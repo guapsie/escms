@@ -75,5 +75,9 @@ Separación sagrada para que las actualizaciones del sistema no rompan la web de
 * **Lienzo Infinito y Edición Estricta:** Canvas con márgenes dinámicos para scroll masivo al hacer zoom, y auto-fit de dispositivos. El lienzo ahora es estructuralmente estricto (cero textos fantasma), permitiendo edición inline `contenteditable` solo al hacer clic en bloques de texto reales y protegiendo la selección.
 * **Controles UI Avanzados:** `EscmsColorPicker` ahora cuenta con input HEX interactivo y canal Alpha.
 * **Top Bar:** Añadido soporte Fullscreen nativo con cambio de icono dinámico.
+* **Arquitectura API:** Delegación de rutas API a `07-api.php` para mantener el enrutador limpio sin romper la estructura monolítica.
+* **Motor de Datos (Modo Dios):** Creado `editor-parser.js` para serializar el DOM a JSON y viceversa sin basurilla (*zero-bloat*).
+* **Autoguardado (Autosave):** Implementado `editor-autosave.js` con Debounce y `MutationObserver` guardando el DOM y JSON limpios en SQLite.
+* **Gestor de Páginas (Pages Manager):** Interfaz inicial creada en el panel izquierdo (`editor-pagemanager.js`) con lista de páginas y menús contextuales flotantes.
 
-**Siguiente paso lógico:** Conectar el Inspector (Panel Derecho) de forma bidireccional leyendo el `window.getComputedStyle()` para alterar los estilos del nodo seleccionado en tiempo real. Después, implementar la lógica de Autoguardado (Autosave) en `editor-app.js` para guardar el DOM en SQLite vía AJAX.
+**Siguiente paso lógico:** Añadir un botón al Gestor de Páginas para crear páginas nuevas, conectar el listado con los datos reales de SQLite, y por fin conectar el Inspector de la derecha de forma bidireccional leyendo el `window.getComputedStyle()`.
