@@ -66,8 +66,11 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
     <script src="/core/js/editor-settings.js"></script>
     <script src="/core/js/editor-inspector.js"></script>
     <script src="/core/js/editor-canvas.js"></script>
+    <script src="/core/js/editor-pagemanager.js"></script>
     <script src="/core/js/editor-leftpanel.js"></script>
     <script src="/core/js/editor-selection.js"></script>
+    <script src="/core/js/editor-parser.js"></script>
+    <script src="/core/js/editor-autosave.js"></script>
     <script src="/core/js/editor-app.js"></script>
 </body>
 </html>';

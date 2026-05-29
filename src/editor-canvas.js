@@ -74,7 +74,7 @@ class EscmsCanvas {
         
         window.addEventListener('resize', () => {
             if (this.activeView === 'desktop') {
-                this.host.style.width = `${this.viewport.clientWidth}px`;
+                this.host.style.width = `${this.area.clientWidth}px`;
             }
             this.updateScaler();
         });
@@ -188,7 +188,7 @@ class EscmsCanvas {
         let targetZoom = 1;
         
         if (viewId === 'desktop') {
-            this.host.style.width = `${this.viewport.clientWidth}px`;
+            this.host.style.width = `${this.area.clientWidth}px`;
         } else {
             this.host.style.width = width;
             
@@ -229,7 +229,7 @@ class EscmsCanvas {
         
         let baseWidth;
         if (this.activeView === 'desktop') {
-            baseWidth = this.viewport.clientWidth;
+            baseWidth = this.area.clientWidth;
         } else {
             baseWidth = parseInt(this.host.style.width) || 768;
         }
@@ -239,6 +239,15 @@ class EscmsCanvas {
 
         this.scaler.style.width = `${baseWidth * this.currentZoom}px`;
         this.scaler.style.height = `${baseHeight * this.currentZoom}px`;
+
+        // Añadimos márgenes externos dinámicos al hacer zoom para poder centrar cualquier esquina
+        if (this.currentZoom > 1) {
+            const padX = Math.round(this.viewport.clientWidth / 2);
+            const padY = Math.round(this.viewport.clientHeight / 2);
+            this.scaler.style.margin = `${padY}px ${padX}px`;
+        } else {
+            this.scaler.style.margin = '0 auto';
+        }
 
         // Matamos el scroll horizontal nativamente en Desktop al 100%
         if (this.currentZoom === 1 && this.activeView === 'desktop') {
@@ -264,21 +273,34 @@ class EscmsCanvas {
         const clientWidth = node.clientWidth || node.offsetWidth || 0;
         const clientHeight = node.clientHeight || node.offsetHeight || 0;
 
-        const centerX = offsetLeft + (clientWidth / 2);
-        const centerY = offsetTop + (clientHeight / 2);
-
-        const scaledCenterX = centerX * this.currentZoom;
-        const scaledCenterY = centerY * this.currentZoom;
+        const scaledLeft = offsetLeft * this.currentZoom;
+        const scaledTop = offsetTop * this.currentZoom;
+        const scaledWidth = clientWidth * this.currentZoom;
+        const scaledHeight = clientHeight * this.currentZoom;
         
         setTimeout(() => {
-            const targetScrollLeft = scaledCenterX - (this.viewport.clientWidth / 2);
-            const targetScrollTop = scaledCenterY - (this.viewport.clientHeight / 2);
+            const padX = this.currentZoom > 1 ? Math.round(this.viewport.clientWidth / 2) : 0;
+            const padY = this.currentZoom > 1 ? Math.round(this.viewport.clientHeight / 2) : 0;
+
+            let targetScrollLeft;
+            if (scaledWidth > this.viewport.clientWidth * 0.8) {
+                targetScrollLeft = (padX + scaledLeft) - 40;
+            } else {
+                targetScrollLeft = (padX + scaledLeft + (scaledWidth / 2)) - (this.viewport.clientWidth / 2);
+            }
+
+            let targetScrollTop;
+            if (scaledHeight > this.viewport.clientHeight * 0.8) {
+                targetScrollTop = (padY + scaledTop) - 40;
+            } else {
+                targetScrollTop = (padY + scaledTop + (scaledHeight / 2)) - (this.viewport.clientHeight / 2);
+            }
             
             this.viewport.scrollTo({
                 left: Math.max(0, targetScrollLeft),
                 top: Math.max(0, targetScrollTop),
                 behavior: 'smooth'
             });
-        }, 10);
+        }, 50);
     }
 }

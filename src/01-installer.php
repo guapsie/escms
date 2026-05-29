@@ -45,6 +45,26 @@ if ($needs_install) {
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->exec("CREATE TABLE IF NOT EXISTS options (k TEXT PRIMARY KEY, v TEXT)");
         $pdo->exec("CREATE TABLE IF NOT EXISTS passkeys (id TEXT PRIMARY KEY, public_key TEXT, sign_count INTEGER DEFAULT 0)");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS pages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            slug TEXT UNIQUE NOT NULL,
+            editor_data TEXT,
+            public_html TEXT,
+            views INTEGER DEFAULT 0,
+            seo_title TEXT,
+            seo_desc TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $pdo->exec("CREATE TRIGGER IF NOT EXISTS update_pages_updated_at 
+            AFTER UPDATE ON pages
+            FOR EACH ROW
+            BEGIN
+                UPDATE pages SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+            END;
+        ");
     } catch (PDOException $e) {
         die("Fatal Error: Database creation failed - " . $e->getMessage());
     }

@@ -9,6 +9,7 @@ class EscmsEditor {
         this.canvas = null;
         this.selection = null;
         this.settings = null;
+        this.autosave = null;
     }
 
     async init() {
@@ -32,7 +33,6 @@ class EscmsEditor {
         
         const docRoot = document.createElement('div');
         docRoot.id = 'document-root';
-        docRoot.contentEditable = 'true';
         
         docRoot.innerHTML = '';
         
@@ -43,6 +43,10 @@ class EscmsEditor {
 
         this.leftpanel = new EscmsLeftPanel(this.i18n);
         this.leftpanel.init(this.shadow);
+
+        const statusIndicator = document.querySelector('#btn-toggle-publish span[data-i18n]');
+        this.autosave = new EscmsAutosave(this.i18n);
+        this.autosave.init(docRoot, null, statusIndicator);
 
         this.setupShortcuts();
         await this.loadLocale();
@@ -56,7 +60,7 @@ class EscmsEditor {
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
                 e.preventDefault();
-                console.log('[ESCMS] Guardado simulado (Ctrl+S)');
+                if (this.autosave) this.autosave.saveToServer();
             }
         });
     }

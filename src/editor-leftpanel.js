@@ -12,14 +12,14 @@ class EscmsLeftPanel {
                 tag: 'section',
                 icon: icons.rows,
                 text: null,
-                styles: { minHeight: '50px', padding: '2rem' }
+                className: 'escms-section'
             },
             {
                 name: 'Container',
                 tag: 'div',
                 icon: icons.square,
                 text: null,
-                styles: { minHeight: '20px' }
+                className: 'escms-container'
             },
             {
                 name: 'Heading',
@@ -34,6 +34,8 @@ class EscmsLeftPanel {
                 textKey: 'leftpanel.default_paragraph'
             }
         ];
+        
+        this.pageManager = new EscmsPageManager(this.i18n);
     }
 
     init(shadowRoot) {
@@ -107,6 +109,7 @@ class EscmsLeftPanel {
         
         header.appendChild(createTab('elements', icons.atom, 'Elements'));
         header.appendChild(createTab('layers', icons.stack, 'Layers'));
+        header.appendChild(createTab('pages', icons.file, 'Pages'));
 
         this.contentArea = document.createElement('div');
         this.contentArea.style.flex = '1';
@@ -119,6 +122,8 @@ class EscmsLeftPanel {
 
         if (this.activeTab === 'elements') {
             this.renderElements();
+        } else if (this.activeTab === 'pages') {
+            this.pageManager.init(this.contentArea);
         } else {
             this.renderLayers();
         }
@@ -376,7 +381,8 @@ class EscmsLeftPanel {
                 else if (action === 'after') domNode.parentNode.insertBefore(this.draggedDomNode, domNode.nextSibling);
                 else if (action === 'inside') domNode.appendChild(this.draggedDomNode);
 
-                setTimeout(() => this.draggedDomNode.click(), 10);
+                const droppedNode = this.draggedDomNode;
+                setTimeout(() => { if (droppedNode) droppedNode.click(); }, 10);
             });
             
             this.treeNodes.set(domNode, treeItem);
@@ -426,6 +432,9 @@ class EscmsLeftPanel {
         if (atom.textKey) el.textContent = this.i18n.dictionary[atom.textKey] || 'New Text';
         if (atom.styles) {
             Object.assign(el.style, atom.styles);
+        }
+        if (atom.className) {
+            el.className = atom.className;
         }
 
         let target = this.selectedNode;

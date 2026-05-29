@@ -21,6 +21,7 @@ const files = fs.readdirSync(srcDir)
 let outputCode = '<?php\n\ndeclare(strict_types=1);\n\n// ESCMS Core - Build autogenerado. NO EDITAR.\n\n';
 
 files.forEach(file => {
+    console.log(`[+] Empaquetando backend (PHP): ${file}`);
     let content = fs.readFileSync(path.join(srcDir, file), 'utf8');
     
     content = content.replace(/^<\?php\s*/i, '');
@@ -33,6 +34,7 @@ files.forEach(file => {
 let assetsPayload = '';
 const assetFiles = fs.readdirSync(srcDir).filter(f => f.endsWith('.js') || f.endsWith('.css'));
 assetFiles.forEach(file => {
+    console.log(`[+] Inyectando asset (Base64): ${file}`);
     const content = fs.readFileSync(path.join(srcDir, file));
     const b64 = content.toString('base64');
     const dir = file.endsWith('.js') ? 'core/js' : 'core/css';

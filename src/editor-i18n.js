@@ -1,5 +1,7 @@
 const enFallback = Object.freeze({
     'topbar.draft': 'Draft',
+    'topbar.saving': 'Saving...',
+    'topbar.saved': 'Saved',
     'topbar.published': 'Published',
     'topbar.seo': 'SEO Settings',
     'topbar.fullscreen': 'Fullscreen',
@@ -27,7 +29,11 @@ const enFallback = Object.freeze({
     "settings.google_fonts": "Google Fonts URLs",
     "settings.body_font": "Body Font Family",
     "settings.site_title": "Site Title",
-    "settings.meta_desc": "Global Meta Description"
+    "settings.meta_desc": "Global Meta Description",
+    "set_home": "Set as Homepage",
+    "set_blog": "Set as Blog",
+    "duplicate_page": "Duplicate Page",
+    "delete_page": "Delete Page"
 });
 
 class I18nEngine {
