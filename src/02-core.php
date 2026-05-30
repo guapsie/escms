@@ -35,7 +35,7 @@ if (!defined('ESCMS_HAS_ZIP')) {
 
 // 4. El Motor de Base de Datos (PDO)
 try {
-    $pdo = new PDO('sqlite:' . __DIR__ . '/data/escms.sqlite');
+    $pdo = new PDO('sqlite:' . dirname(__DIR__) . '/data/escms.sqlite');
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $config = $pdo->query("SELECT k, v FROM options")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
 } catch (PDOException $e) {

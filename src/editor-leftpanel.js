@@ -5,33 +5,46 @@ class EscmsLeftPanel {
         this.selectedNode = null;
         this.draggedDomNode = null;
         this.activeTab = 'elements';
-        this.treeNodes = new Map();
-        this.atoms = [
+        this.atomCategories = [
             {
-                name: 'Section',
-                tag: 'section',
-                icon: icons.rows,
-                text: null,
-                className: 'escms-section'
+                id: 'layout',
+                name: 'leftpanel.cat_layout',
+                atoms: [
+                    { name: 'Section', tag: 'section', icon: icons.rows, className: 'escms-section' },
+                    { name: 'Container', tag: 'div', icon: icons.square, className: 'escms-container' },
+                    { name: 'Columns', tag: 'div', icon: icons.columns, className: 'escms-columns' },
+                    { name: 'Grid', tag: 'div', icon: icons.grid, className: 'escms-grid' },
+                    { name: 'Separator', tag: 'hr', icon: icons.separator, className: 'escms-separator' },
+                    { name: 'Spacer', tag: 'div', icon: icons.spacer, className: 'escms-spacer', styles: { height: '50px' } }
+                ]
             },
             {
-                name: 'Container',
-                tag: 'div',
-                icon: icons.square,
-                text: null,
-                className: 'escms-container'
+                id: 'content',
+                name: 'leftpanel.cat_content',
+                atoms: [
+                    { name: 'Heading', tag: 'h2', icon: icons.heading, textKey: 'leftpanel.default_heading' },
+                    { name: 'Paragraph', tag: 'p', icon: icons.textT, textKey: 'leftpanel.default_paragraph' },
+                    { name: 'Cite', tag: 'blockquote', icon: icons.quotes, textKey: 'leftpanel.default_cite' },
+                    { name: 'List', tag: 'ul', icon: icons.list, children: [{tag:'li', textKey:'leftpanel.default_list_item'}] },
+                    { name: 'Code', tag: 'pre', icon: icons.code, textKey: 'leftpanel.default_code' },
+                    { name: 'Image', tag: 'img', icon: icons.image, attributes: { src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2RkZCIvPjwvc3ZnPg==', alt: 'Placeholder', style: 'max-width: 100%; height: auto;' } },
+                    { name: 'Button', tag: 'button', icon: icons.button, textKey: 'leftpanel.default_button' }
+                ]
             },
             {
-                name: 'Heading',
-                tag: 'h2',
-                icon: icons.heading || icons.textT,
-                textKey: 'leftpanel.default_heading'
+                id: 'embeds',
+                name: 'leftpanel.cat_embeds',
+                atoms: [
+                    { name: 'Video', tag: 'video', icon: icons.videoCamera, attributes: { controls: 'true', style: 'width: 100%;' } },
+                    { name: 'Audio', tag: 'audio', icon: icons.speakerHigh, attributes: { controls: 'true', style: 'width: 100%;' } },
+                    { name: 'YouTube', tag: 'iframe', icon: icons.youtubeLogo, attributes: { src: 'https://www.youtube.com/embed/dQw4w9WgXcQ', frameborder: '0', allowfullscreen: 'true', style: 'width: 100%; aspect-ratio: 16/9;' } },
+                    { name: 'Vimeo', tag: 'iframe', icon: icons.playCircle, attributes: { src: 'https://player.vimeo.com/video/76979871', frameborder: '0', allowfullscreen: 'true', style: 'width: 100%; aspect-ratio: 16/9;' } }
+                ]
             },
             {
-                name: 'Paragraph',
-                tag: 'p',
-                icon: icons.textT,
-                textKey: 'leftpanel.default_paragraph'
+                id: 'downloaded',
+                name: 'leftpanel.cat_downloaded',
+                atoms: []
             }
         ];
         
@@ -61,6 +74,7 @@ class EscmsLeftPanel {
         }
 
         this.render();
+        this.pageManager.loadPages(true);
     }
 
     render() {
@@ -131,42 +145,68 @@ class EscmsLeftPanel {
 
     renderElements() {
         this.contentArea.innerHTML = '';
-        const grid = document.createElement('div');
-        grid.style.display = 'grid';
-        grid.style.gridTemplateColumns = '1fr 1fr';
-        grid.style.gap = '8px';
+        
+        this.atomCategories.forEach(cat => {
+            const header = document.createElement('div');
+            header.setAttribute('data-i18n', cat.name);
+            header.textContent = this.i18n.dictionary[cat.name] || cat.name;
+            header.style.fontSize = '0.75rem';
+            header.style.textTransform = 'uppercase';
+            header.style.letterSpacing = '1px';
+            header.style.color = 'rgba(245, 245, 245, 0.4)';
+            header.style.padding = '15px 15px 10px 15px';
+            header.style.fontWeight = '600';
+            this.contentArea.appendChild(header);
 
-        this.atoms.forEach(atom => {
-            const btn = document.createElement('button');
-            btn.title = atom.name;
-            btn.innerHTML = atom.icon;
-            btn.style.display = 'flex';
-            btn.style.alignItems = 'center';
-            btn.style.justifyContent = 'center';
-            btn.style.background = '#1f1f1f';
-            btn.style.border = '1px solid rgba(255, 255, 255, 0.05)';
-            btn.style.borderRadius = '6px';
-            btn.style.padding = '1rem';
-            btn.style.color = 'var(--text-solid)';
-            btn.style.cursor = 'pointer';
-            btn.style.transition = 'all 0.2s ease';
-            
-            const svg = btn.querySelector('svg');
-            if (svg) {
-                svg.style.width = '24px';
-                svg.style.height = '24px';
-                svg.style.pointerEvents = 'none';
+            if (cat.atoms.length === 0) {
+                const empty = document.createElement('div');
+                empty.textContent = 'No atoms downloaded yet.';
+                empty.style.color = 'rgba(245, 245, 245, 0.3)';
+                empty.style.fontSize = '0.8rem';
+                empty.style.padding = '0 15px 15px 15px';
+                empty.style.fontStyle = 'italic';
+                this.contentArea.appendChild(empty);
+                return;
             }
 
-            btn.addEventListener('mouseenter', () => btn.style.borderColor = 'var(--accent-solid)');
-            btn.addEventListener('mouseleave', () => btn.style.borderColor = 'rgba(255, 255, 255, 0.05)');
+            const grid = document.createElement('div');
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = '1fr 1fr';
+            grid.style.gap = '8px';
+            grid.style.padding = '0 15px 15px 15px';
 
-            btn.addEventListener('click', () => this.injectAtom(atom));
+            cat.atoms.forEach(atom => {
+                const btn = document.createElement('button');
+                btn.title = atom.name;
+                btn.innerHTML = atom.icon;
+                btn.style.display = 'flex';
+                btn.style.alignItems = 'center';
+                btn.style.justifyContent = 'center';
+                btn.style.background = '#1f1f1f';
+                btn.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+                btn.style.borderRadius = '6px';
+                btn.style.padding = '1rem';
+                btn.style.color = 'var(--text-solid)';
+                btn.style.cursor = 'pointer';
+                btn.style.transition = 'all 0.2s ease';
+                
+                const svg = btn.querySelector('svg');
+                if (svg) {
+                    svg.style.width = '24px';
+                    svg.style.height = '24px';
+                    svg.style.pointerEvents = 'none';
+                }
 
-            grid.appendChild(btn);
+                btn.addEventListener('mouseenter', () => btn.style.borderColor = 'var(--accent-solid)');
+                btn.addEventListener('mouseleave', () => btn.style.borderColor = 'rgba(255, 255, 255, 0.05)');
+
+                btn.addEventListener('click', () => this.injectAtom(atom));
+
+                grid.appendChild(btn);
+            });
+
+            this.contentArea.appendChild(grid);
         });
-
-        this.contentArea.appendChild(grid);
     }
 
     renderLayers() {
@@ -435,6 +475,16 @@ class EscmsLeftPanel {
         }
         if (atom.className) {
             el.className = atom.className;
+        }
+        if (atom.attributes) {
+            Object.entries(atom.attributes).forEach(([k, v]) => el.setAttribute(k, v));
+        }
+        if (atom.children) {
+            atom.children.forEach(childAtom => {
+                const childEl = document.createElement(childAtom.tag);
+                if (childAtom.textKey) childEl.textContent = this.i18n.dictionary[childAtom.textKey] || 'Item';
+                el.appendChild(childEl);
+            });
         }
 
         let target = this.selectedNode;

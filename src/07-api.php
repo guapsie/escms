@@ -124,6 +124,171 @@ if (str_starts_with($route, 'api/')) {
             }
             break;
 
+        case 'api/pages/list':
+            if ($method !== 'GET') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $pages = $pdo->query("SELECT id, title, slug, views, updated_at FROM pages ORDER BY updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+                
+                if (count($pages) === 0) {
+                    $defaultData = '{"tag":"div","classes":["escms-container"],"styles":"max-width: var(--max-width); margin: 0px auto; padding: 20px;","children":[{"tag":"h2","children":[{"tag":"span","children":["Welcome to ESCMS"]}]},{"tag":"p","children":[{"tag":"span","children":["This is your brand new lightweight CMS."]}]}]}';
+                    $defaultHtml = '<div class="escms-container" style="max-width: var(--max-width); margin: 0px auto; padding: 20px;"><h2>New Heading</h2><p>Type something here...</p></div>';
+                    
+                    $stmt = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html) VALUES (?, ?, ?, ?)");
+                    $stmt->execute(['Home', 'home', $defaultData, $defaultHtml]);
+                    $homeId = $pdo->lastInsertId();
+                    
+                    $stmtOpt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('home_page_id', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+                    $stmtOpt->execute([$homeId]);
+                    
+                    $config['home_page_id'] = $homeId; // Update in memory so the loop below sees it
+                    
+                    $pages = $pdo->query("SELECT id, title, slug, views, updated_at FROM pages ORDER BY updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+                }
+
+                $home_id = (int)($config['home_page_id'] ?? 0);
+                $blog_id = (int)($config['blog_page_id'] ?? 0);
+
+                foreach ($pages as &$p) {
+                    $p['is_home'] = ((int)$p['id'] === $home_id);
+                    $p['is_blog'] = ((int)$p['id'] === $blog_id);
+                }
+
+                $send_json(['status' => 'success', 'pages' => $pages]);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+        case 'api/pages/get':
+            if ($method !== 'GET') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $id = $_GET['id'] ?? null;
+                if (!$id) throw new RuntimeException('ID required');
+                $stmt = $pdo->prepare("SELECT id, title, slug, editor_data FROM pages WHERE id = ?");
+                $stmt->execute([$id]);
+                $page = $stmt->fetch(PDO::FETCH_ASSOC);
+                if (!$page) throw new RuntimeException('Page not found');
+                $send_json(['status' => 'success', 'page' => $page]);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+        case 'api/pages/create':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $title = 'Draft ' . date('Y-m-d H:i:s');
+                $slug = 'draft-' . bin2hex(random_bytes(4));
+                $emptyContainer = '{"tag":"div","classes":["escms-container"],"styles":"max-width: var(--max-width); margin: 0px auto; padding: 20px;","children":[]}';
+                $stmt = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html) VALUES (?, ?, ?, '')");
+                $stmt->execute([$title, $slug, $emptyContainer]);
+                
+                $send_json(['status' => 'success', 'id' => $pdo->lastInsertId()]);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+        case 'api/pages/rename':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $id = $input['id'] ?? null;
+                $title = trim($input['title'] ?? '');
+                if (!$id || !$title) throw new RuntimeException('ID and Title required');
+                
+                $stmt = $pdo->prepare("UPDATE pages SET title = ? WHERE id = ?");
+                $stmt->execute([$title, $id]);
+                
+                $send_json(['status' => 'success']);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+        case 'api/pages/delete':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $id = $input['id'] ?? null;
+                if (!$id) throw new RuntimeException('ID required');
+                
+                $stmt = $pdo->prepare("DELETE FROM pages WHERE id = ?");
+                $stmt->execute([$id]);
+
+                // Limpiar opciones si la borrada era home o blog
+                if ((int)($config['home_page_id'] ?? 0) === (int)$id) {
+                    $pdo->exec("DELETE FROM options WHERE k = 'home_page_id'");
+                }
+                if ((int)($config['blog_page_id'] ?? 0) === (int)$id) {
+                    $pdo->exec("DELETE FROM options WHERE k = 'blog_page_id'");
+                }
+                
+                $send_json(['status' => 'success']);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+        case 'api/pages/duplicate':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $id = $input['id'] ?? null;
+                if (!$id) throw new RuntimeException('ID required');
+                
+                $stmt = $pdo->prepare("SELECT title, editor_data FROM pages WHERE id = ?");
+                $stmt->execute([$id]);
+                $page = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$page) throw new RuntimeException('Page not found');
+
+                $newTitle = $page['title'] . ' (Copy)';
+                $newSlug = 'draft-' . bin2hex(random_bytes(4));
+                
+                $stmtInsert = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html) VALUES (?, ?, ?, '')");
+                $stmtInsert->execute([$newTitle, $newSlug, $page['editor_data']]);
+                
+                $send_json(['status' => 'success', 'id' => $pdo->lastInsertId()]);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+        case 'api/pages/set_home':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $id = $input['id'] ?? null;
+                if (!$id) throw new RuntimeException('ID required');
+                
+                $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('home_page_id', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+                $stmt->execute([$id]);
+                
+                $send_json(['status' => 'success']);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+        case 'api/pages/set_blog':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $id = $input['id'] ?? null;
+                if (!$id) throw new RuntimeException('ID required');
+                
+                $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('blog_page_id', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+                $stmt->execute([$id]);
+                
+                $send_json(['status' => 'success']);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
         default:
             $send_json(['error' => 'Endpoint no encontrado'], 404);
     }

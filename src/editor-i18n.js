@@ -18,8 +18,16 @@ const enFallback = Object.freeze({
     "network.modal_desc": "Connect your blog with the ecosystem. When you publish, your title and link are securely whispered to other nodes. In return, you display organic recommendations from the network.",
     "network.modal_warning": "Absolute Privacy: No tracking, no cookies, no central server data retention. One for all, and all for one.",
     "network.toggle_label": "Join the Decentralized Network",
+    "leftpanel.cat_layout": "Layout",
+    "leftpanel.cat_content": "Content",
+    "leftpanel.cat_embeds": "Embeds",
+    "leftpanel.cat_downloaded": "Downloaded",
     "leftpanel.default_heading": "New Heading",
     "leftpanel.default_paragraph": "Type something here...",
+    "leftpanel.default_cite": "This is a blockquote.",
+    "leftpanel.default_list_item": "List item",
+    "leftpanel.default_code": "console.log('Hello World');",
+    "leftpanel.default_button": "Click Me",
     "settings.max_width": "Max Width (px)",
     "settings.page_bg_color": "Page Background Color",
     "settings.text_color": "Text Color",
@@ -33,7 +41,9 @@ const enFallback = Object.freeze({
     "set_home": "Set as Homepage",
     "set_blog": "Set as Blog",
     "duplicate_page": "Duplicate Page",
-    "delete_page": "Delete Page"
+    "rename_page": "Rename Page",
+    "delete_page": "Delete Page",
+    "pages": "Pages"
 });
 
 class I18nEngine {

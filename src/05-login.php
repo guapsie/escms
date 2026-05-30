@@ -48,7 +48,7 @@ if (!EscmsAuth::isLoggedIn() && in_array($route, ['admin', 'login', ''])) {
         <h1>Welcome Back</h1>
         <button id="btn-login-passkey">Login with Passkey</button>
     </div>
-    <script src="/core/js/login.js"></script>
+    <script src="/assets/js/login.js"></script>
 </body>
 </html>';
     exit;

@@ -1,6 +1,6 @@
 <?php
 
-if (php_sapi_name() === 'cli-server' && is_file(__DIR__ . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH))) {
+if (php_sapi_name() === 'cli-server' && is_file(dirname(__DIR__) . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH))) {
     return false;
 }
 
@@ -65,7 +65,7 @@ if (version_compare(PHP_VERSION, '8.1.0', '<')) {
     $escms_fatal('ESCMS requires PHP 8.1.0 or higher. You are currently running PHP ' . PHP_VERSION . '.');
 }
 
-if (!is_writable(__DIR__)) {
+if (!is_writable(dirname(__DIR__))) {
     $escms_fatal('Directory is not writable. ESCMS needs write permissions to install.');
 }
 

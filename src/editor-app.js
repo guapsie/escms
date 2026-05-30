@@ -49,6 +49,30 @@ class EscmsEditor {
         this.autosave.init(docRoot, null, statusIndicator);
 
         this.setupShortcuts();
+        
+        window.addEventListener('escms-page-selected', (e) => {
+            const page = e.detail.page;
+            docRoot.innerHTML = '';
+            
+            if (page.editor_data) {
+                try {
+                    const parsedRoot = EscmsParser.jsonToDom(JSON.parse(page.editor_data));
+                    if (parsedRoot) {
+                        while(parsedRoot.firstChild) {
+                            docRoot.appendChild(parsedRoot.firstChild);
+                        }
+                    }
+                } catch (err) {
+                    console.error('[ESCMS] Error parsing page data', err);
+                }
+            }
+            
+            if (this.autosave) {
+                this.autosave.pageId = page.id;
+                this.autosave.updateStatus('topbar.saved');
+            }
+        });
+
         await this.loadLocale();
     }
 

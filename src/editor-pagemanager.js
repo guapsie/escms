@@ -4,40 +4,171 @@ class EscmsPageManager {
         this.container = null;
         this.contextMenu = null;
         this.outsideClickListener = null;
-        
-        // Mock Data Inicial
-        this.pages = [
-            { id: 1, title: 'Inicio', views: 1420, is_home: true, is_blog: false },
-            { id: 2, title: 'Blog', views: 340, is_home: false, is_blog: true },
-            { id: 3, title: 'About Us', views: 125, is_home: false, is_blog: false },
-            { id: 4, title: 'Contact', views: 89, is_home: false, is_blog: false }
-        ];
+        this.pages = [];
     }
 
     init(container) {
         this.container = container;
-        this.renderPages(this.pages);
+        this.renderPages();
     }
 
-    renderPages(pagesArray) {
+    async loadPages(autoLoad = false) {
+        try {
+            const res = await fetch('/api/pages/list');
+            const data = await res.json();
+            if (data.status === 'success') {
+                this.pages = data.pages;
+                this.renderPages();
+                
+                if (autoLoad && this.pages.length > 0) {
+                    const homePage = this.pages.find(p => p.is_home) || this.pages[0];
+                    this.loadPage(homePage.id);
+                }
+            }
+        } catch (e) {
+            console.error('[ESCMS] Error loading pages', e);
+        }
+    }
+
+    async createPage() {
+        try {
+            const res = await fetch('/api/pages/create', { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                await this.loadPages();
+                this.loadPage(data.id);
+            }
+        } catch (e) {
+            console.error('[ESCMS] Error creating page', e);
+        }
+    }
+
+    async duplicatePage(id) {
+        try {
+            const res = await fetch('/api/pages/duplicate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                await this.loadPages();
+            }
+        } catch (e) {
+            console.error('[ESCMS] Error duplicating page', e);
+        }
+    }
+
+    async deletePage(id) {
+        if (!confirm('Are you sure you want to delete this page?')) return;
+        try {
+            const res = await fetch('/api/pages/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                await this.loadPages();
+            }
+        } catch (e) {
+            console.error('[ESCMS] Error deleting page', e);
+        }
+    }
+
+    // renamePage is handled inline now
+
+    async setSpecialPage(id, type) {
+        try {
+            const endpoint = type === 'home' ? '/api/pages/set_home' : '/api/pages/set_blog';
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                await this.loadPages();
+            }
+        } catch (e) {
+            console.error('[ESCMS] Error setting special page', e);
+        }
+    }
+
+    async loadPage(id) {
+        try {
+            const res = await fetch(`/api/pages/get?id=${id}`);
+            const data = await res.json();
+            if (data.status === 'success') {
+                window.dispatchEvent(new CustomEvent('escms-page-selected', { detail: { page: data.page } }));
+            }
+        } catch (e) {
+            console.error('[ESCMS] Error fetching page details', e);
+        }
+    }
+
+    renderPages() {
+        if (!this.container) return;
         this.container.innerHTML = '';
         
+        // --- Header + Create Button ---
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.padding = '10px 15px';
+        header.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
+        
+        const title = document.createElement('h3');
+        title.setAttribute('data-i18n', 'pages');
+        title.textContent = this.i18n.dictionary.pages || 'Pages';
+        title.style.margin = '0';
+        title.style.fontSize = '0.85rem';
+        title.style.fontWeight = '500';
+        title.style.color = 'var(--text-solid)';
+        
+        const createBtn = document.createElement('button');
+        createBtn.innerHTML = icons.plus;
+        createBtn.style.background = 'transparent';
+        createBtn.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        createBtn.style.color = 'var(--text-solid)';
+        createBtn.style.cursor = 'pointer';
+        createBtn.style.padding = '4px 8px';
+        createBtn.style.borderRadius = '4px';
+        createBtn.style.display = 'flex';
+        createBtn.style.alignItems = 'center';
+        createBtn.style.transition = 'all 0.2s';
+        
+        const svgAdd = createBtn.querySelector('svg');
+        if (svgAdd) { svgAdd.style.width = '14px'; svgAdd.style.height = '14px'; }
+        
+        createBtn.addEventListener('mouseenter', () => createBtn.style.background = 'rgba(255, 255, 255, 0.1)');
+        createBtn.addEventListener('mouseleave', () => createBtn.style.background = 'transparent');
+        createBtn.addEventListener('click', () => this.createPage());
+        
+        header.appendChild(title);
+        header.appendChild(createBtn);
+        this.container.appendChild(header);
+
+        // --- List Container ---
         const listContainer = document.createElement('div');
         listContainer.style.display = 'flex';
         listContainer.style.flexDirection = 'column';
+        listContainer.style.overflowY = 'auto';
 
-        pagesArray.forEach(page => {
+        this.pages.forEach(page => {
             const item = document.createElement('div');
             item.style.display = 'flex';
             item.style.alignItems = 'center';
             item.style.justifyContent = 'space-between';
-            item.style.padding = '12px 10px';
+            item.style.padding = '12px 15px';
             item.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
             item.style.transition = 'background 0.2s';
             item.style.cursor = 'pointer';
             
             item.addEventListener('mouseenter', () => item.style.background = 'rgba(255, 255, 255, 0.03)');
             item.addEventListener('mouseleave', () => item.style.background = 'transparent');
+            item.addEventListener('click', () => this.loadPage(page.id));
 
             // --- Izquierda: Icono + Título ---
             const leftDiv = document.createElement('div');
@@ -79,7 +210,7 @@ class EscmsPageManager {
             viewsBadge.style.gap = '4px';
             viewsBadge.style.fontSize = '0.75rem';
             viewsBadge.style.color = 'rgba(245, 245, 245, 0.4)';
-            viewsBadge.innerHTML = `<div style="width: 14px; height: 14px; display: flex; align-items: center;">${icons.eye}</div> <span>${page.views}</span>`;
+            viewsBadge.innerHTML = `<div style="width: 14px; height: 14px; display: flex; align-items: center;">${icons.eye}</div> <span>${page.views || 0}</span>`;
             const eyeSvg = viewsBadge.querySelector('svg');
             if (eyeSvg) { eyeSvg.style.width = '100%'; eyeSvg.style.height = '100%'; }
 
@@ -104,7 +235,7 @@ class EscmsPageManager {
 
             menuBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.openContextMenu(e, page);
+                this.openContextMenu(e, page, titleSpan);
             });
 
             rightDiv.appendChild(viewsBadge);
@@ -118,7 +249,7 @@ class EscmsPageManager {
         this.container.appendChild(listContainer);
     }
 
-    openContextMenu(e, page) {
+    openContextMenu(e, page, titleSpan) {
         this.closeContextMenu();
 
         this.contextMenu = document.createElement('div');
@@ -136,7 +267,6 @@ class EscmsPageManager {
         const rect = e.currentTarget.getBoundingClientRect();
         this.contextMenu.style.top = `${rect.bottom + 4}px`;
         
-        // Calcular posición para que no se salga de la pantalla
         const menuLeft = rect.left - 130;
         this.contextMenu.style.left = menuLeft < 10 ? '10px' : `${menuLeft}px`;
 
@@ -156,16 +286,74 @@ class EscmsPageManager {
             
             item.addEventListener('click', (evt) => {
                 evt.stopPropagation();
-                onClick();
                 this.closeContextMenu();
+                onClick();
             });
             return item;
         };
 
-        this.contextMenu.appendChild(createItem('set_home', () => console.log('Set home:', page.id)));
-        this.contextMenu.appendChild(createItem('set_blog', () => console.log('Set blog:', page.id)));
-        this.contextMenu.appendChild(createItem('duplicate_page', () => console.log('Duplicate:', page.id)));
-        this.contextMenu.appendChild(createItem('delete_page', () => console.log('Delete:', page.id), true));
+        this.contextMenu.appendChild(createItem('set_home', () => this.setSpecialPage(page.id, 'home')));
+        this.contextMenu.appendChild(createItem('set_blog', () => this.setSpecialPage(page.id, 'blog')));
+        
+        this.contextMenu.appendChild(createItem('rename_page', () => {
+            titleSpan.contentEditable = 'true';
+            titleSpan.style.background = 'rgba(255, 255, 255, 0.1)';
+            titleSpan.style.padding = '2px 4px';
+            titleSpan.style.borderRadius = '4px';
+            titleSpan.style.outline = '1px solid var(--accent-solid)';
+            titleSpan.focus();
+            
+            const range = document.createRange();
+            range.selectNodeContents(titleSpan);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+
+            const finishRename = async () => {
+                titleSpan.contentEditable = 'false';
+                titleSpan.style.background = 'transparent';
+                titleSpan.style.padding = '0';
+                titleSpan.style.outline = 'none';
+                
+                const newTitle = titleSpan.textContent.trim();
+                if (newTitle !== '' && newTitle !== page.title) {
+                    try {
+                        const res = await fetch('/api/pages/rename', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: page.id, title: newTitle })
+                        });
+                        const data = await res.json();
+                        if (data.status === 'success') {
+                            page.title = newTitle;
+                        } else {
+                            titleSpan.textContent = page.title;
+                        }
+                    } catch (err) {
+                        titleSpan.textContent = page.title;
+                    }
+                } else {
+                    titleSpan.textContent = page.title;
+                }
+            };
+
+            const onKeyDown = (evt) => {
+                if (evt.key === 'Enter') {
+                    evt.preventDefault();
+                    titleSpan.blur();
+                } else if (evt.key === 'Escape') {
+                    evt.preventDefault();
+                    titleSpan.textContent = page.title;
+                    titleSpan.blur();
+                }
+            };
+
+            titleSpan.addEventListener('blur', finishRename, { once: true });
+            titleSpan.addEventListener('keydown', onKeyDown);
+        }));
+
+        this.contextMenu.appendChild(createItem('duplicate_page', () => this.duplicatePage(page.id)));
+        this.contextMenu.appendChild(createItem('delete_page', () => this.deletePage(page.id), true));
 
         document.body.appendChild(this.contextMenu);
 

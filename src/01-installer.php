@@ -1,11 +1,12 @@
 <?php
 
-$data_dir = __DIR__ . '/data';
+$root_dir = dirname(__DIR__);
+$data_dir = $root_dir . '/data';
 $db_path = $data_dir . '/escms.sqlite';
-$core_dir = __DIR__ . '/core';
+$core_dir = __DIR__;
 
-$needs_install = !file_exists($db_path);
-$needs_assets = !file_exists($core_dir . '/js/editor-app.js');
+$needs_install = !file_exists($db_path) || filesize($db_path) === 0;
+$needs_assets = !file_exists($root_dir . '/assets/js/editor-app.js');
 
 if ($needs_install || $needs_assets) {
     $dirs = [
@@ -14,9 +15,8 @@ if ($needs_install || $needs_assets) {
         $data_dir . '/templates',
         $data_dir . '/atoms',
         $data_dir . '/locales',
-        $core_dir,
-        $core_dir . '/js',
-        $core_dir . '/css'
+        $root_dir . '/assets/js',
+        $root_dir . '/assets/css'
     ];
 
     foreach ($dirs as $dir) {
@@ -25,14 +25,9 @@ if ($needs_install || $needs_assets) {
         }
     }
 
-    $assets = [
-        /*__ASSETS_PAYLOAD__*/
-    ];
-    foreach ($assets as $file => $b64) {
-        file_put_contents(__DIR__ . '/' . $file, base64_decode($b64));
-    }
+    // La extracción real de assets y core ahora la hace el Kamikaze installer (build.js)
 
-    $htaccess_path = __DIR__ . '/.htaccess';
+    $htaccess_path = $root_dir . '/.htaccess';
     if (!file_exists($htaccess_path)) {
         $htaccess_content = "<IfModule mod_rewrite.c>\n    RewriteEngine On\n    RewriteCond %{HTTPS} off\n    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]\n    RewriteRule \.sqlite$ - [F,L]\n    RewriteCond %{REQUEST_FILENAME} !-f\n    RewriteCond %{REQUEST_FILENAME} !-d\n    RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]\n</IfModule>";
         file_put_contents($htaccess_path, $htaccess_content);
@@ -65,6 +60,8 @@ if ($needs_install) {
                 UPDATE pages SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
             END;
         ");
+
+        // Seeding de página de inicio movido a la API (07-api.php)
     } catch (PDOException $e) {
         die("Fatal Error: Database creation failed - " . $e->getMessage());
     }
@@ -131,7 +128,7 @@ if ($needs_install) {
         <h1>ESCMS Setup</h1>
         <button id="btn-setup-passkey">Create Admin Passkey</button>
     </div>
-    <script src="core/js/installer.js"></script>
+    <script src="assets/js/installer.js"></script>
 </body>
 </html>';
     exit;

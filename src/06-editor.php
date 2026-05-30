@@ -59,19 +59,19 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
         <div id="escms-canvas-wrapper"><div id="escms-canvas-host"></div></div>
         <div id="escms-inspector"><div style="padding: 1rem; opacity: 0.5; font-size: 0.85rem;">Inspector</div></div>
     </div>
-    <script src="/core/js/editor-icons.js"></script>
-    <script src="/core/js/editor-i18n.js"></script>
-    <script src="/core/js/editor-topbar.js"></script>
-    <script src="/core/js/editor-controls.js"></script>
-    <script src="/core/js/editor-settings.js"></script>
-    <script src="/core/js/editor-inspector.js"></script>
-    <script src="/core/js/editor-canvas.js"></script>
-    <script src="/core/js/editor-pagemanager.js"></script>
-    <script src="/core/js/editor-leftpanel.js"></script>
-    <script src="/core/js/editor-selection.js"></script>
-    <script src="/core/js/editor-parser.js"></script>
-    <script src="/core/js/editor-autosave.js"></script>
-    <script src="/core/js/editor-app.js"></script>
+    <script src="/assets/js/editor-icons.js"></script>
+    <script src="/assets/js/editor-i18n.js"></script>
+    <script src="/assets/js/editor-topbar.js"></script>
+    <script src="/assets/js/editor-controls.js"></script>
+    <script src="/assets/js/editor-settings.js"></script>
+    <script src="/assets/js/editor-inspector.js"></script>
+    <script src="/assets/js/editor-canvas.js"></script>
+    <script src="/assets/js/editor-pagemanager.js"></script>
+    <script src="/assets/js/editor-leftpanel.js"></script>
+    <script src="/assets/js/editor-selection.js"></script>
+    <script src="/assets/js/editor-parser.js"></script>
+    <script src="/assets/js/editor-autosave.js"></script>
+    <script src="/assets/js/editor-app.js"></script>
 </body>
 </html>';
     exit;
