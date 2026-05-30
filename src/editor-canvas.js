@@ -40,12 +40,12 @@ class EscmsCanvas {
         this.scaler.id = 'escms-canvas-scaler';
         this.scaler.style.margin = '0 auto';
         this.scaler.style.position = 'relative';
-        this.scaler.style.transition = 'width 0.3s ease, height 0.3s ease';
+        this.scaler.style.transition = 'width 0.5s ease, height 0.5s ease, margin 0.5s ease';
         this.scaler.style.boxShadow = '0 0 0 1px rgba(255,255,255,0.05), 0 10px 40px rgba(0,0,0,0.5)';
 
         this.host.style.margin = '0';
         this.host.style.transformOrigin = 'top left';
-        this.host.style.transition = 'transform 0.3s ease, width 0.3s ease';
+        this.host.style.transition = 'transform 0.5s ease, width 0.5s ease';
         this.host.style.backgroundColor = 'transparent';
         this.host.style.position = 'absolute';
         this.host.style.top = '0';
@@ -62,8 +62,8 @@ class EscmsCanvas {
 
         window.addEventListener('escms-element-selected', (e) => {
             const node = e.detail.node;
-            if (node) {
-                this.focusNode(node);
+            if (node && window.escmsAutoZoom !== false) {
+                this.focusNode(node, e.detail.clientX, e.detail.clientY);
             }
         });
 
@@ -257,43 +257,61 @@ class EscmsCanvas {
         }
     }
 
-    focusNode(node) {
+    focusNode(node, clientX, clientY) {
         this.setZoom(1.5);
         
-        let offsetLeft = 0;
-        let offsetTop = 0;
-        let curr = node;
-        
-        while (curr && curr.tagName !== 'BODY' && curr !== this.host && !curr.id?.includes('escms-canvas-host')) {
-            offsetLeft += curr.offsetLeft || 0;
-            offsetTop += curr.offsetTop || 0;
-            curr = curr.offsetParent;
-        }
-
-        const clientWidth = node.clientWidth || node.offsetWidth || 0;
-        const clientHeight = node.clientHeight || node.offsetHeight || 0;
-
-        const scaledLeft = offsetLeft * this.currentZoom;
-        const scaledTop = offsetTop * this.currentZoom;
-        const scaledWidth = clientWidth * this.currentZoom;
-        const scaledHeight = clientHeight * this.currentZoom;
-        
         setTimeout(() => {
-            const padX = this.currentZoom > 1 ? Math.round(this.viewport.clientWidth / 2) : 0;
-            const padY = this.currentZoom > 1 ? Math.round(this.viewport.clientHeight / 2) : 0;
-
             let targetScrollLeft;
-            if (scaledWidth > this.viewport.clientWidth * 0.8) {
-                targetScrollLeft = (padX + scaledLeft) - 40;
-            } else {
-                targetScrollLeft = (padX + scaledLeft + (scaledWidth / 2)) - (this.viewport.clientWidth / 2);
-            }
-
             let targetScrollTop;
-            if (scaledHeight > this.viewport.clientHeight * 0.8) {
-                targetScrollTop = (padY + scaledTop) - 40;
+            
+            if (clientX !== undefined && clientY !== undefined) {
+                // Zoom exactly to where the user clicked
+                // First get the mouse position relative to the scaled container
+                const hostRect = this.host.getBoundingClientRect();
+                const viewportRect = this.viewport.getBoundingClientRect();
+                
+                const clickX_in_host = clientX - hostRect.left;
+                const clickY_in_host = clientY - hostRect.top;
+                
+                const padX = Math.round(viewportRect.width / 2);
+                const padY = Math.round(viewportRect.height / 2);
+                
+                targetScrollLeft = (padX + clickX_in_host) - (viewportRect.width * 0.25);
+                targetScrollTop = (padY + clickY_in_host) - (viewportRect.height * 0.25);
             } else {
-                targetScrollTop = (padY + scaledTop + (scaledHeight / 2)) - (this.viewport.clientHeight / 2);
+                // Fallback to node center if no coordinates
+                let offsetLeft = 0;
+                let offsetTop = 0;
+                let curr = node;
+                
+                while (curr && curr.tagName !== 'BODY' && curr !== this.host && !curr.id?.includes('escms-canvas-host')) {
+                    offsetLeft += curr.offsetLeft || 0;
+                    offsetTop += curr.offsetTop || 0;
+                    curr = curr.offsetParent;
+                }
+
+                const clientWidth = node.clientWidth || node.offsetWidth || 0;
+                const clientHeight = node.clientHeight || node.offsetHeight || 0;
+
+                const scaledLeft = offsetLeft * this.currentZoom;
+                const scaledTop = offsetTop * this.currentZoom;
+                const scaledWidth = clientWidth * this.currentZoom;
+                const scaledHeight = clientHeight * this.currentZoom;
+
+                const padX = this.currentZoom > 1 ? Math.round(this.viewport.clientWidth / 2) : 0;
+                const padY = this.currentZoom > 1 ? Math.round(this.viewport.clientHeight / 2) : 0;
+
+                if (scaledWidth > this.viewport.clientWidth * 0.8) {
+                    targetScrollLeft = (padX + scaledLeft) - 40;
+                } else {
+                    targetScrollLeft = (padX + scaledLeft + (scaledWidth / 2)) - (this.viewport.clientWidth / 2);
+                }
+
+                if (scaledHeight > this.viewport.clientHeight * 0.8) {
+                    targetScrollTop = (padY + scaledTop) - 40;
+                } else {
+                    targetScrollTop = (padY + scaledTop + (scaledHeight / 2)) - (this.viewport.clientHeight / 2);
+                }
             }
             
             this.viewport.scrollTo({

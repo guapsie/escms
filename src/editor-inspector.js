@@ -3,7 +3,7 @@ class EscmsInspector {
         this.i18n = i18nEngine;
         this.selectedNode = null;
         this.isSyncing = false;
-        
+
         this.controls = {};
     }
 
@@ -28,7 +28,7 @@ class EscmsInspector {
         window.addEventListener('escms-element-selected', (e) => {
             const node = e.detail.node;
             this.selectedNode = node;
-            
+
             if (node && node.id !== 'document-root') {
                 this.sectionsContainer.style.display = 'block';
                 this.syncDOMToUI();
@@ -71,10 +71,37 @@ class EscmsInspector {
 
     applyAttribute(attr, value) {
         if (!this.selectedNode || this.isSyncing) return;
-        if (value === '') {
+        
+        let finalValue = value;
+        let isValidEmbed = true;
+
+        if (attr === 'src' && this.selectedNode.tagName.toLowerCase() === 'iframe') {
+            if (this.selectedNode.classList.contains('escms-youtube')) {
+                let match = finalValue.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+                if (match && match[1]) {
+                    finalValue = `https://www.youtube.com/embed/${match[1]}`;
+                } else if (finalValue !== '') {
+                    isValidEmbed = false; // Wait until they finish typing
+                }
+            } else if (this.selectedNode.classList.contains('escms-vimeo')) {
+                let match = finalValue.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/);
+                if (match && match[1]) {
+                    finalValue = `https://player.vimeo.com/video/${match[1]}`;
+                } else if (finalValue !== '') {
+                    isValidEmbed = false;
+                }
+            }
+        }
+
+        if (!isValidEmbed) {
+            // Do not update the DOM attribute if it's an invalid/incomplete YouTube/Vimeo URL
+            return;
+        }
+
+        if (finalValue === '') {
             this.selectedNode.removeAttribute(attr);
         } else {
-            this.selectedNode.setAttribute(attr, value);
+            this.selectedNode.setAttribute(attr, finalValue);
         }
         window.dispatchEvent(new Event('escms-dom-mutated'));
     }
@@ -83,11 +110,11 @@ class EscmsInspector {
         if (!this.selectedNode || this.isSyncing) return;
         const oldTag = this.selectedNode.tagName.toLowerCase();
         if (oldTag === newTag) return;
-        
+
         const newNode = document.createElement(newTag);
         Array.from(this.selectedNode.attributes).forEach(attr => newNode.setAttribute(attr.name, attr.value));
         newNode.innerHTML = this.selectedNode.innerHTML;
-        
+
         this.selectedNode.replaceWith(newNode);
         this.selectedNode = newNode;
         window.dispatchEvent(new Event('escms-dom-mutated'));
@@ -107,7 +134,7 @@ class EscmsInspector {
                         const name = f.split(':')[0];
                         fonts.push({ value: `"${name.replace(/\+/g, ' ')}"`, label: name.replace(/\+/g, ' ') });
                     });
-                } catch(e) {}
+                } catch (e) { }
             });
         }
         return fonts;
@@ -134,7 +161,7 @@ class EscmsInspector {
                 break; // Stop removing if not empty
             }
         }
-        
+
         window.dispatchEvent(new Event('escms-dom-mutated'));
     }
 
@@ -151,19 +178,21 @@ class EscmsInspector {
         // --- ATTRIBUTES (Dynamic) ---
         this.attrSection = this.createSection('inspector.attributes');
         this.attrSection.style.display = 'none'; // Hidden initially
-        
+
         this.attrInputs = {
-            src: this.createTextInput('SRC', (val) => this.applyAttribute('src', val)),
-            alt: this.createTextInput('ALT', (val) => this.applyAttribute('alt', val)),
-            href: this.createTextInput('HREF', (val) => this.applyAttribute('href', val))
+            src: new EscmsUploadControl('inspector.src_url', this.i18n, '', (val) => this.applyAttribute('src', val)),
+            alt: this.createTextInput('inspector.alt_text', (val) => this.applyAttribute('alt', val)),
+            href: this.createTextInput('inspector.href_url', (val) => this.applyAttribute('href', val))
         };
-        
-        Object.values(this.attrInputs).forEach(inp => this.attrSection.appendChild(inp.element));
+
+        this.attrSection.appendChild(this.attrInputs.src.element);
+        this.attrSection.appendChild(this.attrInputs.alt.element);
+        this.attrSection.appendChild(this.attrInputs.href.element);
         this.sectionsContainer.appendChild(this.attrSection);
 
         // --- TYPOGRAPHY ---
         const typoSection = this.createSection('inspector.typography');
-        
+
         this.controls.tagSwap = new EscmsSelect('inspector.html_tag', [
             { value: 'h1', label: 'H1' },
             { value: 'h2', label: 'H2' },
@@ -176,10 +205,10 @@ class EscmsInspector {
 
         this.controls.fontFamily = new EscmsSelect('inspector.font_family', [{ value: '', label: 'Default' }], '', (val) => this.applyStyle('font-family', val));
         typoSection.appendChild(this.controls.fontFamily.element);
-        
+
         this.controls.color = new EscmsColorPicker('inspector.text_color', '#f5f5f5', 100, (val) => this.applyStyle('color', val.rgba));
         typoSection.appendChild(this.controls.color.element);
-        
+
         this.controls.fontSize = new EscmsSlider('inspector.font_size', 8, 120, 1, 16, (val) => this.applyStyle('font-size', `${val}px`), 'px');
         typoSection.appendChild(this.controls.fontSize.element);
 
@@ -203,10 +232,10 @@ class EscmsInspector {
 
         // --- BACKGROUND ---
         const bgSection = this.createSection('inspector.background');
-        
+
         this.controls.bgColor = new EscmsColorPicker('inspector.solid_color', '#0a0a0a', 0, (val) => this.applyStyle('background-color', val.rgba));
         bgSection.appendChild(this.controls.bgColor.element);
-        
+
         this.controls.bgGradient = new EscmsGradientControl('inspector.linear_gradient', this.i18n, undefined, (val) => this.applyStyle('background-image', val.cssString));
         bgSection.appendChild(this.controls.bgGradient.element);
 
@@ -215,15 +244,67 @@ class EscmsInspector {
         // --- LAYOUT ---
         const layoutSection = this.createSection('inspector.layout');
 
+        this.controls.columnsCount = new EscmsSlider('inspector.columns_count', 1, 12, 1, 2, (val) => {
+            if (!this.selectedNode || this.isSyncing) return;
+            
+            this.selectedNode.style.gridTemplateColumns = `repeat(${val}, 1fr)`;
+            this.selectedNode.setAttribute('data-columns', val);
+            
+            const currentChildren = Array.from(this.selectedNode.children);
+            const currentCount = currentChildren.length;
+            const isGrid = this.selectedNode.classList.contains('escms-grid');
+            
+            if (val > currentCount) {
+                for (let i = 0; i < (val - currentCount); i++) {
+                    const col = document.createElement('div');
+                    col.className = isGrid ? 'escms-grid-item' : 'escms-column';
+                    this.selectedNode.appendChild(col);
+                }
+            } else if (val < currentCount) {
+                for (let i = 0; i < (currentCount - val); i++) {
+                    if (this.selectedNode.lastElementChild) {
+                        this.selectedNode.removeChild(this.selectedNode.lastElementChild);
+                    }
+                }
+            }
+            
+            window.dispatchEvent(new Event('escms-dom-mutated'));
+        }, '');
+        layoutSection.appendChild(this.controls.columnsCount.element);
+
+        this.controls.width = this.createTextInput('inspector.width', (val) => this.applyStyle('width', val));
+        layoutSection.appendChild(this.controls.width.element);
+
+        this.controls.imageAlign = new EscmsButtonGroup('inspector.image_align', [
+            { value: 'left', icon: icons.textAlignLeft },
+            { value: 'center', icon: icons.textAlignCenter },
+            { value: 'right', icon: icons.textAlignRight }
+        ], 'left', (val) => {
+            if (!this.selectedNode || this.isSyncing) return;
+            this.selectedNode.style.display = 'block';
+            if (val === 'left') {
+                this.selectedNode.style.marginLeft = '0';
+                this.selectedNode.style.marginRight = 'auto';
+            } else if (val === 'center') {
+                this.selectedNode.style.marginLeft = 'auto';
+                this.selectedNode.style.marginRight = 'auto';
+            } else if (val === 'right') {
+                this.selectedNode.style.marginLeft = 'auto';
+                this.selectedNode.style.marginRight = '0';
+            }
+            window.dispatchEvent(new Event('escms-dom-mutated'));
+        });
+        layoutSection.appendChild(this.controls.imageAlign.element);
+
         this.controls.spacerHeight = new EscmsSlider('inspector.spacer_height', 0, 200, 1, 50, (val) => this.applyStyle('height', val + 'px'), 'px');
         layoutSection.appendChild(this.controls.spacerHeight.element);
-        
-        this.controls.margin = new EscmsSpacing('inspector.margin', {t:0, r:0, b:0, l:0}, (val) => {
+
+        this.controls.margin = new EscmsSpacing('inspector.margin', { t: 0, r: 0, b: 0, l: 0 }, (val) => {
             this.applyStyle('margin', `${val.t}px ${val.r}px ${val.b}px ${val.l}px`);
         });
         layoutSection.appendChild(this.controls.margin.element);
 
-        this.controls.padding = new EscmsSpacing('inspector.padding', {t:0, r:0, b:0, l:0}, (val) => {
+        this.controls.padding = new EscmsSpacing('inspector.padding', { t: 0, r: 0, b: 0, l: 0 }, (val) => {
             this.applyStyle('padding', `${val.t}px ${val.r}px ${val.b}px ${val.l}px`);
         });
         layoutSection.appendChild(this.controls.padding.element);
@@ -235,22 +316,25 @@ class EscmsInspector {
         layoutSection.appendChild(this.controls.border.element);
 
         this.sectionsContainer.appendChild(layoutSection);
-        
+
         // --- VISIBILITY ---
         const visSection = this.createSection('inspector.visibility');
         this.controls.opacity = new EscmsSlider('inspector.opacity', 0, 100, 1, 100, (val) => this.applyStyle('opacity', val / 100), '%');
         visSection.appendChild(this.controls.opacity.element);
-        
+
+        this.controls.effects = new EscmsEffectsControl('inspector.effects', this.i18n, '', (val) => this.applyStyle('filter', val));
+        visSection.appendChild(this.controls.effects.element);
+
         this.sectionsContainer.appendChild(visSection);
     }
 
-    createTextInput(labelTxt, onChange) {
+    createTextInput(i18nKey, onChange) {
         const container = document.createElement('div');
         container.style.marginBottom = '0.75rem';
         container.style.display = 'none';
 
         const label = document.createElement('div');
-        label.textContent = labelTxt;
+        label.setAttribute('data-i18n', i18nKey);
         label.style.fontSize = '0.75rem';
         label.style.color = 'rgba(245, 245, 245, 0.6)';
         label.style.marginBottom = '0.35rem';
@@ -266,12 +350,12 @@ class EscmsInspector {
         input.style.boxSizing = 'border-box';
         input.style.fontFamily = 'monospace';
         input.style.fontSize = '0.8rem';
-        
+
         input.addEventListener('input', (e) => onChange(e.target.value));
 
         container.appendChild(label);
         container.appendChild(input);
-        
+
         return {
             element: container,
             input: input,
@@ -285,35 +369,35 @@ class EscmsInspector {
         if (!rgba || rgba === 'transparent' || rgba === 'none' || rgba.trim() === '') return { hex: '#000000', alpha: 0 };
         let parts = rgba.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
         if (!parts) return { hex: '#000000', alpha: 100 };
-        
+
         let r = parseInt(parts[1]).toString(16).padStart(2, '0');
         let g = parseInt(parts[2]).toString(16).padStart(2, '0');
         let b = parseInt(parts[3]).toString(16).padStart(2, '0');
         let a = parts[4] !== undefined ? Math.round(parseFloat(parts[4]) * 100) : 100;
-        
+
         return { hex: `#${r}${g}${b}`, alpha: a };
     }
 
     _parseSpacing(cssVal) {
-        if (!cssVal) return {t:0, r:0, b:0, l:0};
+        if (!cssVal) return { t: 0, r: 0, b: 0, l: 0 };
         let parts = cssVal.replace(/px/g, '').split(' ').map(n => parseInt(n) || 0);
-        if (parts.length === 1) return {t:parts[0], r:parts[0], b:parts[0], l:parts[0]};
-        if (parts.length === 2) return {t:parts[0], r:parts[1], b:parts[0], l:parts[1]};
-        if (parts.length === 3) return {t:parts[0], r:parts[1], b:parts[2], l:parts[1]};
-        if (parts.length === 4) return {t:parts[0], r:parts[1], b:parts[2], l:parts[3]};
-        return {t:0, r:0, b:0, l:0};
+        if (parts.length === 1) return { t: parts[0], r: parts[0], b: parts[0], l: parts[0] };
+        if (parts.length === 2) return { t: parts[0], r: parts[1], b: parts[0], l: parts[1] };
+        if (parts.length === 3) return { t: parts[0], r: parts[1], b: parts[2], l: parts[1] };
+        if (parts.length === 4) return { t: parts[0], r: parts[1], b: parts[2], l: parts[3] };
+        return { t: 0, r: 0, b: 0, l: 0 };
     }
 
     _parseBorder(cssVal, radiusVal) {
         let res = { width: 0, style: 'solid', color: '#000000', alpha: 100 };
         if (!cssVal || cssVal === 'none' || cssVal === '') return res;
-        
+
         let widthMatch = cssVal.match(/(\d+)px/);
         if (widthMatch) res.width = parseInt(widthMatch[1]);
-        
+
         let styleMatch = cssVal.match(/(solid|dashed|dotted)/);
         if (styleMatch) res.style = styleMatch[1];
-        
+
         let colorMatch = cssVal.match(/rgba?\([^)]+\)|#[0-9a-fA-F]+/);
         if (colorMatch) {
             if (colorMatch[0].startsWith('#')) {
@@ -325,7 +409,7 @@ class EscmsInspector {
                 res.alpha = rgba.alpha;
             }
         }
-        
+
         if (radiusVal) {
             let radiusMatch = radiusVal.match(/(\d+)px/);
             if (radiusMatch) res.radius = parseInt(radiusMatch[1]);
@@ -334,13 +418,13 @@ class EscmsInspector {
     }
 
     _parseGradient(cssVal) {
-        let res = { enabled: false, angle: 90, c1: '#3b82f6', a1: 100, c2: '#1e3a8a', a2: 100 };
+        let res = { enabled: false, angle: 90, c1: '#3b82f6', a1: 100, stop1: 0, c2: '#1e3a8a', a2: 100, stop2: 100 };
         if (!cssVal || !cssVal.includes('linear-gradient')) return res;
-        
+
         res.enabled = true;
         let inner = cssVal.match(/linear-gradient\((.*)\)/);
         if (!inner) return res;
-        
+
         let parts = inner[1].split(/,(?![^(]*\))/).map(s => s.trim());
         if (parts[0].endsWith('deg')) {
             res.angle = parseInt(parts[0].replace('deg', ''));
@@ -352,26 +436,32 @@ class EscmsInspector {
             let color2 = this._rgbaToHexA(parts[1].split(' ')[0]);
             res.c1 = color1.hex; res.a1 = color1.alpha;
             res.c2 = color2.hex; res.a2 = color2.alpha;
+
+            let stop1Match = parts[0].match(/(\d+)%/);
+            if (stop1Match) res.stop1 = parseInt(stop1Match[1]);
+
+            let stop2Match = parts[1].match(/(\d+)%/);
+            if (stop2Match) res.stop2 = parseInt(stop2Match[1]);
         }
         return res;
     }
 
     applyTextStyles(vals) {
         if (!this.selectedNode || this.isSyncing) return;
-        
+
         // Font Weight
         this.selectedNode.style.fontWeight = vals.includes('bold') ? 'bold' : '';
-        
+
         // Font Style
         this.selectedNode.style.fontStyle = vals.includes('italic') ? 'italic' : '';
-        
+
         // Text Decoration
         let decorations = [];
         if (vals.includes('underline')) decorations.push('underline');
         if (vals.includes('strikethrough')) decorations.push('line-through');
-        
+
         this.selectedNode.style.textDecoration = decorations.length > 0 ? decorations.join(' ') : '';
-        
+
         window.dispatchEvent(new Event('escms-dom-mutated'));
     }
 
@@ -398,11 +488,17 @@ class EscmsInspector {
             isAtom = true;
         }
 
-        if (!isAtom && window.escmsEditor && window.escmsEditor.leftPanel) {
-            const categories = window.escmsEditor.leftPanel.atomCategories;
+        if (!isAtom && window.escmsEditor && window.escmsEditor.leftpanel) {
+            const categories = window.escmsEditor.leftpanel.atomCategories;
             for (let cat of categories) {
                 for (let atom of cat.atoms) {
+                    let match = false;
                     if (atom.className && this.selectedNode.classList.contains(atom.className)) {
+                        match = true;
+                    } else if (this.selectedNode.tagName.toLowerCase() === atom.tag.toLowerCase()) {
+                        match = true; // Fallback to tag name for legacy elements that lack the class
+                    }
+                    if (match) {
                         allowedControls = atom.allowedControls || defaultControls['default'];
                         isAtom = true;
                         break;
@@ -454,9 +550,18 @@ class EscmsInspector {
         }
 
         // Sync Attributes
-        if (allowedControls.includes('src')) this.attrInputs.src.setValue(this.selectedNode.getAttribute('src'));
-        if (allowedControls.includes('alt')) this.attrInputs.alt.setValue(this.selectedNode.getAttribute('alt'));
-        if (allowedControls.includes('href')) this.attrInputs.href.setValue(this.selectedNode.getAttribute('href'));
+        if (allowedControls.includes('src')) {
+            this.attrInputs.src.setValue(this.selectedNode.getAttribute('src'), false);
+            this.attrInputs.src.element.style.display = 'block';
+        }
+        if (allowedControls.includes('alt')) {
+            this.attrInputs.alt.setValue(this.selectedNode.getAttribute('alt'), false);
+            this.attrInputs.alt.show();
+        }
+        if (allowedControls.includes('href')) {
+            this.attrInputs.href.setValue(this.selectedNode.getAttribute('href'), false);
+            this.attrInputs.href.element.style.display = 'block';
+        }
 
         // Typography
         if (allowedControls.includes('fontFamily')) {
@@ -476,12 +581,12 @@ class EscmsInspector {
             let cColor = this._rgbaToHexA(comp.color);
             this.controls.color.setValue(cColor.hex, cColor.alpha, false);
         }
-        
+
         if (allowedControls.includes('fontSize')) {
             let fSize = parseInt(comp.fontSize) || 16;
             this.controls.fontSize.setValue(fSize, false);
         }
-        
+
         if (allowedControls.includes('textAlign')) {
             let tAlign = comp.textAlign === 'start' ? 'left' : comp.textAlign;
             this.controls.textAlign.setValue(['left', 'center', 'right', 'justify'].includes(tAlign) ? tAlign : 'left', false);
@@ -508,20 +613,34 @@ class EscmsInspector {
         }
 
         // Layout
+        if (allowedControls.includes('width')) {
+            this.controls.width.setValue(comp.width !== 'auto' ? comp.width : '', false);
+        }
+
+        if (allowedControls.includes('imageAlign')) {
+            let mLeft = comp.marginLeft;
+            let mRight = comp.marginRight;
+            let align = '';
+            if (comp.display === 'block') {
+                if (mLeft === 'auto' && mRight === 'auto') align = 'center';
+                else if (mLeft === 'auto') align = 'right';
+                else if (mRight === 'auto') align = 'left';
+            }
+            this.controls.imageAlign.setValue(align, false);
+        }
+
         if (allowedControls.includes('spacerHeight')) {
             let sHeight = parseInt(comp.height) || 50;
             this.controls.spacerHeight.setValue(sHeight, false);
         }
-        
+
         if (allowedControls.includes('margin')) this.controls.margin.setValue(this._parseSpacing(comp.margin), false);
         if (allowedControls.includes('padding')) this.controls.padding.setValue(this._parseSpacing(comp.padding), false);
         if (allowedControls.includes('border')) this.controls.border.setValue(this._parseBorder(comp.border, comp.borderRadius), false);
 
         // Visibility
-        if (allowedControls.includes('opacity')) {
-            let op = parseFloat(comp.opacity);
-            this.controls.opacity.setValue(isNaN(op) ? 100 : Math.round(op * 100), false);
-        }
+        if (allowedControls.includes('opacity')) this.controls.opacity.setValue(this.selectedNode.style.opacity !== '' ? Math.round(parseFloat(this.selectedNode.style.opacity) * 100) : 100, false);
+        if (allowedControls.includes('effects')) this.controls.effects.setValue(this.selectedNode.style.filter || 'none', false);
 
         this.isSyncing = false;
     }

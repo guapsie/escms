@@ -289,6 +289,106 @@ if (str_starts_with($route, 'api/')) {
                 $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
             }
             break;
+        case 'api/settings':
+            if ($method === 'GET') {
+                if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+                $send_json(['status' => 'success', 'data' => $config]);
+            } elseif ($method === 'POST') {
+                if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+                try {
+                    $pdo->beginTransaction();
+                    foreach ($input as $k => $v) {
+                        $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
+                        $stmt->execute([$k, is_bool($v) ? ($v ? '1' : '0') : (string)$v]);
+                    }
+                    $pdo->commit();
+                    $send_json(['status' => 'success']);
+                } catch (Throwable $e) {
+                    $pdo->rollBack();
+                    $send_json(['status' => 'error', 'msg' => $e->getMessage()], 500);
+                }
+            } else {
+                $send_json(['error' => 'Method not allowed'], 405);
+            }
+            break;
+
+        case 'api/upload':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            
+            try {
+                if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+                    throw new RuntimeException('Upload failed.');
+                }
+                
+                $file = $_FILES['file'];
+                $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                $is_image = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                
+                $filename = bin2hex(random_bytes(8));
+                $upload_dir = dirname(__DIR__) . '/data/uploads/';
+                
+                $generate_webp = ($config['webp_enabled'] ?? '1') === '1' && function_exists('imagewebp') && $is_image;
+                
+                if ($generate_webp) {
+                    $src = null;
+                    if ($ext === 'jpg' || $ext === 'jpeg') $src = imagecreatefromjpeg($file['tmp_name']);
+                    elseif ($ext === 'png') $src = imagecreatefrompng($file['tmp_name']);
+                    elseif ($ext === 'webp') $src = imagecreatefromwebp($file['tmp_name']);
+                    elseif ($ext === 'gif') $src = imagecreatefromgif($file['tmp_name']);
+                    
+                    if ($src) {
+                        $w = imagesx($src);
+                        $h = imagesy($src);
+                        
+                        $new_w = min($w, 1920);
+                        $new_h = (int)($h * ($new_w / $w));
+                        $dst = imagecreatetruecolor($new_w, $new_h);
+                        
+                        if ($ext === 'png' || $ext === 'webp') {
+                            imagealphablending($dst, false);
+                            imagesavealpha($dst, true);
+                            $transparent = imagecolorallocatealpha($dst, 255, 255, 255, 127);
+                            imagefilledrectangle($dst, 0, 0, $new_w, $new_h, $transparent);
+                        }
+                        
+                        imagecopyresampled($dst, $src, 0, 0, 0, 0, $new_w, $new_h, $w, $h);
+                        imagewebp($dst, $upload_dir . $filename . '.webp', 85);
+                        imagedestroy($dst);
+                        
+                        $thumb_w = min($w, 400);
+                        $thumb_h = (int)($h * ($thumb_w / $w));
+                        $thumb = imagecreatetruecolor($thumb_w, $thumb_h);
+                        if ($ext === 'png' || $ext === 'webp') {
+                            imagealphablending($thumb, false);
+                            imagesavealpha($thumb, true);
+                            $transparent = imagecolorallocatealpha($thumb, 255, 255, 255, 127);
+                            imagefilledrectangle($thumb, 0, 0, $thumb_w, $thumb_h, $transparent);
+                        }
+                        imagecopyresampled($thumb, $src, 0, 0, 0, 0, $thumb_w, $thumb_h, $w, $h);
+                        imagewebp($thumb, $upload_dir . $filename . '_thumb.webp', 80);
+                        imagedestroy($thumb);
+                        
+                        imagedestroy($src);
+                        $final_url = '/data/uploads/' . $filename . '.webp';
+                    } else {
+                        $final_name = $filename . '.' . $ext;
+                        move_uploaded_file($file['tmp_name'], $upload_dir . $final_name);
+                        $final_url = '/data/uploads/' . $final_name;
+                    }
+                } else {
+                    $final_name = $filename . '.' . $ext;
+                    move_uploaded_file($file['tmp_name'], $upload_dir . $final_name);
+                    $final_url = '/data/uploads/' . $final_name;
+                }
+                
+                $send_json(['status' => 'success', 'url' => $final_url]);
+                
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
         default:
             $send_json(['error' => 'Endpoint no encontrado'], 404);
     }

@@ -45,7 +45,7 @@ class EscmsBorderControl {
             this.triggerChange();
         });
 
-        this.radiusSlider = new EscmsSlider('inspector.radius', 0, 100, 1, this.values.radius || 0, (val) => {
+        this.radiusSlider = new EscmsSlider('inspector.radius', 0, 500, 1, this.values.radius || 0, (val) => {
             this.values.radius = val;
             this.triggerChange();
         }, 'px');

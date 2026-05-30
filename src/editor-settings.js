@@ -6,9 +6,13 @@ class EscmsGlobalSettings {
         this.tabButtons = {};
         this.tabContents = {};
         this.googleFonts = [];
+        this.config = {
+            webp_enabled: true,
+            auto_zoom: true
+        };
     }
 
-    init() {
+    async init() {
         const topbar = document.getElementById('escms-topbar');
         if (topbar) {
             const titleDiv = topbar.firstElementChild;
@@ -31,7 +35,36 @@ class EscmsGlobalSettings {
             }
         }
 
+        try {
+            const res = await fetch('/api/settings');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.status === 'success' && data.data) {
+                    this.config.webp_enabled = data.data.webp_enabled !== '0';
+                    this.config.auto_zoom = data.data.auto_zoom !== '0';
+                    window.escmsAutoZoom = this.config.auto_zoom;
+                    if (data.data.google_fonts) {
+                        try {
+                            this.googleFonts = JSON.parse(data.data.google_fonts);
+                            this.applyGoogleFonts();
+                        } catch(e) {}
+                    }
+                }
+            }
+        } catch (e) { console.error('Failed to load settings', e); }
+
         this.renderOverlay();
+    }
+
+    async saveConfig(key, value) {
+        this.config[key] = value;
+        try {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [key]: value })
+            });
+        } catch (e) { console.error('Failed to save settings', e); }
     }
 
     renderOverlay() {
@@ -88,6 +121,7 @@ class EscmsGlobalSettings {
         sidebar.style.gap = '0.5rem';
 
         const tabs = [
+            { id: 'general', label: 'General' },
             { id: 'layout', label: 'Layout & Colors' },
             { id: 'typography', label: 'Typography' },
             { id: 'seo', label: 'Global SEO' }
@@ -132,6 +166,7 @@ class EscmsGlobalSettings {
         this.contentArea.style.paddingBottom = '80px';
 
         this.tabContents = {
+            general: this.createGeneralTab(),
             layout: this.createLayoutTab(),
             typography: this.createTypographyTab(),
             seo: this.createSeoTab()
@@ -258,6 +293,66 @@ class EscmsGlobalSettings {
         }
     }
 
+    createGeneralTab() {
+        const tab = this.createTabContent('General');
+        
+        const createToggleSetting = (titleKey, descKey, settingKey, value, onChange) => {
+            const group = document.createElement('div');
+            group.style.marginBottom = '2rem';
+            
+            const headerRow = document.createElement('div');
+            headerRow.style.display = 'flex';
+            headerRow.style.justifyContent = 'space-between';
+            headerRow.style.alignItems = 'center';
+            headerRow.style.marginBottom = '0.5rem';
+
+            const title = document.createElement('div');
+            title.setAttribute('data-i18n', titleKey);
+            title.style.fontSize = '0.9rem';
+            title.style.fontWeight = '500';
+            title.style.color = 'var(--text-solid)';
+
+            const toggle = new EscmsToggle(null, value, onChange);
+
+            headerRow.appendChild(title);
+            headerRow.appendChild(toggle.element);
+            group.appendChild(headerRow);
+
+            if (descKey) {
+                const desc = document.createElement('div');
+                desc.setAttribute('data-i18n', descKey);
+                desc.style.fontSize = '0.75rem';
+                desc.style.color = 'rgba(245,245,245,0.5)';
+                group.appendChild(desc);
+            }
+
+            return group;
+        };
+
+        // WebP
+        tab.appendChild(createToggleSetting(
+            'settings.webp_title', 
+            'settings.webp_desc', 
+            'webp_enabled', 
+            this.config.webp_enabled, 
+            (val) => { this.saveConfig('webp_enabled', val); }
+        ));
+
+        // Auto Zoom
+        tab.appendChild(createToggleSetting(
+            'settings.auto_zoom_title', 
+            'settings.auto_zoom_desc', 
+            'auto_zoom', 
+            this.config.auto_zoom, 
+            (val) => {
+                this.saveConfig('auto_zoom', val);
+                window.escmsAutoZoom = val;
+            }
+        ));
+        
+        return tab;
+    }
+
     createLayoutTab() {
         const tab = this.createTabContent('Layout & Colors');
         tab.appendChild(this.createInputGroup('settings.max_width', 'number', (val) => this.applyStyleVariable('--max-width', val ? `${val}px` : '')).group);
@@ -368,6 +463,7 @@ class EscmsGlobalSettings {
                 delBtn.addEventListener('click', () => {
                     this.googleFonts.splice(index, 1);
                     this.applyGoogleFonts();
+                    this.saveConfig('google_fonts', JSON.stringify(this.googleFonts));
                     renderFontsList();
                 });
                 
@@ -383,6 +479,7 @@ class EscmsGlobalSettings {
                 this.googleFonts.push(url);
                 input.value = '';
                 this.applyGoogleFonts();
+                this.saveConfig('google_fonts', JSON.stringify(this.googleFonts));
                 renderFontsList();
             }
         });

@@ -57,7 +57,19 @@ const enFallback = Object.freeze({
     "duplicate_page": "Duplicate Page",
     "rename_page": "Rename Page",
     "delete_page": "Delete Page",
-    "pages": "Pages"
+    "pages": "Pages",
+    "inspector.src_url": "Source / File URL",
+    "inspector.href_url": "Link URL",
+    "inspector.effects": "CSS Effects (Filters)",
+    "settings.webp_title": "Optimize Images (WebP)",
+    "settings.webp_desc": "WebP format improves performance and SEO. Disabling this will conserve original images.",
+    "settings.auto_zoom_title": "Auto-Zoom Canvas",
+    "settings.auto_zoom_desc": "Automatically zooms into the element you click on.",
+    "inspector.alt_text": "ALT Text",
+    "inspector.width": "Width",
+    "inspector.image_align": "Alignment",
+    "editor.drop_atoms": "Drop atoms here",
+    "inspector.columns_count": "Columns"
 });
 
 class I18nEngine {

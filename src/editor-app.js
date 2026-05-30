@@ -34,12 +34,15 @@ class EscmsEditor {
         const docRoot = document.createElement('div');
         docRoot.id = 'document-root';
         
-        docRoot.innerHTML = '';
-        
         this.shadow.appendChild(docRoot);
+        
+        const emptyText = this.i18n.dictionary['editor.drop_atoms'] || 'Drop atoms here';
 
         this.selection = new EscmsSelection();
-        this.selection.init(this.shadow, docRoot);
+        this.selection.init(this.shadow, docRoot, emptyText);
+
+        this.floatingToolbar = new EscmsFloatingToolbar(this.i18n);
+        this.floatingToolbar.init(this.shadow, docRoot);
 
         this.leftpanel = new EscmsLeftPanel(this.i18n);
         this.leftpanel.init(this.shadow);
@@ -92,5 +95,6 @@ class EscmsEditor {
 
 document.addEventListener('DOMContentLoaded', () => {
     const app = new EscmsEditor();
+    window.escmsEditor = app;
     app.init();
 });

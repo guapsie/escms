@@ -3,7 +3,7 @@ class EscmsSelection {
         this.selectedNode = null;
     }
 
-    init(shadowRoot, documentRoot) {
+    init(shadowRoot, documentRoot, emptyText = 'Drop atoms here') {
         const style = document.createElement('style');
         style.textContent = `
             * { outline: none !important; }
@@ -14,6 +14,14 @@ class EscmsSelection {
                 flex: 1;
                 width: 100%;
                 box-sizing: border-box;
+            }
+            #document-root a {
+                color: var(--link-color, #3b82f6);
+                text-decoration: none;
+            }
+            #document-root a:hover {
+                color: var(--link-hover-color, #2563eb);
+                text-decoration: underline;
             }
             #document-root div,
             #document-root section,
@@ -39,11 +47,31 @@ class EscmsSelection {
                 box-sizing: border-box;
             }
             .escms-column, .escms-grid-item {
-                outline: 1px dotted rgba(255, 255, 255, 0.15) !important;
+                outline: 1px dotted rgba(59, 130, 246, 0.5) !important;
                 outline-offset: -1px;
                 min-height: 50px;
                 min-width: 10px;
-                background-color: rgba(255, 255, 255, 0.02);
+                background-color: rgba(59, 130, 246, 0.05);
+                position: relative;
+            }
+            .escms-column:empty::after, .escms-grid-item:empty::after, .escms-container:empty::after, .escms-section:empty::after {
+                content: '${emptyText}';
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: absolute;
+                inset: 0;
+                color: rgba(59, 130, 246, 0.6);
+                font-family: monospace;
+                font-size: 0.75rem;
+                pointer-events: none;
+            }
+            blockquote {
+                border-left: 4px solid var(--accent-solid, #3b82f6);
+                padding-left: 1rem;
+                margin-left: 0;
+                color: rgba(245, 245, 245, 0.8);
+                font-style: italic;
             }
             .escms-selected {
                 outline: 2px solid var(--accent-faint) !important;
@@ -81,9 +109,32 @@ class EscmsSelection {
             }
 
             const event = new CustomEvent('escms-element-selected', {
-                detail: { node: this.selectedNode }
+                detail: { 
+                    node: this.selectedNode,
+                    clientX: e.clientX,
+                    clientY: e.clientY
+                }
             });
             window.dispatchEvent(event);
+        });
+
+        documentRoot.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && this.selectedNode && this.selectedNode.tagName === 'LI') {
+                e.preventDefault();
+                const parentList = this.selectedNode.closest('ul, ol');
+                if (parentList) {
+                    const newLi = document.createElement('li');
+                    newLi.textContent = 'New Item';
+                    // Insert after current selected node
+                    if (this.selectedNode.nextSibling) {
+                        parentList.insertBefore(newLi, this.selectedNode.nextSibling);
+                    } else {
+                        parentList.appendChild(newLi);
+                    }
+                    // Trigger click to select it
+                    newLi.click();
+                }
+            }
         });
     }
 }

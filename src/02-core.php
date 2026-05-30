@@ -16,7 +16,7 @@ header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 header('X-Frame-Options: SAMEORIGIN');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src * 'unsafe-inline'; img-src * data: blob:; font-src * data:; frame-src *; media-src *; connect-src *;");
 
 // 2. Sesión Blindada
 if (session_status() === PHP_SESSION_NONE) {

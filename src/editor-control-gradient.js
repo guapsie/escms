@@ -1,8 +1,8 @@
 class EscmsGradientControl {
-    constructor(labelKey, i18n, initialValues = { angle: 90, c1: '#3b82f6', a1: 100, c2: '#1e3a8a', a2: 100, enabled: false }, onChangeCallback) {
+    constructor(labelKey, i18n, initialValues = { angle: 90, c1: '#3b82f6', a1: 100, stop1: 0, c2: '#1e3a8a', a2: 100, stop2: 100, enabled: false }, onChangeCallback) {
         this.labelKey = labelKey;
         this.i18n = i18n;
-        this.values = { ...initialValues };
+        this.values = { stop1: 0, stop2: 100, ...initialValues };
         this.onChange = onChangeCallback;
         this.element = this.render();
     }
@@ -59,6 +59,12 @@ class EscmsGradientControl {
             this.triggerChange();
         });
 
+        this.stop1Slider = new EscmsSlider(null, 0, 100, 1, this.values.stop1, (val) => {
+            this.values.stop1 = val;
+            this.triggerChange();
+        }, '%');
+        this.stop1Slider.element.style.marginTop = '0.5rem';
+
         this.color2Picker = new EscmsColorPicker(null, this.values.c2, this.values.a2, (val) => {
             this.values.c2 = val.hex;
             this.values.a2 = val.alpha;
@@ -66,8 +72,22 @@ class EscmsGradientControl {
             this.triggerChange();
         });
 
-        colorsRow.appendChild(this.color1Picker.element);
-        colorsRow.appendChild(this.color2Picker.element);
+        this.stop2Slider = new EscmsSlider(null, 0, 100, 1, this.values.stop2, (val) => {
+            this.values.stop2 = val;
+            this.triggerChange();
+        }, '%');
+        this.stop2Slider.element.style.marginTop = '0.5rem';
+
+        const col1Wrap = document.createElement('div');
+        col1Wrap.appendChild(this.color1Picker.element);
+        col1Wrap.appendChild(this.stop1Slider.element);
+        
+        const col2Wrap = document.createElement('div');
+        col2Wrap.appendChild(this.color2Picker.element);
+        col2Wrap.appendChild(this.stop2Slider.element);
+
+        colorsRow.appendChild(col1Wrap);
+        colorsRow.appendChild(col2Wrap);
         
         this.bodyWrapper.appendChild(this.angleSlider.element);
         this.bodyWrapper.appendChild(colorsRow);
@@ -99,9 +119,11 @@ class EscmsGradientControl {
                 angle: this.values.angle,
                 c1: this.values.c1,
                 a1: this.values.a1,
+                stop1: this.values.stop1,
                 c2: this.values.c2,
                 a2: this.values.a2,
-                cssString: `linear-gradient(${this.values.angle}deg, ${rgba1}, ${rgba2})`
+                stop2: this.values.stop2,
+                cssString: `linear-gradient(${this.values.angle}deg, ${rgba1} ${this.values.stop1}%, ${rgba2} ${this.values.stop2}%)`
             });
         }
     }
@@ -133,6 +155,18 @@ class EscmsGradientControl {
             this.values.c2 = newValues.c2 || this.values.c2;
             this.values.a2 = newValues.a2 !== undefined ? newValues.a2 : this.values.a2;
             this.color2Picker.setValue(this.values.c2, this.values.a2, false);
+            changed = true;
+        }
+
+        if (newValues.stop1 !== undefined && this.values.stop1 !== newValues.stop1) {
+            this.values.stop1 = newValues.stop1;
+            this.stop1Slider.setValue(newValues.stop1, false);
+            changed = true;
+        }
+
+        if (newValues.stop2 !== undefined && this.values.stop2 !== newValues.stop2) {
+            this.values.stop2 = newValues.stop2;
+            this.stop2Slider.setValue(newValues.stop2, false);
             changed = true;
         }
 

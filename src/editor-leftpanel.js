@@ -13,10 +13,10 @@ class EscmsLeftPanel {
                 atoms: [
                     { name: 'Section', tag: 'section', icon: icons.rows, className: 'escms-section', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
                     { name: 'Container', tag: 'div', icon: icons.square, className: 'escms-container', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
-                    { 
-                        name: 'Columns', 
-                        tag: 'div', 
-                        icon: icons.columns, 
+                    {
+                        name: 'Columns',
+                        tag: 'div',
+                        icon: icons.columns,
                         className: 'escms-columns',
                         allowedControls: ['columnsCount', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
                         attributes: { 'data-columns': '2' },
@@ -26,11 +26,11 @@ class EscmsLeftPanel {
                             { tag: 'div', className: 'escms-column' }
                         ]
                     },
-                    { 
-                        name: 'Grid', 
-                        tag: 'div', 
-                        icon: icons.grid, 
-                        className: 'escms-grid', 
+                    {
+                        name: 'Grid',
+                        tag: 'div',
+                        icon: icons.grid,
+                        className: 'escms-grid',
                         allowedControls: ['columnsCount', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
                         attributes: { 'data-columns': '3' },
                         styles: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', minHeight: '50px' },
@@ -48,23 +48,23 @@ class EscmsLeftPanel {
                 id: 'content',
                 name: 'leftpanel.cat_content',
                 atoms: [
-                    { name: 'Heading', tag: 'h2', icon: icons.heading, textKey: 'leftpanel.default_heading' },
-                    { name: 'Paragraph', tag: 'p', icon: icons.textT, textKey: 'leftpanel.default_paragraph' },
-                    { name: 'Cite', tag: 'blockquote', icon: icons.quotes, textKey: 'leftpanel.default_cite' },
-                    { name: 'List', tag: 'ul', icon: icons.list, children: [{tag:'li', textKey:'leftpanel.default_list_item'}] },
-                    { name: 'Code', tag: 'pre', icon: icons.code, textKey: 'leftpanel.default_code' },
-                    { name: 'Image', tag: 'img', icon: icons.image, attributes: { src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2RkZCIvPjwvc3ZnPg==', alt: 'Placeholder', style: 'max-width: 100%; height: auto;' } },
-                    { name: 'Button', tag: 'button', icon: icons.button, textKey: 'leftpanel.default_button' }
+                    { name: 'Heading', tag: 'h2', icon: icons.heading, className: 'escms-heading', textKey: 'leftpanel.default_heading', allowedControls: ['tagSwap', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'] },
+                    { name: 'Paragraph', tag: 'p', icon: icons.textT, className: 'escms-paragraph', textKey: 'leftpanel.default_paragraph', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'] },
+                    { name: 'Cite', tag: 'blockquote', icon: icons.quotes, className: 'escms-cite', textKey: 'leftpanel.default_cite', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'] },
+                    { name: 'List', tag: 'ul', icon: icons.list, className: 'escms-list', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'], children: [{ tag: 'li', className: 'escms-list-item', textKey: 'leftpanel.default_list_item' }] },
+                    { name: 'Code', tag: 'pre', icon: icons.code, className: 'escms-code', textKey: 'leftpanel.default_code', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'] },
+                    { name: 'Image', tag: 'img', icon: icons.image, className: 'escms-image', allowedControls: ['src', 'alt', 'href', 'width', 'imageAlign', 'margin', 'padding', 'border', 'opacity', 'effects'], attributes: { src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2RkZCIvPjwvc3ZnPg==', alt: 'Placeholder', style: 'max-width: 100%; height: auto;' } },
+                    { name: 'Button', tag: 'button', icon: icons.button, className: 'escms-button', textKey: 'leftpanel.default_button', allowedControls: ['href', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'] }
                 ]
             },
             {
                 id: 'embeds',
                 name: 'leftpanel.cat_embeds',
                 atoms: [
-                    { name: 'Video', tag: 'video', icon: icons.videoCamera, attributes: { controls: 'true', style: 'width: 100%;' } },
-                    { name: 'Audio', tag: 'audio', icon: icons.speakerHigh, attributes: { controls: 'true', style: 'width: 100%;' } },
-                    { name: 'YouTube', tag: 'iframe', icon: icons.youtubeLogo, attributes: { src: 'https://www.youtube.com/embed/dQw4w9WgXcQ', frameborder: '0', allowfullscreen: 'true', style: 'width: 100%; aspect-ratio: 16/9;' } },
-                    { name: 'Vimeo', tag: 'iframe', icon: icons.playCircle, attributes: { src: 'https://player.vimeo.com/video/76979871', frameborder: '0', allowfullscreen: 'true', style: 'width: 100%; aspect-ratio: 16/9;' } }
+                    { name: 'Video', tag: 'video', icon: icons.videoCamera, className: 'escms-video', allowedControls: ['src', 'margin', 'padding', 'border', 'opacity', 'effects'], attributes: { controls: 'true', style: 'width: 100%;' } },
+                    { name: 'Audio', tag: 'audio', icon: icons.speakerHigh, className: 'escms-audio', allowedControls: ['src', 'margin', 'padding', 'border', 'opacity', 'effects'], attributes: { controls: 'true', style: 'width: 100%;' } },
+                    { name: 'YouTube', tag: 'iframe', icon: icons.youtubeLogo, className: 'escms-youtube', allowedControls: ['src', 'margin', 'padding', 'border', 'opacity', 'effects'], attributes: { src: 'https://www.youtube.com/embed/dQw4w9WgXcQ', frameborder: '0', allowfullscreen: 'true', style: 'width: 100%; aspect-ratio: 16/9;' } },
+                    { name: 'Vimeo', tag: 'iframe', icon: icons.playCircle, className: 'escms-vimeo', allowedControls: ['src', 'margin', 'padding', 'border', 'opacity', 'effects'], attributes: { src: 'https://player.vimeo.com/video/76979871', frameborder: '0', allowfullscreen: 'true', style: 'width: 100%; aspect-ratio: 16/9;' } }
                 ]
             },
             {
@@ -73,7 +73,7 @@ class EscmsLeftPanel {
                 atoms: []
             }
         ];
-        
+
         this.pageManager = new EscmsPageManager(this.i18n);
     }
 
@@ -116,7 +116,7 @@ class EscmsLeftPanel {
         header.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
         header.style.marginBottom = '1rem';
         header.style.flexShrink = '0';
-        
+
         const createTab = (id, iconSvg, titleLabel) => {
             const tab = document.createElement('button');
             tab.innerHTML = iconSvg;
@@ -132,7 +132,7 @@ class EscmsLeftPanel {
             tab.style.alignItems = 'center';
             tab.style.justifyContent = 'center';
             tab.style.transition = 'all 0.2s';
-            
+
             const svg = tab.querySelector('svg');
             if (svg) {
                 svg.style.width = '20px';
@@ -146,7 +146,7 @@ class EscmsLeftPanel {
             });
             return tab;
         };
-        
+
         header.appendChild(createTab('elements', icons.atom, 'Elements'));
         header.appendChild(createTab('layers', icons.stack, 'Layers'));
         header.appendChild(createTab('pages', icons.file, 'Pages'));
@@ -171,7 +171,7 @@ class EscmsLeftPanel {
 
     renderElements() {
         this.contentArea.innerHTML = '';
-        
+
         this.atomCategories.forEach(cat => {
             const header = document.createElement('div');
             header.setAttribute('data-i18n', cat.name);
@@ -215,7 +215,7 @@ class EscmsLeftPanel {
                 btn.style.color = 'var(--text-solid)';
                 btn.style.cursor = 'pointer';
                 btn.style.transition = 'all 0.2s ease';
-                
+
                 const svg = btn.querySelector('svg');
                 if (svg) {
                     svg.style.width = '24px';
@@ -239,24 +239,24 @@ class EscmsLeftPanel {
         this.contentArea.innerHTML = '';
         const docRoot = this.shadowRoot.getElementById('document-root');
         if (!docRoot) return;
-        
+
         const treeContainer = document.createElement('div');
         treeContainer.style.display = 'flex';
         treeContainer.style.flexDirection = 'column';
-        
+
         this.treeNodes.clear();
-        
+
         const buildTree = (domNode, depth) => {
             if (domNode.nodeType !== Node.ELEMENT_NODE) return;
             if (domNode === docRoot) {
                 Array.from(domNode.childNodes).forEach(child => buildTree(child, 0));
                 return;
             }
-            
+
             const tag = domNode.tagName.toLowerCase();
             let displayName = tag;
             let iconSvg = icons.square;
-            
+
             // Check if it's a known Atom
             let isAtom = false;
             for (let cat of this.atomCategories) {
@@ -270,7 +270,7 @@ class EscmsLeftPanel {
                 }
                 if (isAtom) break;
             }
-            
+
             if (!isAtom) {
                 if (domNode.classList.contains('escms-column')) {
                     displayName = 'Column';
@@ -279,12 +279,12 @@ class EscmsLeftPanel {
                     displayName = 'Grid Item';
                     iconSvg = icons.grid;
                 } else {
-                    if (['h1','h2','h3','h4','h5','h6','p','span','a'].includes(tag)) iconSvg = icons.textT;
-                    if (['section','article','main','header','footer'].includes(tag)) iconSvg = icons.rows;
+                    if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'a'].includes(tag)) iconSvg = icons.textT;
+                    if (['section', 'article', 'main', 'header', 'footer'].includes(tag)) iconSvg = icons.rows;
                     if (tag === 'img') iconSvg = icons.image;
                 }
             }
-            
+
             const treeItem = document.createElement('div');
             treeItem.style.display = 'flex';
             treeItem.style.alignItems = 'center';
@@ -297,7 +297,7 @@ class EscmsLeftPanel {
             treeItem.style.position = 'relative';
             treeItem.draggable = true;
             treeItem.style.transition = 'background 0.2s, border-color 0.2s';
-            
+
             const iconSpan = document.createElement('span');
             iconSpan.innerHTML = iconSvg;
             iconSpan.style.width = '14px';
@@ -306,17 +306,17 @@ class EscmsLeftPanel {
             iconSpan.style.display = 'flex';
             iconSpan.style.alignItems = 'center';
             iconSpan.style.opacity = '0.5';
-            
+
             const svg = iconSpan.querySelector('svg');
-            if(svg) {
+            if (svg) {
                 svg.style.width = '100%';
                 svg.style.height = '100%';
             }
-            
+
             const textSpan = document.createElement('span');
             textSpan.textContent = displayName;
             textSpan.style.flex = '1';
-            
+
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'tree-actions';
             actionsDiv.style.display = 'flex';
@@ -336,13 +336,13 @@ class EscmsLeftPanel {
                 btn.style.borderRadius = '4px';
                 btn.style.color = 'rgba(245, 245, 245, 0.6)';
                 btn.style.transition = 'all 0.2s';
-                
+
                 const svg = btn.querySelector('svg');
-                if(svg) {
+                if (svg) {
                     svg.style.width = '14px';
                     svg.style.height = '14px';
                 }
-                
+
                 btn.addEventListener('mouseenter', () => {
                     btn.style.background = 'rgba(255, 255, 255, 0.1)';
                     btn.style.color = 'var(--text-solid)';
@@ -351,12 +351,12 @@ class EscmsLeftPanel {
                     btn.style.background = 'transparent';
                     btn.style.color = 'rgba(245, 245, 245, 0.6)';
                 });
-                
+
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     onClick();
                 });
-                
+
                 return btn;
             };
 
@@ -373,18 +373,18 @@ class EscmsLeftPanel {
                     setTimeout(() => parent.click(), 10);
                 }
             }));
-            
+
             treeItem.appendChild(iconSpan);
             treeItem.appendChild(textSpan);
             treeItem.appendChild(actionsDiv);
-            
+
             if (domNode === this.selectedNode) {
                 treeItem.style.background = 'rgba(59, 130, 246, 0.1)';
                 treeItem.style.borderLeftColor = 'var(--accent-solid)';
                 treeItem.style.color = 'var(--text-solid)';
                 actionsDiv.style.visibility = 'visible';
             }
-            
+
             treeItem.addEventListener('mouseenter', () => {
                 if (this.draggedDomNode) return;
                 if (domNode !== this.selectedNode) treeItem.style.background = 'rgba(255, 255, 255, 0.05)';
@@ -397,7 +397,7 @@ class EscmsLeftPanel {
                     actionsDiv.style.visibility = 'hidden';
                 }
             });
-            
+
             treeItem.addEventListener('click', (e) => {
                 e.stopPropagation();
                 domNode.click(); // Hack para disparar la lógica nativa del Sniper del Shadow DOM
@@ -423,7 +423,7 @@ class EscmsLeftPanel {
             treeItem.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 if (!this.draggedDomNode || this.draggedDomNode === domNode || this.draggedDomNode.contains(domNode)) {
                     e.dataTransfer.dropEffect = 'none';
                     return;
@@ -464,7 +464,7 @@ class EscmsLeftPanel {
             treeItem.addEventListener('drop', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 if (!this.draggedDomNode || this.draggedDomNode === domNode || this.draggedDomNode.contains(domNode)) return;
 
                 const action = treeItem.dataset.dropAction;
@@ -475,15 +475,15 @@ class EscmsLeftPanel {
                 const droppedNode = this.draggedDomNode;
                 setTimeout(() => { if (droppedNode) droppedNode.click(); }, 10);
             });
-            
+
             this.treeNodes.set(domNode, treeItem);
             treeContainer.appendChild(treeItem);
-            
+
             Array.from(domNode.childNodes).forEach(child => buildTree(child, depth + 1));
         };
-        
+
         buildTree(docRoot, 0);
-        
+
         if (treeContainer.childNodes.length === 0) {
             const empty = document.createElement('div');
             empty.textContent = 'Canvas is empty';
@@ -493,16 +493,16 @@ class EscmsLeftPanel {
             empty.style.textAlign = 'center';
             treeContainer.appendChild(empty);
         }
-        
+
         this.contentArea.appendChild(treeContainer);
     }
-    
+
     highlightTreeNode() {
         if (this.activeTab !== 'layers') return;
-        
+
         this.treeNodes.forEach((uiNode, domNode) => {
             const actionsDiv = uiNode.querySelector('.tree-actions');
-            
+
             if (domNode === this.selectedNode) {
                 uiNode.style.background = 'rgba(59, 130, 246, 0.1)';
                 uiNode.style.borderLeftColor = 'var(--accent-solid)';
@@ -534,13 +534,17 @@ class EscmsLeftPanel {
             atom.children.forEach(childAtom => {
                 const childEl = document.createElement(childAtom.tag);
                 if (childAtom.textKey) childEl.textContent = this.i18n.dictionary[childAtom.textKey] || 'Item';
+                if (childAtom.className) childEl.className = childAtom.className;
+                if (childAtom.attributes) {
+                    Object.entries(childAtom.attributes).forEach(([k, v]) => childEl.setAttribute(k, v));
+                }
                 el.appendChild(childEl);
             });
         }
 
         let target = this.selectedNode;
         const docRoot = this.shadowRoot.getElementById('document-root');
-        
+
         if (!target || !['DIV', 'SECTION', 'HEADER', 'FOOTER', 'MAIN', 'ARTICLE'].includes(target.tagName) && target !== docRoot) {
             target = docRoot;
         }
