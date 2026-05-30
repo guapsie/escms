@@ -38,6 +38,13 @@ class EscmsSelection {
                 margin: 0 auto;
                 box-sizing: border-box;
             }
+            .escms-column, .escms-grid-item {
+                outline: 1px dotted rgba(255, 255, 255, 0.15) !important;
+                outline-offset: -1px;
+                min-height: 50px;
+                min-width: 10px;
+                background-color: rgba(255, 255, 255, 0.02);
+            }
             .escms-selected {
                 outline: 2px solid var(--accent-faint) !important;
                 outline-offset: -2px;

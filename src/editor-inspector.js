@@ -1,6 +1,10 @@
 class EscmsInspector {
     constructor(i18nEngine) {
         this.i18n = i18nEngine;
+        this.selectedNode = null;
+        this.isSyncing = false;
+        
+        this.controls = {};
     }
 
     init() {
@@ -8,90 +12,30 @@ class EscmsInspector {
         if (!this.container) return;
 
         this.container.innerHTML = '';
-        this.container.style.padding = '1.5rem';
+        this.container.style.padding = '1.5rem 1.5rem 5rem 1.5rem';
         this.container.style.display = 'flex';
         this.container.style.flexDirection = 'column';
         this.container.style.gap = '2rem';
         this.container.style.overflowY = 'auto';
         this.container.style.height = '100%';
         this.container.style.boxSizing = 'border-box';
-
-        this.activeTagDisplay = document.createElement('div');
-        this.activeTagDisplay.style.fontSize = '0.75rem';
-        this.activeTagDisplay.style.color = 'var(--accent-solid)';
-        this.activeTagDisplay.style.background = '#121212';
-        this.activeTagDisplay.style.padding = '0.5rem';
-        this.activeTagDisplay.style.borderRadius = '4px';
-        this.activeTagDisplay.style.border = '1px solid var(--accent-faint)';
-        this.activeTagDisplay.style.textAlign = 'center';
-        this.activeTagDisplay.style.fontWeight = '600';
-        this.activeTagDisplay.style.letterSpacing = '1px';
-        this.activeTagDisplay.textContent = 'NO SELECTION';
-
-        this.container.appendChild(this.activeTagDisplay);
+        this.sectionsContainer = document.createElement('div');
+        this.sectionsContainer.style.display = 'none'; // Hide by default until selection
+        this.container.appendChild(this.sectionsContainer);
 
         this.renderSections();
 
         window.addEventListener('escms-element-selected', (e) => {
             const node = e.detail.node;
-            if (node) {
-                this.activeTagDisplay.textContent = node.tagName;
+            this.selectedNode = node;
+            
+            if (node && node.id !== 'document-root') {
+                this.sectionsContainer.style.display = 'block';
+                this.syncDOMToUI();
+            } else {
+                this.sectionsContainer.style.display = 'none';
             }
         });
-    }
-
-    renderSections() {
-        const typoSection = this.createSection('inspector.typography');
-        const tagSelect = new EscmsSelect(
-            'inspector.html_tag',
-            [
-                { value: 'div', label: 'DIV Block' },
-                { value: 'section', label: 'Section' },
-                { value: 'p', label: 'Paragraph' },
-                { value: 'h1', label: 'Heading 1' },
-                { value: 'h2', label: 'Heading 2' }
-            ],
-            'div',
-            (val) => console.log('[Inspector] Tag changed:', val)
-        );
-        typoSection.appendChild(tagSelect.element);
-
-        const visSection = this.createSection('inspector.visibility');
-        const hiddenToggle = new EscmsToggle(
-            'inspector.hidden_element',
-            false,
-            (val) => console.log('[Inspector] Hidden changed:', val)
-        );
-        visSection.appendChild(hiddenToggle.element);
-
-        const styleSection = this.createSection('inspector.styles');
-        
-        const colorPicker = new EscmsColorPicker(
-            'inspector.text_color',
-            '#f5f5f5',
-            100,
-            (val) => console.log('[Inspector] Text Color:', val)
-        );
-        styleSection.appendChild(colorPicker.element);
-
-        const paddingControl = new EscmsSpacing(
-            'inspector.padding',
-            { t: 0, r: 0, b: 0, l: 0 },
-            (val) => console.log('[Inspector] Padding:', val)
-        );
-        styleSection.appendChild(paddingControl.element);
-
-        const opacitySlider = new EscmsSlider(
-            'inspector.opacity',
-            0, 100, 1, 100,
-            (val) => console.log('[Inspector] Opacity:', val),
-            '%'
-        );
-        styleSection.appendChild(opacitySlider.element);
-
-        this.container.appendChild(typoSection);
-        this.container.appendChild(visSection);
-        this.container.appendChild(styleSection);
     }
 
     createSection(titleI18n) {
@@ -99,6 +43,7 @@ class EscmsInspector {
         section.style.display = 'flex';
         section.style.flexDirection = 'column';
         section.style.gap = '1rem';
+        section.style.marginBottom = '2rem';
 
         const title = document.createElement('div');
         title.setAttribute('data-i18n', titleI18n);
@@ -112,5 +57,472 @@ class EscmsInspector {
 
         section.appendChild(title);
         return section;
+    }
+
+    applyStyle(prop, value) {
+        if (!this.selectedNode || this.isSyncing) return;
+        if (value === '' || value === 'none') {
+            this.selectedNode.style.removeProperty(prop);
+        } else {
+            this.selectedNode.style[prop] = value;
+        }
+        window.dispatchEvent(new Event('escms-dom-mutated')); // Trigger autosave
+    }
+
+    applyAttribute(attr, value) {
+        if (!this.selectedNode || this.isSyncing) return;
+        if (value === '') {
+            this.selectedNode.removeAttribute(attr);
+        } else {
+            this.selectedNode.setAttribute(attr, value);
+        }
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+    }
+
+    swapTag(newTag) {
+        if (!this.selectedNode || this.isSyncing) return;
+        const oldTag = this.selectedNode.tagName.toLowerCase();
+        if (oldTag === newTag) return;
+        
+        const newNode = document.createElement(newTag);
+        Array.from(this.selectedNode.attributes).forEach(attr => newNode.setAttribute(attr.name, attr.value));
+        newNode.innerHTML = this.selectedNode.innerHTML;
+        
+        this.selectedNode.replaceWith(newNode);
+        this.selectedNode = newNode;
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+        window.dispatchEvent(new CustomEvent('escms-element-selected', { detail: { node: newNode } }));
+    }
+
+    getInstalledFonts() {
+        let fonts = [{ value: '', label: 'Default' }];
+        const host = document.getElementById('escms-canvas-host');
+        if (host && host.shadowRoot) {
+            const links = host.shadowRoot.querySelectorAll('link[data-type="escms-google-font"]');
+            links.forEach(l => {
+                try {
+                    const url = new URL(l.href);
+                    const families = url.searchParams.getAll('family');
+                    families.forEach(f => {
+                        const name = f.split(':')[0];
+                        fonts.push({ value: `"${name.replace(/\+/g, ' ')}"`, label: name.replace(/\+/g, ' ') });
+                    });
+                } catch(e) {}
+            });
+        }
+        return fonts;
+    }
+
+    updateColumns(val) {
+        if (!this.selectedNode || this.isSyncing) return;
+        this.selectedNode.setAttribute('data-columns', val);
+        this.selectedNode.style.gridTemplateColumns = `repeat(${val}, 1fr)`;
+
+        // Append missing columns
+        while (this.selectedNode.children.length < val) {
+            const col = document.createElement('div');
+            col.className = this.selectedNode.classList.contains('escms-grid') ? 'escms-grid-item' : 'escms-column';
+            this.selectedNode.appendChild(col);
+        }
+
+        // Remove trailing empty columns
+        while (this.selectedNode.children.length > val) {
+            const lastChild = this.selectedNode.lastElementChild;
+            if (lastChild.innerHTML.trim() === '' || lastChild.textContent.trim() === '') {
+                this.selectedNode.removeChild(lastChild);
+            } else {
+                break; // Stop removing if not empty
+            }
+        }
+        
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+    }
+
+    renderSections() {
+        // --- STRUCTURE ---
+        this.structureSection = this.createSection('inspector.structure');
+        this.structureSection.style.display = 'none'; // Hidden by default
+
+        this.controls.columnsCount = new EscmsSlider('inspector.columns_count', 1, 12, 1, 2, (val) => this.updateColumns(val), '');
+        this.structureSection.appendChild(this.controls.columnsCount.element);
+
+        this.sectionsContainer.appendChild(this.structureSection);
+
+        // --- ATTRIBUTES (Dynamic) ---
+        this.attrSection = this.createSection('inspector.attributes');
+        this.attrSection.style.display = 'none'; // Hidden initially
+        
+        this.attrInputs = {
+            src: this.createTextInput('SRC', (val) => this.applyAttribute('src', val)),
+            alt: this.createTextInput('ALT', (val) => this.applyAttribute('alt', val)),
+            href: this.createTextInput('HREF', (val) => this.applyAttribute('href', val))
+        };
+        
+        Object.values(this.attrInputs).forEach(inp => this.attrSection.appendChild(inp.element));
+        this.sectionsContainer.appendChild(this.attrSection);
+
+        // --- TYPOGRAPHY ---
+        const typoSection = this.createSection('inspector.typography');
+        
+        this.controls.tagSwap = new EscmsSelect('inspector.html_tag', [
+            { value: 'h1', label: 'H1' },
+            { value: 'h2', label: 'H2' },
+            { value: 'h3', label: 'H3' },
+            { value: 'h4', label: 'H4' },
+            { value: 'h5', label: 'H5' },
+            { value: 'h6', label: 'H6' }
+        ], 'h2', (val) => this.swapTag(val));
+        typoSection.appendChild(this.controls.tagSwap.element);
+
+        this.controls.fontFamily = new EscmsSelect('inspector.font_family', [{ value: '', label: 'Default' }], '', (val) => this.applyStyle('font-family', val));
+        typoSection.appendChild(this.controls.fontFamily.element);
+        
+        this.controls.color = new EscmsColorPicker('inspector.text_color', '#f5f5f5', 100, (val) => this.applyStyle('color', val.rgba));
+        typoSection.appendChild(this.controls.color.element);
+        
+        this.controls.fontSize = new EscmsSlider('inspector.font_size', 8, 120, 1, 16, (val) => this.applyStyle('font-size', `${val}px`), 'px');
+        typoSection.appendChild(this.controls.fontSize.element);
+
+        this.controls.textAlign = new EscmsButtonGroup('inspector.text_align', [
+            { value: 'left', icon: icons.textAlignLeft || 'L' },
+            { value: 'center', icon: icons.textAlignCenter || 'C' },
+            { value: 'right', icon: icons.textAlignRight || 'R' },
+            { value: 'justify', icon: icons.textAlignJustify || 'J' }
+        ], 'left', (val) => this.applyStyle('text-align', val));
+        typoSection.appendChild(this.controls.textAlign.element);
+
+        this.controls.textStyle = new EscmsButtonGroup('inspector.text_style', [
+            { value: 'bold', icon: icons.textBolder || 'B' },
+            { value: 'italic', icon: icons.textItalic || 'I' },
+            { value: 'underline', icon: icons.textUnderline || 'U' },
+            { value: 'strikethrough', icon: icons.textStrikethrough || 'S' }
+        ], [], (vals) => this.applyTextStyles(vals), true); // true for multi-select
+        typoSection.appendChild(this.controls.textStyle.element);
+
+        this.sectionsContainer.appendChild(typoSection);
+
+        // --- BACKGROUND ---
+        const bgSection = this.createSection('inspector.background');
+        
+        this.controls.bgColor = new EscmsColorPicker('inspector.solid_color', '#0a0a0a', 0, (val) => this.applyStyle('background-color', val.rgba));
+        bgSection.appendChild(this.controls.bgColor.element);
+        
+        this.controls.bgGradient = new EscmsGradientControl('inspector.linear_gradient', this.i18n, undefined, (val) => this.applyStyle('background-image', val.cssString));
+        bgSection.appendChild(this.controls.bgGradient.element);
+
+        this.sectionsContainer.appendChild(bgSection);
+
+        // --- LAYOUT ---
+        const layoutSection = this.createSection('inspector.layout');
+
+        this.controls.spacerHeight = new EscmsSlider('inspector.spacer_height', 0, 200, 1, 50, (val) => this.applyStyle('height', val + 'px'), 'px');
+        layoutSection.appendChild(this.controls.spacerHeight.element);
+        
+        this.controls.margin = new EscmsSpacing('inspector.margin', {t:0, r:0, b:0, l:0}, (val) => {
+            this.applyStyle('margin', `${val.t}px ${val.r}px ${val.b}px ${val.l}px`);
+        });
+        layoutSection.appendChild(this.controls.margin.element);
+
+        this.controls.padding = new EscmsSpacing('inspector.padding', {t:0, r:0, b:0, l:0}, (val) => {
+            this.applyStyle('padding', `${val.t}px ${val.r}px ${val.b}px ${val.l}px`);
+        });
+        layoutSection.appendChild(this.controls.padding.element);
+
+        this.controls.border = new EscmsBorderControl('inspector.border', this.i18n, undefined, (val) => {
+            this.applyStyle('border', val.cssString);
+            this.applyStyle('border-radius', val.radius + 'px');
+        });
+        layoutSection.appendChild(this.controls.border.element);
+
+        this.sectionsContainer.appendChild(layoutSection);
+        
+        // --- VISIBILITY ---
+        const visSection = this.createSection('inspector.visibility');
+        this.controls.opacity = new EscmsSlider('inspector.opacity', 0, 100, 1, 100, (val) => this.applyStyle('opacity', val / 100), '%');
+        visSection.appendChild(this.controls.opacity.element);
+        
+        this.sectionsContainer.appendChild(visSection);
+    }
+
+    createTextInput(labelTxt, onChange) {
+        const container = document.createElement('div');
+        container.style.marginBottom = '0.75rem';
+        container.style.display = 'none';
+
+        const label = document.createElement('div');
+        label.textContent = labelTxt;
+        label.style.fontSize = '0.75rem';
+        label.style.color = 'rgba(245, 245, 245, 0.6)';
+        label.style.marginBottom = '0.35rem';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.style.width = '100%';
+        input.style.background = '#121212';
+        input.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        input.style.color = 'var(--text-solid)';
+        input.style.padding = '0.5rem';
+        input.style.borderRadius = '4px';
+        input.style.boxSizing = 'border-box';
+        input.style.fontFamily = 'monospace';
+        input.style.fontSize = '0.8rem';
+        
+        input.addEventListener('input', (e) => onChange(e.target.value));
+
+        container.appendChild(label);
+        container.appendChild(input);
+        
+        return {
+            element: container,
+            input: input,
+            show: () => container.style.display = 'block',
+            hide: () => container.style.display = 'none',
+            setValue: (val) => input.value = val || ''
+        };
+    }
+
+    _rgbaToHexA(rgba) {
+        if (!rgba || rgba === 'transparent' || rgba === 'none' || rgba.trim() === '') return { hex: '#000000', alpha: 0 };
+        let parts = rgba.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+        if (!parts) return { hex: '#000000', alpha: 100 };
+        
+        let r = parseInt(parts[1]).toString(16).padStart(2, '0');
+        let g = parseInt(parts[2]).toString(16).padStart(2, '0');
+        let b = parseInt(parts[3]).toString(16).padStart(2, '0');
+        let a = parts[4] !== undefined ? Math.round(parseFloat(parts[4]) * 100) : 100;
+        
+        return { hex: `#${r}${g}${b}`, alpha: a };
+    }
+
+    _parseSpacing(cssVal) {
+        if (!cssVal) return {t:0, r:0, b:0, l:0};
+        let parts = cssVal.replace(/px/g, '').split(' ').map(n => parseInt(n) || 0);
+        if (parts.length === 1) return {t:parts[0], r:parts[0], b:parts[0], l:parts[0]};
+        if (parts.length === 2) return {t:parts[0], r:parts[1], b:parts[0], l:parts[1]};
+        if (parts.length === 3) return {t:parts[0], r:parts[1], b:parts[2], l:parts[1]};
+        if (parts.length === 4) return {t:parts[0], r:parts[1], b:parts[2], l:parts[3]};
+        return {t:0, r:0, b:0, l:0};
+    }
+
+    _parseBorder(cssVal, radiusVal) {
+        let res = { width: 0, style: 'solid', color: '#000000', alpha: 100 };
+        if (!cssVal || cssVal === 'none' || cssVal === '') return res;
+        
+        let widthMatch = cssVal.match(/(\d+)px/);
+        if (widthMatch) res.width = parseInt(widthMatch[1]);
+        
+        let styleMatch = cssVal.match(/(solid|dashed|dotted)/);
+        if (styleMatch) res.style = styleMatch[1];
+        
+        let colorMatch = cssVal.match(/rgba?\([^)]+\)|#[0-9a-fA-F]+/);
+        if (colorMatch) {
+            if (colorMatch[0].startsWith('#')) {
+                res.color = colorMatch[0].substring(0, 7);
+                res.alpha = colorMatch[0].length === 9 ? Math.round(parseInt(colorMatch[0].substring(7, 9), 16) / 255 * 100) : 100;
+            } else {
+                let rgba = this._rgbaToHexA(colorMatch[0]);
+                res.color = rgba.hex;
+                res.alpha = rgba.alpha;
+            }
+        }
+        
+        if (radiusVal) {
+            let radiusMatch = radiusVal.match(/(\d+)px/);
+            if (radiusMatch) res.radius = parseInt(radiusMatch[1]);
+        }
+        return res;
+    }
+
+    _parseGradient(cssVal) {
+        let res = { enabled: false, angle: 90, c1: '#3b82f6', a1: 100, c2: '#1e3a8a', a2: 100 };
+        if (!cssVal || !cssVal.includes('linear-gradient')) return res;
+        
+        res.enabled = true;
+        let inner = cssVal.match(/linear-gradient\((.*)\)/);
+        if (!inner) return res;
+        
+        let parts = inner[1].split(/,(?![^(]*\))/).map(s => s.trim());
+        if (parts[0].endsWith('deg')) {
+            res.angle = parseInt(parts[0].replace('deg', ''));
+            parts.shift();
+        }
+
+        if (parts.length >= 2) {
+            let color1 = this._rgbaToHexA(parts[0].split(' ')[0]);
+            let color2 = this._rgbaToHexA(parts[1].split(' ')[0]);
+            res.c1 = color1.hex; res.a1 = color1.alpha;
+            res.c2 = color2.hex; res.a2 = color2.alpha;
+        }
+        return res;
+    }
+
+    applyTextStyles(vals) {
+        if (!this.selectedNode || this.isSyncing) return;
+        
+        // Font Weight
+        this.selectedNode.style.fontWeight = vals.includes('bold') ? 'bold' : '';
+        
+        // Font Style
+        this.selectedNode.style.fontStyle = vals.includes('italic') ? 'italic' : '';
+        
+        // Text Decoration
+        let decorations = [];
+        if (vals.includes('underline')) decorations.push('underline');
+        if (vals.includes('strikethrough')) decorations.push('line-through');
+        
+        this.selectedNode.style.textDecoration = decorations.length > 0 ? decorations.join(' ') : '';
+        
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+    }
+
+    syncDOMToUI() {
+        if (!this.selectedNode) return;
+        this.isSyncing = true;
+
+        const comp = window.getComputedStyle(this.selectedNode);
+        const tag = this.selectedNode.tagName.toLowerCase();
+
+        // 1. Determine allowed controls for this node based on Atom Schema or tag fallback
+        let allowedControls = [];
+        const defaultControls = {
+            'img': ['src', 'alt', 'margin', 'padding', 'border', 'opacity'],
+            'a': ['href', 'fontFamily', 'color', 'fontSize', 'textAlign', 'textStyle', 'margin', 'padding', 'border', 'opacity'],
+            'iframe': ['src', 'margin', 'padding', 'border', 'opacity'],
+            'column': ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
+            'default': ['tagSwap', 'fontFamily', 'color', 'fontSize', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity']
+        };
+
+        let isAtom = false;
+        if (this.selectedNode.classList.contains('escms-column') || this.selectedNode.classList.contains('escms-grid-item')) {
+            allowedControls = defaultControls['column'];
+            isAtom = true;
+        }
+
+        if (!isAtom && window.escmsEditor && window.escmsEditor.leftPanel) {
+            const categories = window.escmsEditor.leftPanel.atomCategories;
+            for (let cat of categories) {
+                for (let atom of cat.atoms) {
+                    if (atom.className && this.selectedNode.classList.contains(atom.className)) {
+                        allowedControls = atom.allowedControls || defaultControls['default'];
+                        isAtom = true;
+                        break;
+                    }
+                }
+                if (isAtom) break;
+            }
+        }
+
+        if (!isAtom) {
+            allowedControls = defaultControls[tag] || defaultControls['default'];
+        }
+
+        // Hide/Show Controls based on allowedControls
+        Object.keys(this.controls).forEach(key => {
+            if (this.controls[key].element) {
+                this.controls[key].element.style.display = allowedControls.includes(key) ? 'block' : 'none';
+            }
+        });
+        Object.keys(this.attrInputs).forEach(key => {
+            if (this.attrInputs[key].element) {
+                this.attrInputs[key].element.style.display = allowedControls.includes(key) ? 'block' : 'none';
+            }
+        });
+
+        // Hide Sections if all their controls are hidden
+        [this.structureSection, this.attrSection, this.controls.tagSwap.element.parentElement, this.controls.bgColor.element.parentElement, this.controls.margin.element.parentElement, this.controls.opacity.element.parentElement].forEach(section => {
+            if (!section) return;
+            // Typo section is the parent of tagSwap, background is parent of bgColor, layout is parent of margin, visibility is parent of opacity
+            let hasVisibleControls = Array.from(section.children).some(child => {
+                // Ignore the label/header of the section which is a span or div with data-i18n
+                if (child.hasAttribute('data-i18n') && child.tagName === 'DIV' && child.style.fontWeight === '600') return false;
+                return child.style.display !== 'none';
+            });
+            section.style.display = hasVisibleControls ? 'flex' : 'none';
+        });
+
+        // Sync Heading Tag Swap manually since its value depends on the tag
+        if (tag.match(/^h[1-6]$/) && allowedControls.includes('tagSwap')) {
+            this.controls.tagSwap.setValue(tag, false);
+        } else if (this.controls.tagSwap.element) {
+            this.controls.tagSwap.element.style.display = 'none';
+        }
+
+        // Sync Structure manually since its value is custom
+        if (allowedControls.includes('columnsCount') && (this.selectedNode.classList.contains('escms-columns') || this.selectedNode.hasAttribute('data-columns'))) {
+            let cols = parseInt(this.selectedNode.getAttribute('data-columns')) || this.selectedNode.children.length || 2;
+            this.controls.columnsCount.setValue(cols, false);
+        }
+
+        // Sync Attributes
+        if (allowedControls.includes('src')) this.attrInputs.src.setValue(this.selectedNode.getAttribute('src'));
+        if (allowedControls.includes('alt')) this.attrInputs.alt.setValue(this.selectedNode.getAttribute('alt'));
+        if (allowedControls.includes('href')) this.attrInputs.href.setValue(this.selectedNode.getAttribute('href'));
+
+        // Typography
+        if (allowedControls.includes('fontFamily')) {
+            this.controls.fontFamily.updateOptions(this.getInstalledFonts());
+            let fFamily = comp.fontFamily;
+            if (fFamily) {
+                let firstFont = fFamily.split(',')[0].trim().replace(/['"]/g, '');
+                let fontOpt = this.controls.fontFamily.options.find(o => o.label === firstFont);
+                if (fontOpt) this.controls.fontFamily.setValue(fontOpt.value, false);
+                else this.controls.fontFamily.setValue('', false);
+            } else {
+                this.controls.fontFamily.setValue('', false);
+            }
+        }
+
+        if (allowedControls.includes('color')) {
+            let cColor = this._rgbaToHexA(comp.color);
+            this.controls.color.setValue(cColor.hex, cColor.alpha, false);
+        }
+        
+        if (allowedControls.includes('fontSize')) {
+            let fSize = parseInt(comp.fontSize) || 16;
+            this.controls.fontSize.setValue(fSize, false);
+        }
+        
+        if (allowedControls.includes('textAlign')) {
+            let tAlign = comp.textAlign === 'start' ? 'left' : comp.textAlign;
+            this.controls.textAlign.setValue(['left', 'center', 'right', 'justify'].includes(tAlign) ? tAlign : 'left', false);
+        }
+
+        if (allowedControls.includes('textStyle')) {
+            let activeStyles = [];
+            if (comp.fontWeight === 'bold' || parseInt(comp.fontWeight) >= 700) activeStyles.push('bold');
+            if (comp.fontStyle === 'italic') activeStyles.push('italic');
+            if (comp.textDecorationLine.includes('underline')) activeStyles.push('underline');
+            if (comp.textDecorationLine.includes('line-through')) activeStyles.push('strikethrough');
+            this.controls.textStyle.setValue(activeStyles, false);
+        }
+
+        // Background
+        if (allowedControls.includes('bgColor')) {
+            let bgColor = this._rgbaToHexA(comp.backgroundColor);
+            this.controls.bgColor.setValue(bgColor.hex, bgColor.alpha, false);
+        }
+
+        if (allowedControls.includes('bgGradient')) {
+            let gradient = this._parseGradient(comp.backgroundImage);
+            this.controls.bgGradient.setValue(gradient, false);
+        }
+
+        // Layout
+        if (allowedControls.includes('spacerHeight')) {
+            let sHeight = parseInt(comp.height) || 50;
+            this.controls.spacerHeight.setValue(sHeight, false);
+        }
+        
+        if (allowedControls.includes('margin')) this.controls.margin.setValue(this._parseSpacing(comp.margin), false);
+        if (allowedControls.includes('padding')) this.controls.padding.setValue(this._parseSpacing(comp.padding), false);
+        if (allowedControls.includes('border')) this.controls.border.setValue(this._parseBorder(comp.border, comp.borderRadius), false);
+
+        // Visibility
+        if (allowedControls.includes('opacity')) {
+            let op = parseFloat(comp.opacity);
+            this.controls.opacity.setValue(isNaN(op) ? 100 : Math.round(op * 100), false);
+        }
+
+        this.isSyncing = false;
     }
 }

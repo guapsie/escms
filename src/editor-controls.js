@@ -64,6 +64,14 @@ class EscmsToggle {
             this.ball.style.transform = 'translateX(2px)';
         }
     }
+
+    setValue(newState, triggerCallback = false) {
+        if (this.state !== newState) {
+            this.state = newState;
+            this.updateStyles();
+            if (triggerCallback && this.onChange) this.onChange(this.state);
+        }
+    }
 }
 
 class EscmsSelect {
@@ -75,6 +83,28 @@ class EscmsSelect {
         this.isOpen = false;
         this.element = this.render();
     }
+    _renderOptions() {
+        this.options.forEach(opt => {
+            const item = document.createElement('div');
+            item.textContent = opt.label;
+            item.style.padding = '0.5rem 0.75rem';
+            item.style.fontSize = '0.85rem';
+            item.style.cursor = 'pointer';
+            item.style.transition = 'background 0.2s';
+            
+            item.addEventListener('mouseenter', () => item.style.background = 'var(--accent-faint)');
+            item.addEventListener('mouseleave', () => item.style.background = 'transparent');
+            
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.value = opt.value;
+                this.selectedText.textContent = opt.label;
+                this.close();
+                if (this.onChange) this.onChange(this.value);
+            });
+            this.dropdown.appendChild(item);
+        });
+    }
 
     render() {
         const container = document.createElement('div');
@@ -82,7 +112,7 @@ class EscmsSelect {
         container.style.marginBottom = '0.5rem';
 
         const label = document.createElement('div');
-        label.setAttribute('data-i18n', this.labelKey);
+        if (this.labelKey) label.setAttribute('data-i18n', this.labelKey);
         label.style.fontSize = '0.75rem';
         label.style.color = 'rgba(245, 245, 245, 0.6)';
         label.style.marginBottom = '0.35rem';
@@ -104,7 +134,7 @@ class EscmsSelect {
         this.selectedText.textContent = selectedOption ? selectedOption.label : '';
 
         const arrow = document.createElement('span');
-        arrow.innerHTML = '&#9662;'; // Triángulo nativo para evitar cargar más SVGs de la cuenta
+        arrow.innerHTML = '&#9662;';
         arrow.style.fontSize = '0.7rem';
         arrow.style.color = 'rgba(245, 245, 245, 0.4)';
 
@@ -127,26 +157,7 @@ class EscmsSelect {
         this.dropdown.style.overflow = 'hidden';
         this.dropdown.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.5)';
 
-        this.options.forEach(opt => {
-            const item = document.createElement('div');
-            item.textContent = opt.label;
-            item.style.padding = '0.5rem 0.75rem';
-            item.style.fontSize = '0.85rem';
-            item.style.cursor = 'pointer';
-            item.style.transition = 'background 0.2s';
-            
-            item.addEventListener('mouseenter', () => item.style.background = 'var(--accent-faint)');
-            item.addEventListener('mouseleave', () => item.style.background = 'transparent');
-            
-            item.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.value = opt.value;
-                this.selectedText.textContent = opt.label;
-                this.close();
-                if (this.onChange) this.onChange(this.value);
-            });
-            this.dropdown.appendChild(item);
-        });
+        this._renderOptions();
 
         container.appendChild(label);
         container.appendChild(this.button);
@@ -181,6 +192,29 @@ class EscmsSelect {
         this.dropdown.style.display = 'none';
         this.button.style.borderColor = 'rgba(255, 255, 255, 0.05)';
         this.button.style.boxShadow = 'none';
+    }
+
+    setValue(newVal, triggerCallback = false) {
+        if (this.value !== newVal) {
+            this.value = newVal;
+            const selectedOption = this.options.find(o => o.value === this.value);
+            this.selectedText.textContent = selectedOption ? selectedOption.label : '';
+            if (triggerCallback && this.onChange) this.onChange(this.value);
+        }
+    }
+
+    updateOptions(newOptions) {
+        this.options = newOptions;
+        this.dropdown.innerHTML = '';
+        this._renderOptions();
+        const selectedOption = this.options.find(o => o.value === this.value);
+        if (selectedOption) {
+            this.selectedText.textContent = selectedOption.label;
+        } else if (this.options.length > 0) {
+            this.setValue(this.options[0].value, false);
+        } else {
+            this.selectedText.textContent = '';
+        }
     }
 }
 
@@ -326,7 +360,7 @@ class EscmsColorPicker {
         container.style.marginBottom = '0.5rem';
 
         const label = document.createElement('div');
-        label.setAttribute('data-i18n', this.labelKey);
+        if (this.labelKey) label.setAttribute('data-i18n', this.labelKey);
         label.style.fontSize = '0.75rem';
         label.style.color = 'rgba(245, 245, 245, 0.6)';
         label.style.marginBottom = '0.35rem';
@@ -499,6 +533,16 @@ class EscmsColorPicker {
         this.button.style.borderColor = 'rgba(255, 255, 255, 0.05)';
         this.button.style.boxShadow = 'none';
     }
+
+    setValue(hex, alpha = 100, triggerCallback = false) {
+        if (this.hex !== hex || this.alpha !== alpha) {
+            this.hex = hex;
+            this.alpha = alpha;
+            this.alphaSlider.setValue(this.alpha, false);
+            this.updateUI();
+            if (triggerCallback) this.triggerChange();
+        }
+    }
 }
 
 class EscmsSpacing {
@@ -514,7 +558,7 @@ class EscmsSpacing {
         container.style.marginBottom = '1rem';
 
         const label = document.createElement('div');
-        label.setAttribute('data-i18n', this.labelKey);
+        if (this.labelKey) label.setAttribute('data-i18n', this.labelKey);
         label.style.fontSize = '0.75rem';
         label.style.color = 'rgba(245, 245, 245, 0.6)';
         label.style.marginBottom = '0.5rem';
@@ -572,6 +616,9 @@ class EscmsSpacing {
                 if (this.onChange) this.onChange(this.values);
             });
 
+            if (!this.inputs) this.inputs = {};
+            this.inputs[side.key] = input;
+
             wrap.appendChild(icon);
             wrap.appendChild(input);
             grid.appendChild(wrap);
@@ -589,5 +636,120 @@ class EscmsSpacing {
         container.appendChild(grid);
 
         return container;
+    }
+
+    setValue(newValues, triggerCallback = false) {
+        let changed = false;
+        ['t', 'r', 'b', 'l'].forEach(key => {
+            if (newValues[key] !== undefined && this.values[key] !== newValues[key]) {
+                this.values[key] = newValues[key];
+                const input = this.inputs[key];
+                if (input) input.value = this.values[key];
+                changed = true;
+            }
+        });
+        if (changed && triggerCallback && this.onChange) {
+            this.onChange(this.values);
+        }
+    }
+}
+
+class EscmsButtonGroup {
+    constructor(labelKey, buttons, initialValue, onChangeCallback, isMulti = false) {
+        this.labelKey = labelKey;
+        this.buttons = buttons; // Array of { value, icon }
+        this.isMulti = isMulti;
+        this.value = isMulti && !Array.isArray(initialValue) ? (initialValue ? [initialValue] : []) : initialValue;
+        this.onChange = onChangeCallback;
+        this.btnElements = {};
+        this.element = this.render();
+    }
+
+    render() {
+        const container = document.createElement('div');
+        container.style.marginBottom = '0.5rem';
+
+        const label = document.createElement('div');
+        if (this.labelKey) label.setAttribute('data-i18n', this.labelKey);
+        label.style.fontSize = '0.75rem';
+        label.style.color = 'rgba(245, 245, 245, 0.6)';
+        label.style.marginBottom = '0.35rem';
+
+        const group = document.createElement('div');
+        group.style.display = 'flex';
+        group.style.background = '#121212';
+        group.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        group.style.borderRadius = '6px';
+        group.style.overflow = 'hidden';
+
+        this.buttons.forEach(btnInfo => {
+            const btn = document.createElement('button');
+            btn.innerHTML = btnInfo.icon;
+            btn.style.flex = '1';
+            const isActive = this.isMulti ? this.value.includes(btnInfo.value) : this.value === btnInfo.value;
+            btn.style.background = isActive ? 'var(--accent-solid)' : 'transparent';
+            btn.style.color = isActive ? '#fff' : 'rgba(245, 245, 245, 0.5)';
+            btn.style.border = 'none';
+            btn.style.borderRight = '1px solid rgba(255, 255, 255, 0.05)';
+            btn.style.padding = '0.5rem 0';
+            btn.style.cursor = 'pointer';
+            btn.style.display = 'flex';
+            btn.style.justifyContent = 'center';
+            btn.style.alignItems = 'center';
+            btn.style.transition = 'all 0.2s';
+            
+            const svg = btn.querySelector('svg');
+            if (svg) {
+                svg.style.width = '16px';
+                svg.style.height = '16px';
+            }
+
+            btn.addEventListener('click', () => {
+                if (this.isMulti) {
+                    let newValues = [...this.value];
+                    if (newValues.includes(btnInfo.value)) {
+                        newValues = newValues.filter(v => v !== btnInfo.value);
+                    } else {
+                        newValues.push(btnInfo.value);
+                    }
+                    this.setValue(newValues, true);
+                } else {
+                    this.setValue(btnInfo.value, true);
+                }
+            });
+
+            this.btnElements[btnInfo.value] = btn;
+            group.appendChild(btn);
+        });
+
+        // Remove right border of last child
+        if (group.lastChild) {
+            group.lastChild.style.borderRight = 'none';
+        }
+
+        container.appendChild(label);
+        container.appendChild(group);
+        return container;
+    }
+
+    setValue(newValue, triggerCallback = false) {
+        let changed = false;
+        if (this.isMulti) {
+            changed = JSON.stringify(this.value) !== JSON.stringify(newValue);
+            this.value = [...newValue];
+        } else {
+            changed = this.value !== newValue;
+            this.value = newValue;
+        }
+
+        if (changed || !triggerCallback) { // Update UI always when not triggered by callback to ensure sync
+            Object.keys(this.btnElements).forEach(val => {
+                const btn = this.btnElements[val];
+                const isActive = this.isMulti ? this.value.includes(val) : this.value === val;
+                btn.style.background = isActive ? 'var(--accent-solid)' : 'transparent';
+                btn.style.color = isActive ? '#fff' : 'rgba(245, 245, 245, 0.5)';
+            });
+            if (triggerCallback && this.onChange) this.onChange(this.value);
+        }
     }
 }

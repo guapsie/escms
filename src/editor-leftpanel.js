@@ -4,18 +4,44 @@ class EscmsLeftPanel {
         this.shadowRoot = null;
         this.selectedNode = null;
         this.draggedDomNode = null;
+        this.treeNodes = new Map();
         this.activeTab = 'elements';
         this.atomCategories = [
             {
                 id: 'layout',
                 name: 'leftpanel.cat_layout',
                 atoms: [
-                    { name: 'Section', tag: 'section', icon: icons.rows, className: 'escms-section' },
-                    { name: 'Container', tag: 'div', icon: icons.square, className: 'escms-container' },
-                    { name: 'Columns', tag: 'div', icon: icons.columns, className: 'escms-columns' },
-                    { name: 'Grid', tag: 'div', icon: icons.grid, className: 'escms-grid' },
-                    { name: 'Separator', tag: 'hr', icon: icons.separator, className: 'escms-separator' },
-                    { name: 'Spacer', tag: 'div', icon: icons.spacer, className: 'escms-spacer', styles: { height: '50px' } }
+                    { name: 'Section', tag: 'section', icon: icons.rows, className: 'escms-section', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
+                    { name: 'Container', tag: 'div', icon: icons.square, className: 'escms-container', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
+                    { 
+                        name: 'Columns', 
+                        tag: 'div', 
+                        icon: icons.columns, 
+                        className: 'escms-columns',
+                        allowedControls: ['columnsCount', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
+                        attributes: { 'data-columns': '2' },
+                        styles: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', width: '100%', minHeight: '50px' },
+                        children: [
+                            { tag: 'div', className: 'escms-column' },
+                            { tag: 'div', className: 'escms-column' }
+                        ]
+                    },
+                    { 
+                        name: 'Grid', 
+                        tag: 'div', 
+                        icon: icons.grid, 
+                        className: 'escms-grid', 
+                        allowedControls: ['columnsCount', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
+                        attributes: { 'data-columns': '3' },
+                        styles: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', minHeight: '50px' },
+                        children: [
+                            { tag: 'div', className: 'escms-grid-item' },
+                            { tag: 'div', className: 'escms-grid-item' },
+                            { tag: 'div', className: 'escms-grid-item' }
+                        ]
+                    },
+                    { name: 'Separator', tag: 'hr', icon: icons.separator, className: 'escms-separator', allowedControls: ['bgColor', 'margin', 'padding', 'border', 'opacity'] },
+                    { name: 'Spacer', tag: 'div', icon: icons.arrowsVertical, className: 'escms-spacer', allowedControls: ['spacerHeight'] }
                 ]
             },
             {
@@ -228,6 +254,36 @@ class EscmsLeftPanel {
             }
             
             const tag = domNode.tagName.toLowerCase();
+            let displayName = tag;
+            let iconSvg = icons.square;
+            
+            // Check if it's a known Atom
+            let isAtom = false;
+            for (let cat of this.atomCategories) {
+                for (let atom of cat.atoms) {
+                    if (atom.className && domNode.classList.contains(atom.className)) {
+                        displayName = atom.name;
+                        iconSvg = atom.icon;
+                        isAtom = true;
+                        break;
+                    }
+                }
+                if (isAtom) break;
+            }
+            
+            if (!isAtom) {
+                if (domNode.classList.contains('escms-column')) {
+                    displayName = 'Column';
+                    iconSvg = icons.columns;
+                } else if (domNode.classList.contains('escms-grid-item')) {
+                    displayName = 'Grid Item';
+                    iconSvg = icons.grid;
+                } else {
+                    if (['h1','h2','h3','h4','h5','h6','p','span','a'].includes(tag)) iconSvg = icons.textT;
+                    if (['section','article','main','header','footer'].includes(tag)) iconSvg = icons.rows;
+                    if (tag === 'img') iconSvg = icons.image;
+                }
+            }
             
             const treeItem = document.createElement('div');
             treeItem.style.display = 'flex';
@@ -243,11 +299,6 @@ class EscmsLeftPanel {
             treeItem.style.transition = 'background 0.2s, border-color 0.2s';
             
             const iconSpan = document.createElement('span');
-            let iconSvg = icons.square;
-            if (['h1','h2','h3','h4','h5','h6','p','span','a'].includes(tag)) iconSvg = icons.textT;
-            if (['section','article','main','header','footer'].includes(tag)) iconSvg = icons.rows;
-            if (tag === 'img') iconSvg = icons.image;
-            
             iconSpan.innerHTML = iconSvg;
             iconSpan.style.width = '14px';
             iconSpan.style.height = '14px';
@@ -263,7 +314,7 @@ class EscmsLeftPanel {
             }
             
             const textSpan = document.createElement('span');
-            textSpan.textContent = tag;
+            textSpan.textContent = displayName;
             textSpan.style.flex = '1';
             
             const actionsDiv = document.createElement('div');

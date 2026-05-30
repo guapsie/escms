@@ -63,6 +63,8 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
     <script src="/assets/js/editor-i18n.js"></script>
     <script src="/assets/js/editor-topbar.js"></script>
     <script src="/assets/js/editor-controls.js"></script>
+    <script src="/assets/js/editor-control-border.js"></script>
+    <script src="/assets/js/editor-control-gradient.js"></script>
     <script src="/assets/js/editor-settings.js"></script>
     <script src="/assets/js/editor-inspector.js"></script>
     <script src="/assets/js/editor-canvas.js"></script>
