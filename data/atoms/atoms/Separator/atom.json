@@ -1,0 +1,16 @@
+{
+  "name": "Separator",
+  "tag": "hr",
+  "icon": "separator",
+  "className": "escms-separator",
+  "allowedControls": [
+    "bgColor"
+  ],
+  "styles": {
+    "width": "100%",
+    "border": "none",
+    "height": "1px",
+    "backgroundColor": "rgba(255,255,255,0.1)"
+  },
+  "category": "layout"
+}

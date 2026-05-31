@@ -1,0 +1,22 @@
+{
+  "name": "Heading",
+  "tag": "h2",
+  "icon": "textBolder",
+  "className": "escms-heading",
+  "allowedControls": [
+    "color",
+    "typography",
+    "textAlign",
+    "margin",
+    "padding",
+    "opacity",
+    "effects"
+  ],
+  "children": [
+    {
+      "tag": "span",
+      "textKey": "leftpanel.default_heading"
+    }
+  ],
+  "category": "text"
+}

@@ -312,81 +312,325 @@ if (str_starts_with($route, 'api/')) {
             }
             break;
 
-        case 'api/upload':
+
+        case 'api/menus':
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            if ($method === 'GET') {
+                try {
+                    $stmt = $pdo->prepare("SELECT v FROM options WHERE k = 'main_menu'");
+                    $stmt->execute();
+                    $result = $stmt->fetchColumn();
+                    $menus = $result ? json_decode($result, true) : [];
+                    $send_json(['status' => 'success', 'menus' => $menus]);
+                } catch (Throwable $e) {
+                    $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+                }
+            } elseif ($method === 'POST') {
+                try {
+                    $menusJson = json_encode($input['menus'] ?? []);
+                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('main_menu', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
+                    $stmt->execute([$menusJson]);
+                    $send_json(['status' => 'success']);
+                } catch (Throwable $e) {
+                    $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+                }
+            } else {
+                $send_json(['error' => 'Method not allowed'], 405);
+            }
+            break;
+        case 'api/atoms':
+            if ($method !== 'GET') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $atoms_dir = dirname(__DIR__) . '/data/atoms';
+                $atoms = [];
+                if (is_dir($atoms_dir)) {
+                    $dirs = array_filter(glob($atoms_dir . '/*'), 'is_dir');
+                    foreach ($dirs as $dir) {
+                        $json_path = $dir . '/atom.json';
+                        if (file_exists($json_path)) {
+                            $content = file_get_contents($json_path);
+                            $parsed = json_decode($content, true);
+                            if ($parsed) {
+                                $atoms[] = $parsed;
+                            }
+                        }
+                    }
+                }
+                $send_json(['status' => 'success', 'atoms' => $atoms]);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 500);
+            }
+            break;
+        case 'api/media/list':
+            if ($method !== 'GET') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            $media_dir = dirname(__DIR__) . '/data/media';
+            if (!is_dir($media_dir)) mkdir($media_dir, 0755, true);
+            $files = [];
+            foreach (glob($media_dir . '/*.*') as $file) {
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'])) {
+                    $files[] = [
+                        'id' => basename($file),
+                        'url' => '/data/media/' . basename($file),
+                        'name' => basename($file),
+                        'date' => filemtime($file),
+                        'size' => filesize($file)
+                    ];
+                }
+            }
+            // Sort by date descending
+            usort($files, function($a, $b) { return $b['date'] - $a['date']; });
+            $send_json(['status' => 'success', 'media' => $files]);
+            break;
+
+        case 'api/media/upload':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+                $send_json(['status' => 'error', 'msg' => 'No file uploaded or upload error'], 400);
+            }
+            $media_dir = dirname(__DIR__) . '/data/media/';
+            if (!is_dir($media_dir)) mkdir($media_dir, 0755, true);
+            
+            $file = $_FILES['file'];
+            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'])) {
+                $send_json(['status' => 'error', 'msg' => 'Invalid file type'], 400);
+            }
+
+            // Get webp setting
+            $stmt = $pdo->prepare("SELECT v FROM options WHERE k = 'webp_enabled'");
+            $stmt->execute();
+            $webp_enabled_row = $stmt->fetchColumn();
+            $webp_enabled = $webp_enabled_row === false ? '1' : $webp_enabled_row;
+
+            $filename_base = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', pathinfo($file['name'], PATHINFO_FILENAME));
+            $is_image = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+            $generate_webp = ($webp_enabled === '1') && function_exists('imagewebp') && $is_image && $ext !== 'svg';
+
+            $final_name = '';
+
+            if ($generate_webp) {
+                $src = null;
+                if ($ext === 'jpg' || $ext === 'jpeg') $src = @imagecreatefromjpeg($file['tmp_name']);
+                elseif ($ext === 'png') $src = @imagecreatefrompng($file['tmp_name']);
+                elseif ($ext === 'webp') $src = @imagecreatefromwebp($file['tmp_name']);
+                elseif ($ext === 'gif') $src = @imagecreatefromgif($file['tmp_name']);
+
+                if ($src) {
+                    $counter = 1;
+                    $final_name = $filename_base . '.webp';
+                    while (file_exists($media_dir . $final_name)) {
+                        $final_name = $filename_base . '-' . $counter . '.webp';
+                        $counter++;
+                    }
+
+                    $w = imagesx($src);
+                    $h = imagesy($src);
+                    $new_w = min($w, 1920);
+                    $new_h = (int)($h * ($new_w / $w));
+                    $dst = imagecreatetruecolor($new_w, $new_h);
+
+                    if ($ext === 'png' || $ext === 'webp') {
+                        imagealphablending($dst, false);
+                        imagesavealpha($dst, true);
+                        $transparent = imagecolorallocatealpha($dst, 255, 255, 255, 127);
+                        imagefilledrectangle($dst, 0, 0, $new_w, $new_h, $transparent);
+                    }
+
+                    imagecopyresampled($dst, $src, 0, 0, 0, 0, $new_w, $new_h, $w, $h);
+                    imagewebp($dst, $media_dir . $final_name, 85);
+                    imagedestroy($dst);
+                    imagedestroy($src);
+                } else {
+                    $generate_webp = false; // fallback if imagecreate fails
+                }
+            }
+            
+            if (!$generate_webp) {
+                $counter = 1;
+                $final_name = $filename_base . '.' . $ext;
+                while (file_exists($media_dir . $final_name)) {
+                    $final_name = $filename_base . '-' . $counter . '.' . $ext;
+                    $counter++;
+                }
+                move_uploaded_file($file['tmp_name'], $media_dir . $final_name);
+            }
+
+            $send_json([
+                'status' => 'success', 
+                'media' => [
+                    'id' => $final_name,
+                    'url' => '/data/media/' . $final_name,
+                    'name' => $final_name,
+                    'date' => time(),
+                    'size' => file_exists($media_dir . $final_name) ? filesize($media_dir . $final_name) : 0
+                ]
+            ]);
+            break;
+
+        case 'api/media/delete':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            $media_dir = dirname(__DIR__) . '/data/media';
+            $input = json_decode(file_get_contents('php://input'), true);
+            if (!isset($input['files']) || !is_array($input['files'])) {
+                $send_json(['status' => 'error', 'msg' => 'Invalid payload'], 400);
+            }
+            $deleted = 0;
+            foreach ($input['files'] as $filename) {
+                // Prevent directory traversal
+                $safe_filename = basename($filename);
+                $path = $media_dir . '/' . $safe_filename;
+                if (file_exists($path) && is_file($path)) {
+                    unlink($path);
+                    $deleted++;
+                }
+            }
+            $send_json(['status' => 'success', 'deleted' => $deleted]);
+            break;
+
+        case 'api/ai/settings':
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            if ($method === 'GET') {
+                $provider = $pdo->query("SELECT v FROM options WHERE k='ai_provider'")->fetchColumn() ?: 'gemini';
+                $key = $pdo->query("SELECT v FROM options WHERE k='ai_key'")->fetchColumn() ?: '';
+                $model = $pdo->query("SELECT v FROM options WHERE k='ai_model'")->fetchColumn() ?: '';
+                $send_json(['status' => 'success', 'provider' => $provider, 'has_key' => !empty($key), 'model' => $model]);
+            } else if ($method === 'POST') {
+                $input = json_decode(file_get_contents('php://input'), true);
+                if (isset($input['provider'])) {
+                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('ai_provider', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
+                    $stmt->execute([$input['provider']]);
+                }
+                if (isset($input['key'])) {
+                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('ai_key', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
+                    $stmt->execute([trim($input['key'])]);
+                }
+                if (isset($input['model'])) {
+                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('ai_model', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
+                    $stmt->execute([$input['model']]);
+                }
+                $send_json(['status' => 'success']);
+            }
+            break;
+
+        case 'api/ai/models':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            $input = json_decode(file_get_contents('php://input'), true);
+            $provider = $input['provider'] ?? '';
+            $key = trim($input['key'] ?? '');
+            if (!$provider || !$key) $send_json(['status' => 'error', 'msg' => 'Provider and key required'], 400);
+
+            if ($provider === 'claude') {
+                $send_json([
+                    'status' => 'success',
+                    'models' => [
+                        ['value' => 'claude-3-5-sonnet-latest', 'label' => 'Claude 3.5 Sonnet'],
+                        ['value' => 'claude-3-haiku-20240307', 'label' => 'Claude 3 Haiku'],
+                        ['value' => 'claude-3-opus-latest', 'label' => 'Claude 3 Opus']
+                    ]
+                ]);
+            } else if ($provider === 'gemini') {
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, "https://generativelanguage.googleapis.com/v1beta/models?key=" . urlencode($key));
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                $response = curl_exec($ch);
+                $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+
+                if ($httpcode >= 400 || $response === false) {
+                    $send_json(['status' => 'error', 'msg' => 'Error fetching models', 'details' => $response], 500);
+                }
+
+                $data = json_decode($response, true);
+                $models = [];
+                if (isset($data['models'])) {
+                    foreach ($data['models'] as $m) {
+                        if (isset($m['supportedGenerationMethods']) && in_array('generateContent', $m['supportedGenerationMethods'])) {
+                            $val = str_replace('models/', '', $m['name']);
+                            $models[] = ['value' => $val, 'label' => $m['displayName'] ?? $val];
+                        }
+                    }
+                }
+                $send_json(['status' => 'success', 'models' => $models]);
+            } else {
+                $send_json(['status' => 'error', 'msg' => 'Unsupported provider'], 400);
+            }
+            break;
+
+        case 'api/ai/generate':
             if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
             if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
             
-            try {
-                if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-                    throw new RuntimeException('Upload failed.');
-                }
-                
-                $file = $_FILES['file'];
-                $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-                $is_image = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-                
-                $filename = bin2hex(random_bytes(8));
-                $upload_dir = dirname(__DIR__) . '/data/uploads/';
-                
-                $generate_webp = ($config['webp_enabled'] ?? '1') === '1' && function_exists('imagewebp') && $is_image;
-                
-                if ($generate_webp) {
-                    $src = null;
-                    if ($ext === 'jpg' || $ext === 'jpeg') $src = imagecreatefromjpeg($file['tmp_name']);
-                    elseif ($ext === 'png') $src = imagecreatefrompng($file['tmp_name']);
-                    elseif ($ext === 'webp') $src = imagecreatefromwebp($file['tmp_name']);
-                    elseif ($ext === 'gif') $src = imagecreatefromgif($file['tmp_name']);
-                    
-                    if ($src) {
-                        $w = imagesx($src);
-                        $h = imagesy($src);
-                        
-                        $new_w = min($w, 1920);
-                        $new_h = (int)($h * ($new_w / $w));
-                        $dst = imagecreatetruecolor($new_w, $new_h);
-                        
-                        if ($ext === 'png' || $ext === 'webp') {
-                            imagealphablending($dst, false);
-                            imagesavealpha($dst, true);
-                            $transparent = imagecolorallocatealpha($dst, 255, 255, 255, 127);
-                            imagefilledrectangle($dst, 0, 0, $new_w, $new_h, $transparent);
-                        }
-                        
-                        imagecopyresampled($dst, $src, 0, 0, 0, 0, $new_w, $new_h, $w, $h);
-                        imagewebp($dst, $upload_dir . $filename . '.webp', 85);
-                        imagedestroy($dst);
-                        
-                        $thumb_w = min($w, 400);
-                        $thumb_h = (int)($h * ($thumb_w / $w));
-                        $thumb = imagecreatetruecolor($thumb_w, $thumb_h);
-                        if ($ext === 'png' || $ext === 'webp') {
-                            imagealphablending($thumb, false);
-                            imagesavealpha($thumb, true);
-                            $transparent = imagecolorallocatealpha($thumb, 255, 255, 255, 127);
-                            imagefilledrectangle($thumb, 0, 0, $thumb_w, $thumb_h, $transparent);
-                        }
-                        imagecopyresampled($thumb, $src, 0, 0, 0, 0, $thumb_w, $thumb_h, $w, $h);
-                        imagewebp($thumb, $upload_dir . $filename . '_thumb.webp', 80);
-                        imagedestroy($thumb);
-                        
-                        imagedestroy($src);
-                        $final_url = '/data/uploads/' . $filename . '.webp';
-                    } else {
-                        $final_name = $filename . '.' . $ext;
-                        move_uploaded_file($file['tmp_name'], $upload_dir . $final_name);
-                        $final_url = '/data/uploads/' . $final_name;
-                    }
-                } else {
-                    $final_name = $filename . '.' . $ext;
-                    move_uploaded_file($file['tmp_name'], $upload_dir . $final_name);
-                    $final_url = '/data/uploads/' . $final_name;
-                }
-                
-                $send_json(['status' => 'success', 'url' => $final_url]);
-                
-            } catch (Throwable $e) {
-                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            $input = json_decode(file_get_contents('php://input'), true);
+            $prompt = $input['prompt'] ?? '';
+            if (!$prompt) $send_json(['status' => 'error', 'msg' => 'Prompt is required'], 400);
+
+            $provider = $pdo->query("SELECT v FROM options WHERE k='ai_provider'")->fetchColumn() ?: 'gemini';
+            $key = $pdo->query("SELECT v FROM options WHERE k='ai_key'")->fetchColumn();
+            $model = $pdo->query("SELECT v FROM options WHERE k='ai_model'")->fetchColumn();
+
+            if (!$key) $send_json(['status' => 'error', 'msg' => 'No API Key configured'], 400);
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+
+            if ($provider === 'gemini') {
+                if (!$model) $model = 'gemini-1.5-flash-latest';
+                $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . urlencode($key);
+                $payload = json_encode([
+                    'contents' => [['parts' => [['text' => $prompt]]]]
+                ]);
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            } else if ($provider === 'claude') {
+                if (!$model) $model = 'claude-3-haiku-20240307';
+                $url = "https://api.anthropic.com/v1/messages";
+                $payload = json_encode([
+                    'model' => $model,
+                    'max_tokens' => 1024,
+                    'messages' => [['role' => 'user', 'content' => $prompt]]
+                ]);
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/json',
+                    'x-api-key: ' . $key,
+                    'anthropic-version: 2023-06-01'
+                ]);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            } else {
+                $send_json(['status' => 'error', 'msg' => 'Unsupported provider'], 400);
             }
+
+            $response = curl_exec($ch);
+            $err = curl_error($ch);
+            $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpcode >= 400 || $response === false) {
+                $send_json(['status' => 'error', 'msg' => 'API Error', 'details' => $response ?: $err], 500);
+            }
+
+            $resData = json_decode($response, true);
+            $text = '';
+            
+            if ($provider === 'gemini') {
+                $text = $resData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+            } else if ($provider === 'claude') {
+                $text = $resData['content'][0]['text'] ?? '';
+            }
+
+            $send_json(['status' => 'success', 'text' => $text]);
             break;
 
         default:

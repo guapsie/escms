@@ -1,0 +1,17 @@
+{
+  "name": "Code",
+  "tag": "pre",
+  "icon": "code",
+  "className": "escms-code",
+  "textKey": "leftpanel.default_code",
+  "allowedControls": [
+    "bgColor",
+    "bgGradient",
+    "margin",
+    "padding",
+    "border",
+    "opacity",
+    "effects"
+  ],
+  "category": "text"
+}

@@ -33,11 +33,17 @@ class EscmsTopBar {
             <div id="escms-topbar-center" style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; height: 100%;"></div>
             
             <div style="display: flex; gap: 0.5rem;">
+                <button class="icon-btn" id="btn-media" data-i18n-title="topbar.media">
+                    ${icons.libraryPhoto}
+                </button>
                 <button class="icon-btn" id="btn-network" data-i18n-title="topbar.network_btn">
                     ${icons.shareNetwork}
                 </button>
+                <button class="icon-btn" id="btn-settings" data-i18n-title="topbar.settings">
+                    ${icons.gearFine}
+                </button>
                 <button class="icon-btn" id="btn-fullscreen" data-i18n-title="topbar.fullscreen">
-                    ${icons.cornersOut}
+                    ${icons.arrowsOut}
                 </button>
             </div>
         `;
@@ -93,6 +99,16 @@ class EscmsTopBar {
             }
         });
 
+        const btnMedia = this.container.querySelector('#btn-media');
+        if (btnMedia) {
+            btnMedia.addEventListener('click', () => {
+                if (!window.escmsMediaLibrary) {
+                    window.escmsMediaLibrary = new EscmsMediaLibrary(this.i18n);
+                }
+                window.escmsMediaLibrary.open();
+            });
+        }
+
         const btnNetwork = this.container.querySelector('#btn-network');
         if (btnNetwork) {
             btnNetwork.addEventListener('click', () => this.showNetworkModal());
@@ -113,7 +129,7 @@ class EscmsTopBar {
             });
 
             document.addEventListener('fullscreenchange', () => {
-                btnFullscreen.innerHTML = document.fullscreenElement ? icons.cornersIn : icons.cornersOut;
+                btnFullscreen.innerHTML = document.fullscreenElement ? icons.arrowsIn : icons.arrowsOut;
             });
         }
     }

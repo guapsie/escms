@@ -239,38 +239,26 @@ class EscmsInspector {
         this.controls.bgGradient = new EscmsGradientControl('inspector.linear_gradient', this.i18n, undefined, (val) => this.applyStyle('background-image', val.cssString));
         bgSection.appendChild(this.controls.bgGradient.element);
 
+        this.controls.bgImage = new EscmsBgImageControl('inspector.bg_image', this.i18n, { image: '' }, (val) => {
+            this.applyStyle('background-image', val.image);
+            if (val.image) {
+                this.applyStyle('background-size', val.size);
+                this.applyStyle('background-repeat', val.repeat);
+                this.applyStyle('background-position', val.position);
+            } else {
+                this.applyStyle('background-size', '');
+                this.applyStyle('background-repeat', '');
+                this.applyStyle('background-position', '');
+            }
+        });
+        bgSection.appendChild(this.controls.bgImage.element);
+
         this.sectionsContainer.appendChild(bgSection);
 
         // --- LAYOUT ---
         const layoutSection = this.createSection('inspector.layout');
 
-        this.controls.columnsCount = new EscmsSlider('inspector.columns_count', 1, 12, 1, 2, (val) => {
-            if (!this.selectedNode || this.isSyncing) return;
-            
-            this.selectedNode.style.gridTemplateColumns = `repeat(${val}, 1fr)`;
-            this.selectedNode.setAttribute('data-columns', val);
-            
-            const currentChildren = Array.from(this.selectedNode.children);
-            const currentCount = currentChildren.length;
-            const isGrid = this.selectedNode.classList.contains('escms-grid');
-            
-            if (val > currentCount) {
-                for (let i = 0; i < (val - currentCount); i++) {
-                    const col = document.createElement('div');
-                    col.className = isGrid ? 'escms-grid-item' : 'escms-column';
-                    this.selectedNode.appendChild(col);
-                }
-            } else if (val < currentCount) {
-                for (let i = 0; i < (currentCount - val); i++) {
-                    if (this.selectedNode.lastElementChild) {
-                        this.selectedNode.removeChild(this.selectedNode.lastElementChild);
-                    }
-                }
-            }
-            
-            window.dispatchEvent(new Event('escms-dom-mutated'));
-        }, '');
-        layoutSection.appendChild(this.controls.columnsCount.element);
+
 
         this.controls.width = this.createTextInput('inspector.width', (val) => this.applyStyle('width', val));
         layoutSection.appendChild(this.controls.width.element);
@@ -493,10 +481,12 @@ class EscmsInspector {
             for (let cat of categories) {
                 for (let atom of cat.atoms) {
                     let match = false;
-                    if (atom.className && this.selectedNode.classList.contains(atom.className)) {
-                        match = true;
+                    if (atom.className) {
+                        if (this.selectedNode.classList.contains(atom.className)) {
+                            match = true;
+                        }
                     } else if (this.selectedNode.tagName.toLowerCase() === atom.tag.toLowerCase()) {
-                        match = true; // Fallback to tag name for legacy elements that lack the class
+                        match = true;
                     }
                     if (match) {
                         allowedControls = atom.allowedControls || defaultControls['default'];
@@ -610,6 +600,16 @@ class EscmsInspector {
         if (allowedControls.includes('bgGradient')) {
             let gradient = this._parseGradient(comp.backgroundImage);
             this.controls.bgGradient.setValue(gradient, false);
+        }
+
+        if (allowedControls.includes('bgImage')) {
+            let bgImg = comp.backgroundImage !== 'none' && !comp.backgroundImage.includes('gradient') ? comp.backgroundImage : '';
+            this.controls.bgImage.setValue({
+                image: bgImg,
+                size: comp.backgroundSize,
+                repeat: comp.backgroundRepeat,
+                position: comp.backgroundPosition
+            }, false);
         }
 
         // Layout

@@ -1,0 +1,16 @@
+{
+  "name": "Section",
+  "tag": "section",
+  "icon": "section",
+  "className": "escms-section",
+  "allowedControls": [
+    "bgColor",
+    "bgGradient",
+    "bgImage",
+    "margin",
+    "padding",
+    "border",
+    "opacity"
+  ],
+  "category": "layout"
+}

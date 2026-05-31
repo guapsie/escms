@@ -1,0 +1,15 @@
+{
+  "name": "Header",
+  "tag": "header",
+  "icon": "caretLineUp",
+  "className": "escms-header",
+  "allowedControls": [
+    "bgColor",
+    "bgGradient",
+    "margin",
+    "padding",
+    "border",
+    "opacity"
+  ],
+  "category": "layout"
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Nav",
+  "tag": "nav",
+  "icon": "compass",
+  "className": "escms-nav",
+  "allowedControls": [
+    "bgColor",
+    "bgGradient",
+    "margin",
+    "padding",
+    "border",
+    "opacity"
+  ],
+  "category": "layout"
+}

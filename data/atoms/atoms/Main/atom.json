@@ -1,0 +1,15 @@
+{
+  "name": "Main",
+  "tag": "main",
+  "icon": "square",
+  "className": "escms-main",
+  "allowedControls": [
+    "bgColor",
+    "bgGradient",
+    "margin",
+    "padding",
+    "border",
+    "opacity"
+  ],
+  "category": "layout"
+}

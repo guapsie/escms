@@ -13,26 +13,11 @@ class EscmsGlobalSettings {
     }
 
     async init() {
-        const topbar = document.getElementById('escms-topbar');
-        if (topbar) {
-            const titleDiv = topbar.firstElementChild;
-            if (titleDiv) {
-                titleDiv.style.display = 'flex';
-                titleDiv.style.alignItems = 'center';
-                titleDiv.style.gap = '0.5rem';
-
-                this.gearBtn = document.createElement('button');
-                this.gearBtn.className = 'icon-btn';
-                this.gearBtn.style.flexShrink = '0';
-                this.gearBtn.innerHTML = icons.gearFine;
-                this.gearBtn.title = 'Global Settings';
-
-                this.gearBtn.addEventListener('click', () => {
-                    this.overlay.style.display = 'block';
-                });
-
-                titleDiv.appendChild(this.gearBtn);
-            }
+        this.gearBtn = document.getElementById('btn-settings');
+        if (this.gearBtn) {
+            this.gearBtn.addEventListener('click', () => {
+                this.overlay.style.display = 'block';
+            });
         }
 
         try {

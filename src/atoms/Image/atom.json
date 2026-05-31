@@ -1,0 +1,24 @@
+{
+  "name": "Image",
+  "tag": "img",
+  "icon": "image",
+  "className": "escms-image",
+  "allowedControls": [
+    "src",
+    "alt",
+    "href",
+    "width",
+    "imageAlign",
+    "margin",
+    "padding",
+    "border",
+    "opacity",
+    "effects"
+  ],
+  "attributes": {
+    "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2RkZCIvPjwvc3ZnPg==",
+    "alt": "Placeholder",
+    "style": "max-width: 100%; height: auto;"
+  },
+  "category": "text"
+}

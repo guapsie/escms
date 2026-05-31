@@ -48,7 +48,8 @@ console.log(`[+] Router aislado para el suicidio: 04-router.php`);
 const payload = {
     php: [],
     js: [],
-    css: []
+    css: [],
+    atoms: []
 };
 
 const files = fs.readdirSync(srcDir);
@@ -76,10 +77,26 @@ files.forEach(file => {
     }
 });
 
-// Construir strings PHP para los arrays de datos
+// Leer átomos de src/atoms
+const atomsDir = path.join(srcDir, 'atoms');
+if (fs.existsSync(atomsDir)) {
+    const atomFolders = fs.readdirSync(atomsDir);
+    atomFolders.forEach(folder => {
+        const atomJsonPath = path.join(atomsDir, folder, 'atom.json');
+        if (fs.existsSync(atomJsonPath)) {
+            const content = fs.readFileSync(atomJsonPath, 'utf8');
+            // Quitamos saltos de línea para minificar un poco
+            const minified = JSON.stringify(JSON.parse(content));
+            payload.atoms.push({ folder: folder, b64: Buffer.from(minified).toString('base64') });
+            console.log(`[+] Empaquetando Atom JSON: ${folder}`);
+        }
+    });
+}
+
 const phpArrayStr = payload.php.map(f => `'${f.name}' => '${f.b64}'`).join(',\n    ');
 const jsArrayStr = payload.js.map(f => `'${f.name}' => '${f.b64}'`).join(',\n    ');
 const cssArrayStr = payload.css.map(f => `'${f.name}' => '${f.b64}'`).join(',\n    ');
+const atomsArrayStr = payload.atoms.map(f => `'${f.folder}' => '${f.b64}'`).join(',\n    ');
 
 // --- 4. LA MUTACIÓN (Lógica del instalador Kamikaze) ---
 // Extraemos el cascarón vivo (01-installer.php) si existe, o generamos uno básico.
@@ -135,6 +152,19 @@ if ($__is_kamikaze_trigger) {
     ];
     foreach ($__css_payload as $f => $b64) {
         file_put_contents(__DIR__ . '/assets/css/' . $f, base64_decode($b64));
+    }
+
+    // 4.5 Vomitar Atoms en /data/atoms/ (Solo si no existen)
+    $__atoms_payload = [
+    ${atomsArrayStr}
+    ];
+    if (!is_dir(__DIR__ . '/data/atoms')) mkdir(__DIR__ . '/data/atoms', 0755, true);
+    foreach ($__atoms_payload as $folder => $b64) {
+        $atom_dir = __DIR__ . '/data/atoms/' . $folder;
+        if (!is_dir($atom_dir)) {
+            mkdir($atom_dir, 0755, true);
+            file_put_contents($atom_dir . '/atom.json', base64_decode($b64));
+        }
     }
 
     // 5. Crear el búnker (.htaccess para /core/)

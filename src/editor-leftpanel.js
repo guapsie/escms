@@ -6,81 +6,12 @@ class EscmsLeftPanel {
         this.draggedDomNode = null;
         this.treeNodes = new Map();
         this.activeTab = 'elements';
-        this.atomCategories = [
-            {
-                id: 'layout',
-                name: 'leftpanel.cat_layout',
-                atoms: [
-                    { name: 'Header', tag: 'header', icon: icons.caretLineUp, className: 'escms-header', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
-                    { name: 'Main', tag: 'main', icon: icons.square, className: 'escms-main', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
-                    { name: 'Section', tag: 'section', icon: icons.rows, className: 'escms-section', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
-                    { name: 'Article', tag: 'article', icon: icons.article, className: 'escms-article', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
-                    { name: 'Aside', tag: 'aside', icon: icons.sidebarSimple, className: 'escms-aside', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
-                    { name: 'Nav', tag: 'nav', icon: icons.compass, className: 'escms-nav', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
-                    { name: 'Footer', tag: 'footer', icon: icons.caretLineDown, className: 'escms-footer', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
-                    { name: 'Container', tag: 'div', icon: icons.cornersOut, className: 'escms-container', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
-                    {
-                        name: 'Columns',
-                        tag: 'div',
-                        icon: icons.columns,
-                        className: 'escms-columns',
-                        allowedControls: ['columnsCount', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
-                        attributes: { 'data-columns': '2' },
-                        styles: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', width: '100%', minHeight: '50px' },
-                        children: [
-                            { tag: 'div', className: 'escms-column' },
-                            { tag: 'div', className: 'escms-column' }
-                        ]
-                    },
-                    {
-                        name: 'Grid',
-                        tag: 'div',
-                        icon: icons.grid,
-                        className: 'escms-grid',
-                        allowedControls: ['columnsCount', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
-                        attributes: { 'data-columns': '3' },
-                        styles: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', minHeight: '50px' },
-                        children: [
-                            { tag: 'div', className: 'escms-grid-item' },
-                            { tag: 'div', className: 'escms-grid-item' },
-                            { tag: 'div', className: 'escms-grid-item' }
-                        ]
-                    },
-                    { name: 'Separator', tag: 'hr', icon: icons.separator, className: 'escms-separator', allowedControls: ['bgColor', 'margin', 'padding', 'border', 'opacity'] },
-                    { name: 'Spacer', tag: 'div', icon: icons.arrowsVertical, className: 'escms-spacer', allowedControls: ['spacerHeight'] }
-                ]
-            },
-            {
-                id: 'content',
-                name: 'leftpanel.cat_content',
-                atoms: [
-                    { name: 'Heading', tag: 'h2', icon: icons.heading, className: 'escms-heading', textKey: 'leftpanel.default_heading', allowedControls: ['tagSwap', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'] },
-                    { name: 'Paragraph', tag: 'p', icon: icons.textT, className: 'escms-paragraph', textKey: 'leftpanel.default_paragraph', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'] },
-                    { name: 'Cite', tag: 'blockquote', icon: icons.quotes, className: 'escms-cite', textKey: 'leftpanel.default_cite', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'] },
-                    { name: 'List', tag: 'ul', icon: icons.list, className: 'escms-list', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'], children: [{ tag: 'li', className: 'escms-list-item', textKey: 'leftpanel.default_list_item' }] },
-                    { name: 'Code', tag: 'pre', icon: icons.code, className: 'escms-code', textKey: 'leftpanel.default_code', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'] },
-                    { name: 'Image', tag: 'img', icon: icons.image, className: 'escms-image', allowedControls: ['src', 'alt', 'href', 'width', 'imageAlign', 'margin', 'padding', 'border', 'opacity', 'effects'], attributes: { src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2RkZCIvPjwvc3ZnPg==', alt: 'Placeholder', style: 'max-width: 100%; height: auto;' } },
-                    { name: 'Button', tag: 'button', icon: icons.button, className: 'escms-button', textKey: 'leftpanel.default_button', allowedControls: ['href', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'effects'] }
-                ]
-            },
-            {
-                id: 'embeds',
-                name: 'leftpanel.cat_embeds',
-                atoms: [
-                    { name: 'Video', tag: 'video', icon: icons.videoCamera, className: 'escms-video', allowedControls: ['src', 'margin', 'padding', 'border', 'opacity', 'effects'], attributes: { controls: 'true', style: 'width: 100%;' } },
-                    { name: 'Audio', tag: 'audio', icon: icons.speakerHigh, className: 'escms-audio', allowedControls: ['src', 'margin', 'padding', 'border', 'opacity', 'effects'], attributes: { controls: 'true', style: 'width: 100%;' } },
-                    { name: 'YouTube', tag: 'iframe', icon: icons.youtubeLogo, className: 'escms-youtube', allowedControls: ['src', 'margin', 'padding', 'border', 'opacity', 'effects'], attributes: { src: 'https://www.youtube.com/embed/dQw4w9WgXcQ', frameborder: '0', allowfullscreen: 'true', style: 'width: 100%; aspect-ratio: 16/9;' } },
-                    { name: 'Vimeo', tag: 'iframe', icon: icons.playCircle, className: 'escms-vimeo', allowedControls: ['src', 'margin', 'padding', 'border', 'opacity', 'effects'], attributes: { src: 'https://player.vimeo.com/video/76979871', frameborder: '0', allowfullscreen: 'true', style: 'width: 100%; aspect-ratio: 16/9;' } }
-                ]
-            },
-            {
-                id: 'downloaded',
-                name: 'leftpanel.cat_downloaded',
-                atoms: []
-            }
-        ];
-
+        this.atomCategories = [];
         this.pageManager = new EscmsPageManager(this.i18n);
+        this.menuManager = new EscmsMenuManager(this.i18n);
+        if (typeof EscmsCopilot !== 'undefined') {
+            this.copilot = new EscmsCopilot(this.i18n);
+        }
     }
 
     init(shadowRoot) {
@@ -95,6 +26,21 @@ class EscmsLeftPanel {
             }
         });
 
+        window.addEventListener('escms-html-cursor-moved', (e) => {
+            if (this.activeTab === 'layers' && e.detail.path) {
+                const docRoot = this.shadowRoot.getElementById('document-root');
+                if (docRoot) {
+                    try {
+                        const targetNode = docRoot.querySelector(e.detail.path);
+                        if (targetNode && targetNode !== this.selectedNode) {
+                            this.selectedNode = targetNode;
+                            this.highlightTreeNode();
+                        }
+                    } catch (err) {}
+                }
+            }
+        });
+
         const docRoot = this.shadowRoot.getElementById('document-root');
         if (docRoot) {
             const observer = new MutationObserver(() => {
@@ -105,7 +51,9 @@ class EscmsLeftPanel {
             observer.observe(docRoot, { childList: true, subtree: true });
         }
 
-        this.render();
+        this.fetchAtoms().then(() => {
+            this.render();
+        });
         this.pageManager.loadPages(true);
     }
 
@@ -157,6 +105,8 @@ class EscmsLeftPanel {
         header.appendChild(createTab('elements', icons.atom, 'Elements'));
         header.appendChild(createTab('layers', icons.stack, 'Layers'));
         header.appendChild(createTab('pages', icons.file, 'Pages'));
+        header.appendChild(createTab('menus', icons.menu2, 'Menus'));
+        header.appendChild(createTab('ai', icons.ai, 'Copilot AI'));
 
         this.contentArea = document.createElement('div');
         this.contentArea.style.flex = '1';
@@ -172,6 +122,14 @@ class EscmsLeftPanel {
             this.renderElements();
         } else if (this.activeTab === 'pages') {
             this.pageManager.init(this.contentArea);
+        } else if (this.activeTab === 'menus') {
+            this.menuManager.init(this.contentArea);
+        } else if (this.activeTab === 'ai') {
+            if (this.copilot) {
+                this.copilot.init(this.contentArea);
+            } else {
+                this.contentArea.innerHTML = '<div style="padding: 1rem; color: #ef4444; text-align: center; font-size: 0.8rem;">Copilot module not loaded.</div>';
+            }
         } else {
             this.renderLayers();
         }
@@ -212,7 +170,7 @@ class EscmsLeftPanel {
             cat.atoms.forEach(atom => {
                 const btn = document.createElement('button');
                 btn.title = atom.name;
-                btn.innerHTML = atom.icon;
+                btn.innerHTML = icons[atom.icon] || icons.boxModel2 || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>';
                 btn.style.display = 'flex';
                 btn.style.alignItems = 'center';
                 btn.style.justifyContent = 'center';
@@ -243,6 +201,33 @@ class EscmsLeftPanel {
         });
     }
 
+async fetchAtoms() {
+    try {
+        const res = await fetch('/api/atoms');
+        const data = await res.json();
+        
+        if (data.status === 'success' && data.atoms) {
+            const categoriesMap = {};
+            data.atoms.forEach(atom => {
+                const catId = atom.category || 'downloaded';
+                if (!categoriesMap[catId]) {
+                    categoriesMap[catId] = {
+                        id: catId,
+                        name: `leftpanel.cat_${catId}`,
+                        atoms: []
+                    };
+                }
+                categoriesMap[catId].atoms.push(atom);
+            });
+            
+            this.atomCategories = Object.values(categoriesMap);
+        }
+    } catch (err) {
+        console.error('Failed to load atoms', err);
+        this.atomCategories = [];
+    }
+}
+
     renderLayers() {
         this.contentArea.innerHTML = '';
         const docRoot = this.shadowRoot.getElementById('document-root');
@@ -271,7 +256,7 @@ class EscmsLeftPanel {
                 for (let atom of cat.atoms) {
                     if (atom.className && domNode.classList.contains(atom.className)) {
                         displayName = atom.name;
-                        iconSvg = atom.icon;
+                        iconSvg = icons[atom.icon] || icons.square;
                         isAtom = true;
                         break;
                     }
@@ -409,6 +394,9 @@ class EscmsLeftPanel {
             treeItem.addEventListener('click', (e) => {
                 e.stopPropagation();
                 domNode.click(); // Hack para disparar la lógica nativa del Sniper del Shadow DOM
+                
+                const path = this.getDomPath(domNode);
+                window.dispatchEvent(new CustomEvent('escms-layer-selected', { detail: { path } }));
             });
 
             // --- DRAG & DROP LOGIC ---
@@ -561,5 +549,23 @@ class EscmsLeftPanel {
             target.appendChild(el);
             setTimeout(() => el.click(), 10);
         }
+    }
+
+    getDomPath(node) {
+        const docRoot = this.shadowRoot.getElementById('document-root');
+        const path = [];
+        let current = node;
+        while (current && current !== docRoot) {
+            let tag = current.tagName.toLowerCase();
+            let parent = current.parentNode;
+            if (!parent) break;
+            
+            let siblings = Array.from(parent.children).filter(n => n.tagName.toLowerCase() === tag);
+            let index = siblings.indexOf(current) + 1;
+            
+            path.unshift(`${tag}:nth-of-type(${index})`);
+            current = parent;
+        }
+        return path.join(' > ');
     }
 }

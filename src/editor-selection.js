@@ -77,6 +77,29 @@ class EscmsSelection {
                 outline: 2px solid var(--accent-faint) !important;
                 outline-offset: -2px;
             }
+
+            /* Preview Mode Overrides */
+            #document-root.escms-preview-mode div,
+            #document-root.escms-preview-mode section,
+            #document-root.escms-preview-mode article,
+            #document-root.escms-preview-mode main,
+            #document-root.escms-preview-mode aside,
+            #document-root.escms-preview-mode header,
+            #document-root.escms-preview-mode footer,
+            #document-root.escms-preview-mode .escms-column,
+            #document-root.escms-preview-mode .escms-grid-item {
+                outline: none !important;
+                background-color: transparent;
+            }
+            #document-root.escms-preview-mode .escms-selected {
+                outline: none !important;
+            }
+            #document-root.escms-preview-mode .escms-column:empty::after, 
+            #document-root.escms-preview-mode .escms-grid-item:empty::after, 
+            #document-root.escms-preview-mode .escms-container:empty::after, 
+            #document-root.escms-preview-mode .escms-section:empty::after {
+                display: none !important;
+            }
         `;
         shadowRoot.appendChild(style);
 
@@ -118,7 +141,29 @@ class EscmsSelection {
             window.dispatchEvent(event);
         });
 
-        documentRoot.addEventListener('keydown', (e) => {
+        window.addEventListener('keydown', (e) => {
+            const activeTag = document.activeElement ? document.activeElement.tagName : '';
+            if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+            if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedNode) {
+                const isEditable = this.selectedNode.hasAttribute('contenteditable');
+                const isEmpty = this.selectedNode.textContent.trim() === '';
+
+                if (!isEditable || isEmpty) {
+                    e.preventDefault();
+                    if (this.selectedNode.id !== 'document-root') {
+                        const parent = this.selectedNode.parentNode;
+                        this.selectedNode.remove();
+                        this.selectedNode = null;
+                        
+                        if (parent && parent.id !== 'document-root') {
+                            setTimeout(() => parent.click(), 10);
+                        } else {
+                            window.dispatchEvent(new CustomEvent('escms-element-selected', { detail: { node: null } }));
+                        }
+                    }
+                }
+            }
+
             if (e.key === 'Enter' && this.selectedNode && this.selectedNode.tagName === 'LI') {
                 e.preventDefault();
                 const parentList = this.selectedNode.closest('ul, ol');

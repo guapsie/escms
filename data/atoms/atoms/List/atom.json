@@ -1,0 +1,23 @@
+{
+  "name": "List",
+  "tag": "ul",
+  "icon": "list",
+  "className": "escms-list",
+  "allowedControls": [
+    "bgColor",
+    "bgGradient",
+    "margin",
+    "padding",
+    "border",
+    "opacity",
+    "effects"
+  ],
+  "children": [
+    {
+      "tag": "li",
+      "className": "escms-list-item",
+      "textKey": "leftpanel.default_list_item"
+    }
+  ],
+  "category": "text"
+}

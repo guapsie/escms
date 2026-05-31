@@ -5,6 +5,7 @@ class EscmsHtmlView {
         this.textarea = null;
         this.isTyping = false;
         this.lastSavedValue = '';
+        this.syncTimeout = null;
     }
 
     init(container) {
@@ -39,6 +40,9 @@ class EscmsHtmlView {
         this.htmlContainer.style.bottom = '2rem';
         this.htmlContainer.style.overflow = 'auto';
         this.htmlContainer.style.pointerEvents = 'none'; // Para que los clicks pasen al textarea
+        this.htmlContainer.style.backgroundImage = 'linear-gradient(rgba(255, 255, 255, 0.02) 50%, transparent 50%)';
+        this.htmlContainer.style.backgroundSize = '100% 3em';
+        this.htmlContainer.style.backgroundAttachment = 'local';
 
         this.textarea = document.createElement('textarea');
         this.textarea.style.margin = '0';
@@ -72,6 +76,36 @@ class EscmsHtmlView {
         this.textarea.addEventListener('input', (e) => {
             this.htmlContainer.innerHTML = this.colorizeHtml(e.target.value);
             this.isTyping = true;
+            
+            if (this.syncTimeout) clearTimeout(this.syncTimeout);
+            this.syncTimeout = setTimeout(() => {
+                this.parseAndSync(true); // silent
+            }, 1000);
+        });
+
+        // Tracking del cursor para las Layers
+        const trackCursor = () => {
+            if (this.view.style.display === 'none') return;
+            const pos = this.textarea.selectionStart;
+            const html = this.textarea.value.substring(0, pos);
+            const path = this.getDomPathFromHtml(html);
+            if (path) {
+                window.dispatchEvent(new CustomEvent('escms-html-cursor-moved', { detail: { path } }));
+            }
+        };
+
+        this.textarea.addEventListener('click', trackCursor);
+        this.textarea.addEventListener('keyup', (e) => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                trackCursor();
+            }
+        });
+
+        // Escuchar selección desde Layers
+        window.addEventListener('escms-layer-selected', (e) => {
+            if (this.view.style.display !== 'none' && e.detail.path) {
+                this.highlightHtmlFromPath(e.detail.path);
+            }
         });
 
         editorWrapper.appendChild(this.htmlContainer);
@@ -147,7 +181,7 @@ class EscmsHtmlView {
         this.isTyping = false;
     }
 
-    parseAndSync() {
+    parseAndSync(silent = false) {
         const newHtml = this.textarea.value;
         if (newHtml === this.lastSavedValue) return; // No hay cambios
 
@@ -179,7 +213,7 @@ class EscmsHtmlView {
         }
 
         this.lastSavedValue = newHtml;
-        this.isTyping = false;
+        if (!silent) this.isTyping = false;
         
         // Forzar autoguardado
         if (window.escmsEditor && window.escmsEditor.autosave) {
@@ -222,5 +256,99 @@ class EscmsHtmlView {
         escaped = escaped.replace(/&gt;/g, '<span style="color: #9ca3af;">&gt;</span>');
         
         return escaped;
+    }
+
+    getDomPathFromHtml(htmlToCursor) {
+        const tags = htmlToCursor.match(/<\/?([a-zA-Z1-6-]+)[^>]*>/g) || [];
+        const stack = [];
+        const counters = [];
+        let inBody = false;
+
+        for (let tagString of tags) {
+            const isClosing = tagString.startsWith('</');
+            const isSelfClosing = tagString.match(/<[^>]+\/>$/) || tagString.match(/<br>|<hr>|<img>|<input>|<meta>|<link>/i);
+            const tagNameMatch = tagString.match(/<\/?([a-zA-Z1-6-]+)/);
+            if (!tagNameMatch) continue;
+            const tagName = tagNameMatch[1].toLowerCase();
+
+            if (tagName === 'body' && !isClosing) {
+                inBody = true;
+                continue;
+            }
+            if (!inBody) continue;
+
+            if (isClosing) {
+                stack.pop();
+                counters.pop();
+            } else if (!isSelfClosing) {
+                const parentCounts = counters.length > 0 ? counters[counters.length - 1] : {};
+                parentCounts[tagName] = (parentCounts[tagName] || 0) + 1;
+                
+                stack.push(tagName);
+                counters.push({ _index: parentCounts[tagName] });
+            } else {
+                const parentCounts = counters.length > 0 ? counters[counters.length - 1] : {};
+                parentCounts[tagName] = (parentCounts[tagName] || 0) + 1;
+            }
+        }
+
+        let path = [];
+        for (let i = 0; i < stack.length; i++) {
+            const tag = stack[i];
+            const idx = counters[i]._index;
+            path.push(`${tag}:nth-of-type(${idx})`);
+        }
+        return path.join(' > ');
+    }
+
+    highlightHtmlFromPath(path) {
+        if (!path) return;
+        const html = this.textarea.value;
+        const parts = path.split(' > ');
+        
+        let searchIndex = html.indexOf('<body>');
+        if (searchIndex === -1) return;
+        searchIndex += 6;
+
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            const match = part.match(/([a-zA-Z1-6-]+):nth-of-type\((\d+)\)/);
+            if (!match) return;
+            const tag = match[1];
+            const targetCount = parseInt(match[2], 10);
+            
+            let currentCount = 0;
+            let tagRegex = new RegExp(`<(${tag})[\\s>]`, 'gi');
+            tagRegex.lastIndex = searchIndex;
+            
+            let found = false;
+            while (true) {
+                const m = tagRegex.exec(html);
+                if (!m) break;
+                currentCount++;
+                if (currentCount === targetCount) {
+                    searchIndex = m.index;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return; // Nodo no encontrado en string
+            if (i < parts.length - 1) {
+                searchIndex += tag.length + 1; // avanzar para buscar hijos
+            }
+        }
+
+        // Si encontramos el nodo final, seleccionamos su etiqueta de apertura
+        const endOfTag = html.indexOf('>', searchIndex);
+        if (endOfTag !== -1) {
+            this.textarea.focus();
+            this.textarea.setSelectionRange(searchIndex, endOfTag + 1);
+            
+            // Hacer scroll hasta esa línea
+            const textToCursor = html.substring(0, searchIndex);
+            const lines = textToCursor.split('\n').length;
+            const lineHeight = 20; // aprox en CSS
+            this.textarea.scrollTop = Math.max(0, (lines - 5) * lineHeight);
+        }
     }
 }

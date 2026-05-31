@@ -1,0 +1,21 @@
+{
+  "name": "Container",
+  "tag": "div",
+  "icon": "cornersOut",
+  "className": "escms-container",
+  "allowedControls": [
+    "bgColor",
+    "bgGradient",
+    "bgImage",
+    "margin",
+    "padding",
+    "border",
+    "opacity"
+  ],
+  "styles": {
+    "maxWidth": "var(--max-width)",
+    "margin": "0 auto",
+    "padding": "20px"
+  },
+  "category": "layout"
+}

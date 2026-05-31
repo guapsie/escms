@@ -1,0 +1,40 @@
+{
+  "name": "Grid",
+  "tag": "div",
+  "icon": "grid",
+  "className": "escms-grid",
+  "allowedControls": [
+    "columnsCount",
+    "bgColor",
+    "bgGradient",
+    "margin",
+    "padding",
+    "border",
+    "opacity"
+  ],
+  "attributes": {
+    "data-columns": "3"
+  },
+  "styles": {
+    "display": "grid",
+    "gridTemplateColumns": "repeat(3, 1fr)",
+    "gap": "1rem",
+    "width": "100%",
+    "minHeight": "50px"
+  },
+  "children": [
+    {
+      "tag": "div",
+      "className": "escms-grid-item"
+    },
+    {
+      "tag": "div",
+      "className": "escms-grid-item"
+    },
+    {
+      "tag": "div",
+      "className": "escms-grid-item"
+    }
+  ],
+  "category": "layout"
+}

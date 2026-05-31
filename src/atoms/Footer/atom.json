@@ -1,0 +1,15 @@
+{
+  "name": "Footer",
+  "tag": "footer",
+  "icon": "caretLineDown",
+  "className": "escms-footer",
+  "allowedControls": [
+    "bgColor",
+    "bgGradient",
+    "margin",
+    "padding",
+    "border",
+    "opacity"
+  ],
+  "category": "layout"
+}

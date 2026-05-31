@@ -174,10 +174,51 @@ class EscmsCanvas {
         btnPlus.addEventListener('click', () => this.setZoom(this.currentZoom + 0.25));
         btnReset.addEventListener('click', () => this.setZoom(1));
 
+        const btnPreview = createZoomBtn('');
+        btnPreview.innerHTML = icons.eye;
+        btnPreview.style.marginLeft = '0.5rem';
+        btnPreview.style.color = 'var(--accent-solid)';
+        btnPreview.title = 'Preview Mode';
+        
+        const svgPrev = btnPreview.querySelector('svg');
+        if (svgPrev) { svgPrev.style.width = '18px'; svgPrev.style.height = '18px'; }
+
         zoomGroup.appendChild(magnifierIcon);
         zoomGroup.appendChild(btnMinus);
         zoomGroup.appendChild(btnReset);
         zoomGroup.appendChild(btnPlus);
+        zoomGroup.appendChild(btnPreview);
+
+        const btnExitPreview = document.createElement('button');
+        btnExitPreview.id = 'btn-exit-preview';
+        btnExitPreview.innerHTML = `${icons.eye} Exit Preview`;
+        const svgExit = btnExitPreview.querySelector('svg');
+        if (svgExit) { svgExit.style.width = '18px'; svgExit.style.height = '18px'; }
+        document.body.appendChild(btnExitPreview);
+
+        const togglePreview = () => {
+            document.body.classList.toggle('escms-preview-mode');
+            if (this.host && this.host.shadowRoot) {
+                const docRoot = this.host.shadowRoot.getElementById('document-root');
+                if (docRoot) docRoot.classList.toggle('escms-preview-mode');
+            }
+        };
+
+        btnPreview.addEventListener('click', togglePreview);
+
+        btnExitPreview.addEventListener('click', () => {
+            document.body.classList.remove('escms-preview-mode');
+            if (this.host && this.host.shadowRoot) {
+                const docRoot = this.host.shadowRoot.getElementById('document-root');
+                if (docRoot) docRoot.classList.remove('escms-preview-mode');
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.body.classList.contains('escms-preview-mode')) {
+                btnExitPreview.click();
+            }
+        });
 
         toolbar.appendChild(pillGroup);
         toolbar.appendChild(zoomGroup);
@@ -326,6 +367,7 @@ class EscmsCanvas {
 
     createViewTabs() {
         const tabsContainer = document.createElement('div');
+        tabsContainer.id = 'escms-view-tabs';
         tabsContainer.style.display = 'flex';
         tabsContainer.style.justifyContent = 'center';
         tabsContainer.style.padding = '0.75rem 0';

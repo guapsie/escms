@@ -1,0 +1,14 @@
+{
+  "name": "Spacer",
+  "tag": "div",
+  "icon": "spacer",
+  "className": "escms-spacer",
+  "allowedControls": [
+    "height"
+  ],
+  "styles": {
+    "width": "100%",
+    "height": "50px"
+  },
+  "category": "layout"
+}

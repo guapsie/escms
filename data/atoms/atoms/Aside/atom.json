@@ -1,0 +1,15 @@
+{
+  "name": "Aside",
+  "tag": "aside",
+  "icon": "sidebarSimple",
+  "className": "escms-aside",
+  "allowedControls": [
+    "bgColor",
+    "bgGradient",
+    "margin",
+    "padding",
+    "border",
+    "opacity"
+  ],
+  "category": "layout"
+}
