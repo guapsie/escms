@@ -19,22 +19,22 @@ class EscmsTopBar {
         this.container.style.padding = '0 1.5rem';
         this.container.style.height = '100%';
 
+        this.container.style.position = 'relative';
+
         this.container.innerHTML = `
-            <div style="font-weight: 600; letter-spacing: 1px;">ESCMS</div>
-            
-            <div>
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="font-weight: 600; letter-spacing: 1px;">ESCMS</div>
                 <button id="btn-toggle-publish" class="pill-btn">
                     <span class="icon-slot">${icons.pencil}</span>
                     <span data-i18n="topbar.draft"></span>
                 </button>
             </div>
             
+            <div id="escms-topbar-center" style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; height: 100%;"></div>
+            
             <div style="display: flex; gap: 0.5rem;">
                 <button class="icon-btn" id="btn-network" data-i18n-title="topbar.network_btn">
                     ${icons.shareNetwork}
-                </button>
-                <button class="icon-btn" data-i18n-title="topbar.seo">
-                    ${icons.magnifyingGlass}
                 </button>
                 <button class="icon-btn" id="btn-fullscreen" data-i18n-title="topbar.fullscreen">
                     ${icons.cornersOut}

@@ -10,6 +10,8 @@ class EscmsEditor {
         this.selection = null;
         this.settings = null;
         this.autosave = null;
+        this.seoView = null;
+        this.htmlView = null;
     }
 
     async init() {
@@ -25,6 +27,12 @@ class EscmsEditor {
 
         this.canvas = new EscmsCanvas();
         this.canvas.init();
+
+        this.seoView = new EscmsSeoView();
+        this.seoView.init(this.canvas.area);
+
+        this.htmlView = new EscmsHtmlView();
+        this.htmlView.init(this.canvas.area);
 
         this.host = document.getElementById('escms-canvas-host');
         if (!this.host) return;

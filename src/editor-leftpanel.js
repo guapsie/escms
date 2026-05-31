@@ -11,8 +11,14 @@ class EscmsLeftPanel {
                 id: 'layout',
                 name: 'leftpanel.cat_layout',
                 atoms: [
+                    { name: 'Header', tag: 'header', icon: icons.caretLineUp, className: 'escms-header', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
+                    { name: 'Main', tag: 'main', icon: icons.square, className: 'escms-main', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
                     { name: 'Section', tag: 'section', icon: icons.rows, className: 'escms-section', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
-                    { name: 'Container', tag: 'div', icon: icons.square, className: 'escms-container', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
+                    { name: 'Article', tag: 'article', icon: icons.article, className: 'escms-article', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
+                    { name: 'Aside', tag: 'aside', icon: icons.sidebarSimple, className: 'escms-aside', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
+                    { name: 'Nav', tag: 'nav', icon: icons.compass, className: 'escms-nav', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
+                    { name: 'Footer', tag: 'footer', icon: icons.caretLineDown, className: 'escms-footer', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
+                    { name: 'Container', tag: 'div', icon: icons.cornersOut, className: 'escms-container', allowedControls: ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'] },
                     {
                         name: 'Columns',
                         tag: 'div',
@@ -110,6 +116,7 @@ class EscmsLeftPanel {
         this.container.style.flexDirection = 'column';
         this.container.style.boxSizing = 'border-box';
         this.container.style.height = '100%';
+        this.container.style.overflow = 'hidden';
 
         const header = document.createElement('div');
         header.style.display = 'flex';
@@ -156,6 +163,7 @@ class EscmsLeftPanel {
         this.contentArea.style.overflowY = 'auto';
         this.contentArea.style.display = 'flex';
         this.contentArea.style.flexDirection = 'column';
+        this.contentArea.style.paddingBottom = '4rem';
 
         this.container.appendChild(header);
         this.container.appendChild(this.contentArea);
@@ -197,7 +205,7 @@ class EscmsLeftPanel {
 
             const grid = document.createElement('div');
             grid.style.display = 'grid';
-            grid.style.gridTemplateColumns = '1fr 1fr';
+            grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
             grid.style.gap = '8px';
             grid.style.padding = '0 15px 15px 15px';
 
@@ -211,15 +219,15 @@ class EscmsLeftPanel {
                 btn.style.background = '#1f1f1f';
                 btn.style.border = '1px solid rgba(255, 255, 255, 0.05)';
                 btn.style.borderRadius = '6px';
-                btn.style.padding = '1rem';
+                btn.style.padding = '0.5rem';
                 btn.style.color = 'var(--text-solid)';
                 btn.style.cursor = 'pointer';
                 btn.style.transition = 'all 0.2s ease';
 
                 const svg = btn.querySelector('svg');
                 if (svg) {
-                    svg.style.width = '24px';
-                    svg.style.height = '24px';
+                    svg.style.width = '20px';
+                    svg.style.height = '20px';
                     svg.style.pointerEvents = 'none';
                 }
 

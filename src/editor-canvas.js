@@ -26,7 +26,15 @@ class EscmsCanvas {
         this.area.style.position = 'relative';
 
         const toolbar = this.createToolbar();
-        this.area.insertBefore(toolbar, this.host);
+        const topbarCenter = document.getElementById('escms-topbar-center');
+        if (topbarCenter) {
+            topbarCenter.appendChild(toolbar);
+        } else {
+            this.area.insertBefore(toolbar, this.host);
+        }
+
+        const viewTabs = this.createViewTabs();
+        this.area.insertBefore(viewTabs, this.host || this.area.firstChild);
 
         this.viewport = document.createElement('div');
         this.viewport.id = 'escms-viewport';
@@ -83,13 +91,7 @@ class EscmsCanvas {
     createToolbar() {
         const toolbar = document.createElement('div');
         toolbar.style.display = 'flex';
-        toolbar.style.justifyContent = 'center';
-        toolbar.style.padding = '0.5rem';
-        toolbar.style.flexShrink = '0';
-        toolbar.style.zIndex = '10';
-        toolbar.style.position = 'relative';
-        toolbar.style.backgroundColor = '#0a0a0a';
-        toolbar.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
+        toolbar.style.alignItems = 'center';
 
         const pillGroup = document.createElement('div');
         pillGroup.style.display = 'flex';
@@ -321,4 +323,79 @@ class EscmsCanvas {
             });
         }, 50);
     }
+
+    createViewTabs() {
+        const tabsContainer = document.createElement('div');
+        tabsContainer.style.display = 'flex';
+        tabsContainer.style.justifyContent = 'center';
+        tabsContainer.style.padding = '0.75rem 0';
+        tabsContainer.style.backgroundColor = '#0a0a0a';
+        tabsContainer.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
+        tabsContainer.style.flexShrink = '0';
+        tabsContainer.style.zIndex = '10';
+
+        const pillGroup = document.createElement('div');
+        pillGroup.style.display = 'flex';
+        pillGroup.style.background = '#1f1f1f';
+        pillGroup.style.borderRadius = '9999px';
+        pillGroup.style.padding = '2px';
+        pillGroup.style.gap = '2px';
+
+        const tabs = [
+            { id: 'editor', label: 'EDITOR' },
+            { id: 'html', label: 'HTML' },
+            { id: 'seo', label: 'SEO' }
+        ];
+
+        this.tabButtons = {};
+
+        tabs.forEach(tab => {
+            const btn = document.createElement('button');
+            btn.textContent = tab.label;
+            btn.style.fontSize = '0.75rem';
+            btn.style.fontWeight = '600';
+            btn.style.letterSpacing = '0.5px';
+            btn.style.padding = '4px 12px';
+            btn.style.border = 'none';
+            btn.style.borderRadius = '9999px';
+            btn.style.background = tab.id === 'editor' ? 'var(--accent-solid)' : 'transparent';
+            btn.style.color = tab.id === 'editor' ? 'var(--text-solid)' : 'rgba(245, 245, 245, 0.4)';
+            btn.style.cursor = 'pointer';
+            btn.style.transition = 'all 0.2s ease';
+
+            btn.addEventListener('click', () => this.switchMainView(tab.id));
+
+            this.tabButtons[tab.id] = btn;
+            pillGroup.appendChild(btn);
+        });
+
+        tabsContainer.appendChild(pillGroup);
+        return tabsContainer;
+    }
+
+    switchMainView(viewId) {
+        Object.entries(this.tabButtons).forEach(([id, btn]) => {
+            if (id === viewId) {
+                btn.style.background = 'var(--accent-solid)';
+                btn.style.color = 'var(--text-solid)';
+                btn.style.boxShadow = '0 0 10px var(--accent-faint)';
+            } else {
+                btn.style.background = 'transparent';
+                btn.style.color = 'rgba(245, 245, 245, 0.4)';
+                btn.style.boxShadow = 'none';
+            }
+        });
+
+        this.viewport.style.display = viewId === 'editor' ? 'block' : 'none';
+
+        const topbarCenter = document.getElementById('escms-topbar-center');
+        if (topbarCenter) {
+            topbarCenter.style.opacity = viewId === 'editor' ? '1' : '0.2';
+            topbarCenter.style.pointerEvents = viewId === 'editor' ? 'auto' : 'none';
+        }
+
+        window.dispatchEvent(new CustomEvent('escms-view-change', { detail: { viewId } }));
+    }
+
+
 }
