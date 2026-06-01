@@ -38,7 +38,7 @@ class EscmsHtmlView {
         this.htmlContainer.style.left = '2rem';
         this.htmlContainer.style.right = '2rem';
         this.htmlContainer.style.bottom = '2rem';
-        this.htmlContainer.style.overflow = 'auto';
+        this.htmlContainer.style.overflow = 'hidden'; // Hide its own scrollbar, sync with textarea
         this.htmlContainer.style.pointerEvents = 'none'; // Para que los clicks pasen al textarea
         this.htmlContainer.style.backgroundImage = 'linear-gradient(rgba(255, 255, 255, 0.02) 50%, transparent 50%)';
         this.htmlContainer.style.backgroundSize = '100% 3em';

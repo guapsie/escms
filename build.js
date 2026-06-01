@@ -49,7 +49,8 @@ const payload = {
     php: [],
     js: [],
     css: [],
-    atoms: []
+    atoms: [],
+    templates: []
 };
 
 const files = fs.readdirSync(srcDir);
@@ -77,7 +78,7 @@ files.forEach(file => {
     }
 });
 
-// Leer átomos de src/atoms
+// Leer atoms de src/atoms
 const atomsDir = path.join(srcDir, 'atoms');
 if (fs.existsSync(atomsDir)) {
     const atomFolders = fs.readdirSync(atomsDir);
@@ -85,10 +86,27 @@ if (fs.existsSync(atomsDir)) {
         const atomJsonPath = path.join(atomsDir, folder, 'atom.json');
         if (fs.existsSync(atomJsonPath)) {
             const content = fs.readFileSync(atomJsonPath, 'utf8');
-            // Quitamos saltos de línea para minificar un poco
             const minified = JSON.stringify(JSON.parse(content));
             payload.atoms.push({ folder: folder, b64: Buffer.from(minified).toString('base64') });
             console.log(`[+] Empaquetando Atom JSON: ${folder}`);
+        }
+    });
+}
+
+// Leer templates de src/templates
+const templatesDir = path.join(srcDir, 'templates');
+if (fs.existsSync(templatesDir)) {
+    const tplFolders = fs.readdirSync(templatesDir);
+    tplFolders.forEach(folder => {
+        const tplPath = path.join(templatesDir, folder);
+        if (fs.statSync(tplPath).isDirectory()) {
+            const files = fs.readdirSync(tplPath);
+            files.forEach(file => {
+                const filePath = path.join(tplPath, file);
+                const content = fs.readFileSync(filePath, 'utf8');
+                payload.templates.push({ folder: folder, file: file, b64: Buffer.from(content).toString('base64') });
+                console.log(`[+] Empaquetando Template ${folder}: ${file}`);
+            });
         }
     });
 }
@@ -97,6 +115,7 @@ const phpArrayStr = payload.php.map(f => `'${f.name}' => '${f.b64}'`).join(',\n 
 const jsArrayStr = payload.js.map(f => `'${f.name}' => '${f.b64}'`).join(',\n    ');
 const cssArrayStr = payload.css.map(f => `'${f.name}' => '${f.b64}'`).join(',\n    ');
 const atomsArrayStr = payload.atoms.map(f => `'${f.folder}' => '${f.b64}'`).join(',\n    ');
+const templatesArrayStr = payload.templates.map(f => `['folder' => '${f.folder}', 'file' => '${f.file}', 'b64' => '${f.b64}']`).join(',\n    ');
 
 // --- 4. LA MUTACIÓN (Lógica del instalador Kamikaze) ---
 // Extraemos el cascarón vivo (01-installer.php) si existe, o generamos uno básico.
@@ -124,7 +143,8 @@ if ($__is_kamikaze_trigger) {
         __DIR__ . '/core',
         __DIR__ . '/assets/js',
         __DIR__ . '/assets/css',
-        __DIR__ . '/data'
+        __DIR__ . '/data',
+        __DIR__ . '/data/user-settings'
     ];
     foreach ($__dirs as $d) {
         if (!is_dir($d)) mkdir($d, 0755, true);
@@ -164,6 +184,22 @@ if ($__is_kamikaze_trigger) {
         if (!is_dir($atom_dir)) {
             mkdir($atom_dir, 0755, true);
             file_put_contents($atom_dir . '/atom.json', base64_decode($b64));
+        }
+    }
+
+    // 4.6 Vomitar Templates en /data/templates/
+    $__tpl_payload = [
+    ${templatesArrayStr}
+    ];
+    if (!is_dir(__DIR__ . '/data/templates')) mkdir(__DIR__ . '/data/templates', 0755, true);
+    foreach ($__tpl_payload as $tpl) {
+        $tpl_dir = __DIR__ . '/data/templates/' . $tpl['folder'];
+        if (!is_dir($tpl_dir)) {
+            mkdir($tpl_dir, 0755, true);
+        }
+        $tpl_file = $tpl_dir . '/' . $tpl['file'];
+        if (!file_exists($tpl_file)) {
+            file_put_contents($tpl_file, base64_decode($tpl['b64']));
         }
     }
 

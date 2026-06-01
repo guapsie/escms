@@ -1,0 +1,42 @@
+/* 
+  Template: pichi
+  Author: ESCMS
+*/
+
+:root {
+  --color-primary: #3b82f6;
+  --color-background: #0a0a0a;
+  --color-text: #f5f5f5;
+  --font-heading: 'Inter', sans-serif;
+  --font-body: 'Roboto', sans-serif;
+  --max-width: 1200px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  margin-top: 0;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.escms-container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+}

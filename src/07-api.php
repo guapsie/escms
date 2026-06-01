@@ -134,6 +134,16 @@ if (str_starts_with($route, 'api/')) {
                     $defaultData = '{"tag":"div","classes":["escms-container"],"styles":"max-width: var(--max-width); margin: 0px auto; padding: 20px;","children":[{"tag":"h2","children":[{"tag":"span","children":["Welcome to ESCMS"]}]},{"tag":"p","children":[{"tag":"span","children":["This is your brand new lightweight CMS."]}]}]}';
                     $defaultHtml = '<div class="escms-container" style="max-width: var(--max-width); margin: 0px auto; padding: 20px;"><h2>New Heading</h2><p>Type something here...</p></div>';
                     
+                    $tpl_path = __DIR__ . '/../data/templates/pichi/pichi.json';
+                    if (file_exists($tpl_path)) {
+                        $tpl = json_decode(file_get_contents($tpl_path), true);
+                        if (isset($tpl['views']['home'])) {
+                            // Envolvemos los nodos de la vista home en un container principal si es un array
+                            $nodes = $tpl['views']['home'];
+                            $defaultData = json_encode(['tag' => 'div', 'classes' => ['escms-template-home'], 'children' => $nodes]);
+                        }
+                    }
+
                     $stmt = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html) VALUES (?, ?, ?, ?)");
                     $stmt->execute(['Home', 'home', $defaultData, $defaultHtml]);
                     $homeId = $pdo->lastInsertId();
@@ -157,6 +167,56 @@ if (str_starts_with($route, 'api/')) {
                 $send_json(['status' => 'success', 'pages' => $pages]);
             } catch (Throwable $e) {
                 $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+        case 'api/css/read':
+            if ($method !== 'GET') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            
+            $userCssPath = __DIR__ . '/../data/user-settings/style.css';
+            $tplCssPath = __DIR__ . '/../data/templates/pichi/style.css';
+            
+            if (file_exists($userCssPath)) {
+                $send_json(['status' => 'success', 'css' => file_get_contents($userCssPath), 'source' => 'user']);
+            } elseif (file_exists($tplCssPath)) {
+                $send_json(['status' => 'success', 'css' => file_get_contents($tplCssPath), 'source' => 'template']);
+            } else {
+                $send_json(['status' => 'success', 'css' => '', 'source' => 'none']);
+            }
+            break;
+
+        case 'api/css/save':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            
+            try {
+                $css = $input['css'] ?? '';
+                $userDir = __DIR__ . '/../data/user-settings';
+                if (!is_dir($userDir)) {
+                    mkdir($userDir, 0755, true);
+                }
+                file_put_contents($userDir . '/style.css', $css);
+                $send_json(['status' => 'success']);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 500);
+            }
+            break;
+
+        case 'api/css/restore':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            
+            try {
+                $userCssPath = __DIR__ . '/../data/user-settings/style.css';
+                if (file_exists($userCssPath)) {
+                    unlink($userCssPath);
+                }
+                $tplCssPath = __DIR__ . '/../data/templates/pichi/style.css';
+                $css = file_exists($tplCssPath) ? file_get_contents($tplCssPath) : '';
+                $send_json(['status' => 'success', 'css' => $css]);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 500);
             }
             break;
 
