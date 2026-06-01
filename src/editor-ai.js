@@ -23,10 +23,12 @@ class EscmsCopilot {
                 this.provider = data.provider || 'gemini';
                 this.model = data.model || '';
                 
-                if (this.hasKey) {
-                    this.renderChat();
-                } else {
-                    this.renderSettings();
+                if (this.container) {
+                    if (this.hasKey) {
+                        this.renderChat();
+                    } else {
+                        this.renderSettings();
+                    }
                 }
             }
         } catch (err) {
@@ -41,178 +43,48 @@ class EscmsCopilot {
         this.container.style.display = 'flex';
         this.container.style.flexDirection = 'column';
         this.container.style.gap = '1.5rem';
+        this.container.style.alignItems = 'center';
+        this.container.style.justifyContent = 'center';
+        this.container.style.height = '100%';
 
-        const header = document.createElement('div');
-        header.innerHTML = `<h3 style="color:#fff; margin:0 0 0.5rem 0; font-weight:500; font-size:1rem; display:flex; align-items:center; gap:8px;">${icons.ai} Setup Copilot AI</h3>
-                            <p style="color:rgba(245,245,245,0.5); font-size:0.8rem; margin:0; line-height:1.4;">Select your preferred AI provider and enter your API Key. The key is securely stored in your local SQLite database.</p>`;
+        const icon = document.createElement('div');
+        icon.innerHTML = icons.ai || '';
+        icon.style.color = 'rgba(245,245,245,0.2)';
+        const svg = icon.querySelector('svg');
+        if (svg) { svg.style.width = '48px'; svg.style.height = '48px'; }
+
+        const text = document.createElement('div');
+        text.setAttribute('data-i18n', 'ai.panel_unconfigured');
+        text.textContent = this.i18n ? (this.i18n.dictionary['ai.panel_unconfigured'] || 'AI Copilot is not configured.') : 'AI Copilot is not configured.';
+        text.style.color = 'rgba(245,245,245,0.6)';
+        text.style.fontSize = '0.9rem';
+
+        const btn = document.createElement('button');
+        btn.innerHTML = `${icons.gearFine || ''} <span style="margin-left:8px;" data-i18n="ai.btn_open_settings">${this.i18n ? (this.i18n.dictionary['ai.btn_open_settings'] || 'Open Global Settings') : 'Open Global Settings'}</span>`;
+        btn.style.display = 'flex';
+        btn.style.alignItems = 'center';
+        btn.style.background = 'var(--accent-solid)';
+        btn.style.color = '#fff';
+        btn.style.border = 'none';
+        btn.style.padding = '0.75rem 1.5rem';
+        btn.style.borderRadius = '6px';
+        btn.style.cursor = 'pointer';
+        btn.style.fontWeight = '500';
         
-        const svg = header.querySelector('svg');
-        if (svg) {
-            svg.style.width = '20px';
-            svg.style.height = '20px';
-        }
+        const btnSvg = btn.querySelector('svg');
+        if (btnSvg) { btnSvg.style.width = '16px'; btnSvg.style.height = '16px'; }
 
-        const form = document.createElement('div');
-        form.style.display = 'flex';
-        form.style.flexDirection = 'column';
-        form.style.gap = '1rem';
-
-        // Select Provider using EscmsSelect if available, else fallback
-        const selectContainer = document.createElement('div');
-        if (typeof EscmsSelect !== 'undefined') {
-            const selectControl = new EscmsSelect(null, [
-                {value: 'gemini', label: 'Google Gemini'},
-                {value: 'claude', label: 'Anthropic Claude'}
-            ], this.provider, (val) => {
-                this.provider = val;
-            });
-            selectContainer.appendChild(selectControl.element);
-        }
-
-        const labelKey = document.createElement('label');
-        labelKey.textContent = 'API Key';
-        labelKey.style.color = 'rgba(245,245,245,0.6)';
-        labelKey.style.fontSize = '0.8rem';
-        labelKey.style.display = 'block';
-        labelKey.style.marginBottom = '0.5rem';
-
-        const inputKey = document.createElement('input');
-        inputKey.type = 'password';
-        inputKey.placeholder = 'Paste your API key here...';
-        inputKey.style.padding = '0.75rem';
-        inputKey.style.background = 'rgba(255,255,255,0.05)';
-        inputKey.style.border = '1px solid rgba(255,255,255,0.1)';
-        inputKey.style.borderRadius = '6px';
-        inputKey.style.color = '#fff';
-        inputKey.style.outline = 'none';
-        inputKey.style.width = '100%';
-        inputKey.style.boxSizing = 'border-box';
-        inputKey.style.transition = 'border-color 0.2s';
-
-        inputKey.addEventListener('focus', () => inputKey.style.borderColor = 'var(--accent-solid)');
-        inputKey.addEventListener('blur', () => inputKey.style.borderColor = 'rgba(255,255,255,0.1)');
-
-        const keyContainer = document.createElement('div');
-        keyContainer.appendChild(labelKey);
-        keyContainer.appendChild(inputKey);
-
-        const btnLoad = document.createElement('button');
-        btnLoad.textContent = 'Load Models';
-        btnLoad.style.background = 'var(--accent-solid)';
-        btnLoad.style.color = '#fff';
-        btnLoad.style.border = 'none';
-        btnLoad.style.padding = '0.75rem';
-        btnLoad.style.borderRadius = '6px';
-        btnLoad.style.cursor = 'pointer';
-        btnLoad.style.fontWeight = '500';
-        btnLoad.style.marginTop = '0.5rem';
-        btnLoad.style.transition = 'transform 0.1s, opacity 0.2s';
-
-        const modelContainer = document.createElement('div');
-        modelContainer.style.display = 'none';
-        modelContainer.style.flexDirection = 'column';
-        modelContainer.style.gap = '1rem';
-
-        const btnSave = document.createElement('button');
-        btnSave.textContent = 'Save Configuration';
-        btnSave.style.background = 'rgba(255,255,255,0.1)';
-        btnSave.style.color = '#fff';
-        btnSave.style.border = '1px solid rgba(255,255,255,0.2)';
-        btnSave.style.padding = '0.75rem';
-        btnSave.style.borderRadius = '6px';
-        btnSave.style.cursor = 'pointer';
-        btnSave.style.fontWeight = '500';
-        btnSave.style.transition = 'background 0.2s';
-        
-        btnSave.addEventListener('mouseenter', () => btnSave.style.background = 'rgba(255,255,255,0.15)');
-        btnSave.addEventListener('mouseleave', () => btnSave.style.background = 'rgba(255,255,255,0.1)');
-
-        btnLoad.addEventListener('click', async () => {
-            const key = inputKey.value.trim();
-            if (!key) {
-                inputKey.style.animation = 'escms-shake 0.4s';
-                setTimeout(() => inputKey.style.animation = '', 400);
-                return;
-            }
-
-            btnLoad.textContent = 'Loading...';
-            btnLoad.style.opacity = '0.7';
-
-            try {
-                const res = await fetch('/api/ai/models', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({provider: this.provider, key: key})
-                });
-                const data = await res.json();
-                
-                btnLoad.textContent = 'Load Models';
-                btnLoad.style.opacity = '1';
-
-                if (data.status === 'success' && data.models && data.models.length > 0) {
-                    btnLoad.style.display = 'none';
-                    modelContainer.style.display = 'flex';
-                    modelContainer.innerHTML = '';
-                    
-                    this.model = data.models[0].value;
-                    const selectModel = new EscmsSelect(null, data.models, this.model, (val) => {
-                        this.model = val;
-                    });
-                    
-                    const labelModel = document.createElement('label');
-                    labelModel.textContent = 'AI Model';
-                    labelModel.style.color = 'rgba(245,245,245,0.6)';
-                    labelModel.style.fontSize = '0.8rem';
-                    labelModel.style.display = 'block';
-                    labelModel.style.marginBottom = '0.5rem';
-
-                    modelContainer.appendChild(labelModel);
-                    modelContainer.appendChild(selectModel.element);
-                    modelContainer.appendChild(btnSave);
-                } else {
-                    alert('Error loading models: ' + (data.msg || 'No models found'));
-                }
-            } catch (err) {
-                console.error(err);
-                btnLoad.textContent = 'Load Models';
-                btnLoad.style.opacity = '1';
-                alert('Network error while loading models');
+        btn.addEventListener('click', () => {
+            const gearBtn = document.getElementById('btn-settings');
+            if (gearBtn) gearBtn.click();
+            if (window.escmsEditor && window.escmsEditor.globalSettings) {
+                window.escmsEditor.globalSettings.switchTab('general');
             }
         });
 
-        btnSave.addEventListener('click', async () => {
-            const key = inputKey.value.trim();
-            btnSave.textContent = 'Saving...';
-            
-            try {
-                const res = await fetch('/api/ai/settings', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({provider: this.provider, key: key, model: this.model})
-                });
-                const data = await res.json();
-                if (data.status === 'success') {
-                    if (window.escmsEditorApp && window.escmsEditorApp.playSound) {
-                        window.escmsEditorApp.playSound('success');
-                    }
-                    this.checkSettings();
-                } else {
-                    alert('Error saving config');
-                    btnSave.textContent = 'Save Configuration';
-                }
-            } catch (err) {
-                console.error(err);
-                btnSave.textContent = 'Save Configuration';
-            }
-        });
-
-        form.appendChild(selectContainer);
-        form.appendChild(keyContainer);
-        form.appendChild(btnLoad);
-        form.appendChild(modelContainer);
-
-        this.container.appendChild(header);
-        this.container.appendChild(form);
+        this.container.appendChild(icon);
+        this.container.appendChild(text);
+        this.container.appendChild(btn);
     }
 
     renderChat() {
@@ -232,7 +104,7 @@ class EscmsCopilot {
         header.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
 
         const title = document.createElement('div');
-        title.innerHTML = `${icons.ai || ''} <span style="font-weight:500;">Copilot</span> <span style="font-size:0.7rem; color:var(--accent-solid); opacity:0.8; margin-left:8px; text-transform:uppercase;">${this.provider}</span>`;
+        title.innerHTML = `${icons.ai || ''} <span style="font-weight:500;" data-i18n="ai.panel_title">${this.i18n ? (this.i18n.dictionary['ai.panel_title'] || 'Copilot') : 'Copilot'}</span> <span style="font-size:0.7rem; color:var(--accent-solid); opacity:0.8; margin-left:8px; text-transform:uppercase;">${this.provider}</span>`;
         title.style.color = '#fff';
         title.style.display = 'flex';
         title.style.alignItems = 'center';
@@ -256,8 +128,11 @@ class EscmsCopilot {
         btnSettings.style.display = 'flex';
         btnSettings.style.alignItems = 'center';
         btnSettings.addEventListener('click', () => {
-            this.hasKey = false; // Force re-render settings
-            this.renderSettings();
+            const gearBtn = document.getElementById('btn-settings');
+            if (gearBtn) gearBtn.click();
+            if (window.escmsEditor && window.escmsEditor.globalSettings) {
+                window.escmsEditor.globalSettings.switchTab('general');
+            }
         });
 
         header.appendChild(title);
@@ -284,7 +159,8 @@ class EscmsCopilot {
         inputContainer.style.boxSizing = 'border-box';
 
         this.promptInput = document.createElement('textarea');
-        this.promptInput.placeholder = 'Ask Copilot...';
+        this.promptInput.setAttribute('data-i18n-placeholder', 'ai.chat_placeholder'); // Optional if we want to add support for this in engine
+        this.promptInput.placeholder = this.i18n ? (this.i18n.dictionary['ai.chat_placeholder'] || 'Ask Copilot...') : 'Ask Copilot...';
         this.promptInput.style.width = '100%';
         this.promptInput.style.boxSizing = 'border-box';
         this.promptInput.style.minHeight = '42px';
@@ -348,7 +224,7 @@ class EscmsCopilot {
         this.chatHistory.forEach(msg => this.appendMessage(msg.role, msg.text));
         
         if (this.chatHistory.length === 0) {
-            this.appendMessage('assistant', 'Hi! I am your AI Copilot. Select a text element on the canvas and ask me to fill it with content, or just ask me anything.');
+            this.appendMessage('assistant', this.i18n ? (this.i18n.dictionary['ai.welcome'] || 'Hi! I am your AI Copilot. Select a text element on the canvas and ask me to fill it with content, or just ask me anything.') : 'Hi! I am your AI Copilot. Select a text element on the canvas and ask me to fill it with content, or just ask me anything.');
         }
     }
 
@@ -362,16 +238,72 @@ class EscmsCopilot {
 
         const typingId = this.appendMessage('assistant', '<span class="escms-typing">...</span>');
 
+        const context = this.getDomContext();
+        const fullPrompt = `${text}\n\n[CONTEXTO DOM ACTUAL]\n${context}`;
+
         try {
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({prompt: text})
+                body: JSON.stringify({prompt: fullPrompt})
             });
             const data = await res.json();
             
             if (data.status === 'success') {
-                this.updateMessage(typingId, data.text);
+                let aiText = data.text;
+                let parsedCommands = null;
+
+                // Extraer el JSON de la respuesta
+                const cmdIndex = aiText.indexOf('"commands"');
+                
+                if (cmdIndex !== -1) {
+                    // Buscar la llave de apertura anterior a "commands"
+                    let startIdx = aiText.lastIndexOf('{', cmdIndex);
+                    if (startIdx !== -1) {
+                        let braceCount = 0;
+                        let endIdx = -1;
+                        for (let i = startIdx; i < aiText.length; i++) {
+                            if (aiText[i] === '{') braceCount++;
+                            else if (aiText[i] === '}') braceCount--;
+                            
+                            if (braceCount === 0) {
+                                endIdx = i;
+                                break;
+                            }
+                        }
+                        
+                        if (endIdx !== -1) {
+                            let jsonStr = aiText.substring(startIdx, endIdx + 1);
+                            try {
+                                // Limpiar comentarios // del JSON (groq suele meterlos)
+                                const cleanJsonStr = jsonStr.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
+                                const jsonObj = JSON.parse(cleanJsonStr);
+                                console.log('[ESCMS AI] JSON detectado:', jsonObj);
+                                if (jsonObj.commands && Array.isArray(jsonObj.commands)) {
+                                    parsedCommands = jsonObj.commands;
+                                }
+                                // Limpiar el JSON de la respuesta para que el usuario solo vea el texto
+                                aiText = aiText.replace(/```json[\s\S]*?```/gi, '').replace(jsonStr, '').trim();
+                            } catch (e) {
+                                aiText += `\n<br><span style="color:#ef4444;font-size:0.7rem;">(Error parsing JSON from AI: ${e.message})</span>`;
+                                console.error("Error parsing AI JSON", e);
+                            }
+                        }
+                    }
+                }
+
+                if (!aiText) aiText = '<span style="color:var(--accent-solid)">Comandos ejecutados.</span>';
+
+                let execErrors = '';
+                if (parsedCommands) {
+                    execErrors = this.executeCommands(parsedCommands);
+                }
+
+                if (execErrors) {
+                    aiText += `<br><span style="color:#ef4444;font-size:0.8rem;">${execErrors}</span>`;
+                }
+                
+                this.updateMessage(typingId, aiText);
             } else {
                 this.updateMessage(typingId, `<span style="color:#ef4444">Error: ${data.msg || 'Unknown error'} ${data.details ? '<br><small>'+data.details+'</small>' : ''}</span>`);
             }
@@ -451,7 +383,8 @@ class EscmsCopilot {
 
             const injectBtn = document.createElement('button');
             injectBtn.className = 'escms-inject-btn';
-            injectBtn.textContent = 'Inject to Selection';
+            injectBtn.setAttribute('data-i18n', 'ai.inject_btn');
+            injectBtn.textContent = this.i18n ? (this.i18n.dictionary['ai.inject_btn'] || 'Inject to Selection') : 'Inject to Selection';
             injectBtn.style.background = 'transparent';
             injectBtn.style.border = 'none';
             injectBtn.style.color = 'var(--accent-solid)';
@@ -465,8 +398,8 @@ class EscmsCopilot {
             injectBtn.addEventListener('mouseleave', () => injectBtn.style.opacity = '0.5');
             
             injectBtn.addEventListener('click', () => {
-                const selected = window.escmsEditorApp ? window.escmsEditorApp.leftPanel.selectedNode : null;
-                const docRoot = window.escmsEditorApp ? window.escmsEditorApp.canvas.shadowRoot.getElementById('document-root') : null;
+                const selected = window.escmsEditor ? window.escmsEditor.leftpanel.selectedNode : null;
+                const docRoot = window.escmsEditor && window.escmsEditor.canvas && window.escmsEditor.canvas.host ? window.escmsEditor.canvas.host.shadowRoot.getElementById('document-root') : null;
                 const target = selected || docRoot;
 
                 if (!target) return;
@@ -498,15 +431,15 @@ class EscmsCopilot {
                         target.appendChild(child);
                     });
                     
-                    if (window.escmsEditorApp && window.escmsEditorApp.playSound) {
-                        window.escmsEditorApp.playSound('success');
+                    if (window.escmsEditor && window.escmsEditor.playSound) {
+                        window.escmsEditor.playSound('success');
                     }
                 } else if (target.isContentEditable) {
                     // Si es texto
                     target.textContent = text; 
                     target.dispatchEvent(new Event('input', {bubbles:true}));
-                    if (window.escmsEditorApp && window.escmsEditorApp.playSound) {
-                        window.escmsEditorApp.playSound('success');
+                    if (window.escmsEditor && window.escmsEditor.playSound) {
+                        window.escmsEditor.playSound('success');
                     }
                 } else {
                     alert('Select an editable text element or a container first.');
@@ -514,5 +447,234 @@ class EscmsCopilot {
             });
             wrapper.appendChild(injectBtn);
         }
+    }
+
+    getDomContext() {
+        if (!window.escmsEditor || !window.escmsEditor.canvas || !window.escmsEditor.canvas.host) return "Canvas is empty or unavailable.";
+        const docRoot = window.escmsEditor.canvas.host.shadowRoot.getElementById('document-root');
+        if (!docRoot) return "Canvas is empty.";
+
+        let map = "";
+        const traverse = (node, depth) => {
+            if (node.nodeType !== Node.ELEMENT_NODE) return;
+            const tag = node.tagName.toLowerCase();
+            if (!node.id) {
+                node.id = 'escms-' + Math.random().toString(36).substr(2, 9);
+            }
+            const id = node.id;
+            const indent = '  '.repeat(depth);
+            map += `${indent}- ${tag} (id: ${id})\n`;
+            Array.from(node.children).forEach(child => traverse(child, depth + 1));
+        };
+        
+        map += `- div (id: canvas_root)\n`;
+        Array.from(docRoot.children).forEach(child => traverse(child, 1));
+        
+        const selected = window.escmsEditor.leftpanel.selectedNode;
+        if (selected) {
+            map += `\nElemento actualmente seleccionado: ${selected.tagName.toLowerCase()} (id: ${selected.id || 'no-id'})`;
+        }
+
+        return map;
+    }
+
+    findTargetNode(targetId) {
+        if (!window.escmsEditor || !window.escmsEditor.canvas || !window.escmsEditor.canvas.host) return null;
+        const docRoot = window.escmsEditor.canvas.host.shadowRoot.getElementById('document-root');
+        if (targetId === 'canvas_root' || !targetId) return docRoot;
+        return docRoot.querySelector(`#${targetId}`);
+    }
+
+    getAtomDefinition(type) {
+        if (!window.escmsEditor || !window.escmsEditor.leftpanel) return null;
+        const cats = window.escmsEditor.leftpanel.atomCategories;
+        for (let cat of cats) {
+            for (let atom of cat.atoms) {
+                if (atom.name === type || atom.name.toLowerCase() === type.toLowerCase()) {
+                    return atom;
+                }
+            }
+        }
+        return null;
+    }
+
+    createNodeFromDef(def) {
+        const atomDef = this.getAtomDefinition(def.type);
+        if (!atomDef) return null;
+
+        const el = document.createElement(atomDef.tag);
+        el.id = 'escms-' + Math.random().toString(36).substr(2, 9);
+        
+        let skipChildren = false;
+        if (def.content) {
+            el.textContent = def.content;
+            if (atomDef.category === 'text' || (atomDef.children && atomDef.children.length === 1 && atomDef.children[0].textKey)) {
+                skipChildren = true;
+            }
+        } else if (atomDef.textKey) {
+            el.textContent = this.i18n.dictionary[atomDef.textKey] || 'New Text';
+        }
+        
+        if (atomDef.className) el.className = atomDef.className;
+        if (def.className) el.className += ' ' + def.className;
+        
+        if (atomDef.attributes) {
+            Object.entries(atomDef.attributes).forEach(([k, v]) => el.setAttribute(k, v));
+        }
+        if (atomDef.styles) {
+            Object.assign(el.style, atomDef.styles);
+        }
+
+        if (def.styles) {
+            if (typeof def.styles === 'string') {
+                el.style.cssText += def.styles;
+            } else if (typeof def.styles === 'object') {
+                Object.entries(def.styles).forEach(([k, v]) => {
+                    const camelKey = k.replace(/-([a-z])/g, g => g[1].toUpperCase());
+                    el.style[camelKey] = v;
+                });
+            }
+        }
+
+        if (def.children && Array.isArray(def.children)) {
+            def.children.forEach(childDef => {
+                const childNode = this.createNodeFromDef(childDef);
+                if (childNode) el.appendChild(childNode);
+            });
+            if (el.classList && el.classList.contains('escms-columns')) {
+                const count = el.children.length;
+                el.setAttribute('data-columns', count);
+                el.style.gridTemplateColumns = count > 0 ? `repeat(${count}, 1fr)` : 'none';
+            }
+        } else if (atomDef.children && !skipChildren) {
+            atomDef.children.forEach(childAtom => {
+                const childEl = document.createElement(childAtom.tag);
+                childEl.id = 'escms-' + Math.random().toString(36).substr(2, 9);
+                if (childAtom.textKey) childEl.textContent = this.i18n.dictionary[childAtom.textKey] || 'Item';
+                if (childAtom.className) childEl.className = childAtom.className;
+                if (childAtom.attributes) {
+                    Object.entries(childAtom.attributes).forEach(([k, v]) => childEl.setAttribute(k, v));
+                }
+                if (childAtom.styles) {
+                    Object.assign(childEl.style, childAtom.styles);
+                }
+                el.appendChild(childEl);
+            });
+        }
+        
+        return el;
+    }
+
+    executeCommands(commands) {
+        if (!window.escmsEditor) return "Error crítico: Editor no inicializado.";
+        if (!Array.isArray(commands)) return "Formato de comandos inválido.";
+
+        const errors = [];
+        const newNodes = {}; // Guarda los nodos creados en este lote por su índice
+
+        commands.forEach((cmd, idx) => {
+            let target = null;
+            if (cmd.target_id && cmd.target_id.startsWith('NEW_')) {
+                const refIdx = parseInt(cmd.target_id.replace('NEW_', ''));
+                target = newNodes[refIdx] || null;
+            } else {
+                target = this.findTargetNode(cmd.target_id);
+            }
+
+            let parentNode = null;
+            if (cmd.parent_id) {
+                if (cmd.parent_id.startsWith('NEW_')) {
+                    const pRefIdx = parseInt(cmd.parent_id.replace('NEW_', ''));
+                    parentNode = newNodes[pRefIdx] || null;
+                } else {
+                    parentNode = this.findTargetNode(cmd.parent_id);
+                }
+            }
+
+            if (!target && cmd.action !== 'add_atom') {
+                errors.push(`Comando ${idx + 1}: No se encontró el elemento con ID '${cmd.target_id}'.`);
+                return;
+            }
+
+            if (cmd.action === 'add_atom') {
+                const docRoot = window.escmsEditor.canvas.host.shadowRoot.getElementById('document-root');
+                const parent = target || docRoot;
+
+                const el = this.createNodeFromDef(cmd);
+                if (el) {
+                    newNodes[idx] = el;
+                    parent.appendChild(el);
+
+                    // Auto-recalcular si el padre es un bloque de Columnas
+                    if (parent.classList && parent.classList.contains('escms-columns')) {
+                        const count = parent.children.length;
+                        parent.setAttribute('data-columns', count);
+                        parent.style.gridTemplateColumns = `repeat(${count}, 1fr)`;
+                    }
+                } else {
+                    errors.push(`Comando ${idx + 1}: El tipo de elemento '${cmd.type}' no existe en ESCMS.`);
+                }
+            } else if (cmd.action === 'update_atom') {
+                if (target) {
+                    if (cmd.content) {
+                        target.textContent = cmd.content;
+                    }
+                    if (cmd.className) {
+                        target.className += ' ' + cmd.className;
+                    }
+                    if (cmd.styles) {
+                        if (typeof cmd.styles === 'string') {
+                            target.style.cssText += cmd.styles;
+                        } else if (typeof cmd.styles === 'object') {
+                            Object.entries(cmd.styles).forEach(([k, v]) => {
+                                const camelKey = k.replace(/-([a-z])/g, g => g[1].toUpperCase());
+                                target.style[camelKey] = v;
+                            });
+                        }
+                    }
+                }
+            } else if (cmd.action === 'remove_atom') {
+                if (target && target.id !== 'document-root') {
+                    const parent = target.parentNode;
+                    target.remove();
+                    // Auto-recalcular si el padre era un bloque de Columnas
+                    if (parent && parent.classList && parent.classList.contains('escms-columns')) {
+                        const count = parent.children.length;
+                        parent.setAttribute('data-columns', count);
+                        parent.style.gridTemplateColumns = count > 0 ? `repeat(${count}, 1fr)` : 'none';
+                    }
+                } else if (target && target.id === 'document-root') {
+                    errors.push(`Comando ${idx + 1}: No se puede eliminar el canvas raíz.`);
+                }
+            } else if (cmd.action === 'move_atom') {
+                if (target && parentNode) {
+                    if (target.id === 'document-root') {
+                        errors.push(`Comando ${idx + 1}: No se puede mover el canvas raíz.`);
+                    } else {
+                        const oldParent = target.parentNode;
+                        parentNode.appendChild(target);
+                        
+                        if (oldParent && oldParent.classList && oldParent.classList.contains('escms-columns')) {
+                            const count = oldParent.children.length;
+                            oldParent.setAttribute('data-columns', count);
+                            oldParent.style.gridTemplateColumns = count > 0 ? `repeat(${count}, 1fr)` : 'none';
+                        }
+                        if (parentNode.classList && parentNode.classList.contains('escms-columns')) {
+                            const count = parentNode.children.length;
+                            parentNode.setAttribute('data-columns', count);
+                            parentNode.style.gridTemplateColumns = `repeat(${count}, 1fr)`;
+                        }
+                    }
+                } else {
+                    if (!parentNode) errors.push(`Comando ${idx + 1}: No se encontró el nuevo padre con ID '${cmd.parent_id}'.`);
+                }
+            }
+        });
+
+        if (errors.length === 0 && window.escmsEditor && window.escmsEditor.playSound) {
+            window.escmsEditor.playSound('success');
+        }
+
+        return errors.join('<br>');
     }
 }

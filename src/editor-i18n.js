@@ -69,9 +69,35 @@ const enFallback = Object.freeze({
     "inspector.width": "Width",
     "inspector.image_align": "Alignment",
     "editor.drop_atoms": "Drop atoms here",
-    "inspector.columns_count": "Columns"
+    "inspector.columns_count": "Columns",
+    "settings.tab_ide": "IDE",
+    "settings.tab_layout": "Layout & Colors",
+    "settings.tab_typography": "Typography",
+    "settings.tab_seo": "Global SEO",
+    "settings.ai_title": "AI Copilot Setup",
+    "settings.ai_loading": "Loading AI settings...",
+    "settings.ai_error": "Error loading AI settings",
+    "settings.ai_provider": "AI Provider",
+    "settings.ai_apikey": "API Key",
+    "settings.ai_apikey_placeholder_has": "•••••••••••••••• (Leave blank to keep existing)",
+    "settings.ai_apikey_placeholder": "Paste your API key here...",
+    "settings.ai_btn_load": "Load Models",
+    "settings.ai_btn_loading": "Loading...",
+    "settings.ai_model": "AI Model",
+    "settings.ai_btn_save": "Save Configuration",
+    "settings.ai_btn_saving": "Saving...",
+    "settings.ai_btn_saved": "Saved!",
+    "ai.panel_title": "Copilot",
+    "ai.panel_unconfigured": "AI Copilot is not configured.",
+    "ai.btn_open_settings": "Open Global Settings",
+    "ai.chat_placeholder": "Ask Copilot...",
+    "ai.inject_btn": "Inject to Selection",
+    "ai.welcome": "Hi! I am your AI Copilot. Select a text element on the canvas and ask me to fill it with content, or just ask me anything.",
+    "settings.ai_endpoint": "Endpoint URL (Custom only)",
+    "settings.ai_endpoint_placeholder": "https://your-api.com/v1",
+    "settings.ai_instructions": "System Instructions",
+    "settings.ai_instructions_placeholder": "You are an expert web designer..."
 });
-
 class I18nEngine {
     constructor() {
         this.dictionary = { ...enFallback };
@@ -89,6 +115,13 @@ class I18nEngine {
             const key = el.getAttribute('data-i18n-title');
             if (this.dictionary[key]) {
                 el.title = this.dictionary[key];
+            }
+        });
+
+        rootElement.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            if (this.dictionary[key]) {
+                el.placeholder = this.dictionary[key];
             }
         });
     }

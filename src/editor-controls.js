@@ -154,8 +154,26 @@ class EscmsSelect {
         this.dropdown.style.zIndex = '100';
         this.dropdown.style.display = 'none';
         this.dropdown.style.flexDirection = 'column';
-        this.dropdown.style.overflow = 'hidden';
+        this.dropdown.style.overflowY = 'auto';
+        this.dropdown.style.overflowX = 'hidden';
+        this.dropdown.style.maxHeight = '250px';
+        this.dropdown.style.boxSizing = 'border-box';
         this.dropdown.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.5)';
+
+        // Webkit scrollbar styles for a premium look
+        const styleId = 'escms-select-scrollbar';
+        if (!document.getElementById(styleId)) {
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = `
+                .escms-select-dropdown::-webkit-scrollbar { width: 6px; }
+                .escms-select-dropdown::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+                .escms-select-dropdown::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+                .escms-select-dropdown::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+            `;
+            document.head.appendChild(style);
+        }
+        this.dropdown.className = 'escms-select-dropdown';
 
         this._renderOptions();
 

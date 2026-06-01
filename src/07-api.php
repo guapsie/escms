@@ -498,7 +498,9 @@ if (str_starts_with($route, 'api/')) {
                 $provider = $pdo->query("SELECT v FROM options WHERE k='ai_provider'")->fetchColumn() ?: 'gemini';
                 $key = $pdo->query("SELECT v FROM options WHERE k='ai_key'")->fetchColumn() ?: '';
                 $model = $pdo->query("SELECT v FROM options WHERE k='ai_model'")->fetchColumn() ?: '';
-                $send_json(['status' => 'success', 'provider' => $provider, 'has_key' => !empty($key), 'model' => $model]);
+                $endpoint = $pdo->query("SELECT v FROM options WHERE k='ai_endpoint'")->fetchColumn() ?: '';
+                $instructions = $pdo->query("SELECT v FROM options WHERE k='ai_instructions'")->fetchColumn() ?: '';
+                $send_json(['status' => 'success', 'provider' => $provider, 'has_key' => !empty($key), 'model' => $model, 'endpoint' => $endpoint, 'instructions' => $instructions]);
             } else if ($method === 'POST') {
                 $input = json_decode(file_get_contents('php://input'), true);
                 if (isset($input['provider'])) {
@@ -513,6 +515,14 @@ if (str_starts_with($route, 'api/')) {
                     $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('ai_model', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
                     $stmt->execute([$input['model']]);
                 }
+                if (isset($input['endpoint'])) {
+                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('ai_endpoint', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
+                    $stmt->execute([trim($input['endpoint'])]);
+                }
+                if (isset($input['instructions'])) {
+                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('ai_instructions', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
+                    $stmt->execute([trim($input['instructions'])]);
+                }
                 $send_json(['status' => 'success']);
             }
             break;
@@ -523,6 +533,13 @@ if (str_starts_with($route, 'api/')) {
             $input = json_decode(file_get_contents('php://input'), true);
             $provider = $input['provider'] ?? '';
             $key = trim($input['key'] ?? '');
+            if (!$key) {
+                $key = $pdo->query("SELECT v FROM options WHERE k='ai_key'")->fetchColumn() ?: '';
+            }
+            $endpoint = trim($input['endpoint'] ?? '');
+            if (!$endpoint) {
+                $endpoint = $pdo->query("SELECT v FROM options WHERE k='ai_endpoint'")->fetchColumn() ?: '';
+            }
             if (!$provider || !$key) $send_json(['status' => 'error', 'msg' => 'Provider and key required'], 400);
 
             if ($provider === 'claude') {
@@ -559,6 +576,38 @@ if (str_starts_with($route, 'api/')) {
                     }
                 }
                 $send_json(['status' => 'success', 'models' => $models]);
+            } else if (in_array($provider, ['groq', 'deepseek', 'mistral', 'custom'])) {
+                $url = '';
+                if ($provider === 'groq') $url = 'https://api.groq.com/openai/v1/models';
+                else if ($provider === 'deepseek') $url = 'https://api.deepseek.com/models';
+                else if ($provider === 'mistral') $url = 'https://api.mistral.ai/v1/models';
+                else if ($provider === 'custom') $url = rtrim($endpoint, '/') . '/models';
+
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Authorization: Bearer ' . $key,
+                    'Content-Type: application/json'
+                ]);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                $response = curl_exec($ch);
+                $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+
+                if ($httpcode >= 400 || $response === false) {
+                    $send_json(['status' => 'error', 'msg' => 'Error fetching models', 'details' => $response], 500);
+                }
+
+                $data = json_decode($response, true);
+                $models = [];
+                if (isset($data['data'])) {
+                    foreach ($data['data'] as $m) {
+                        $models[] = ['value' => $m['id'], 'label' => $m['id']];
+                    }
+                }
+                $send_json(['status' => 'success', 'models' => $models]);
             } else {
                 $send_json(['status' => 'error', 'msg' => 'Unsupported provider'], 400);
             }
@@ -575,6 +624,47 @@ if (str_starts_with($route, 'api/')) {
             $provider = $pdo->query("SELECT v FROM options WHERE k='ai_provider'")->fetchColumn() ?: 'gemini';
             $key = $pdo->query("SELECT v FROM options WHERE k='ai_key'")->fetchColumn();
             $model = $pdo->query("SELECT v FROM options WHERE k='ai_model'")->fetchColumn();
+            $instructions = $pdo->query("SELECT v FROM options WHERE k='ai_instructions'")->fetchColumn() ?: '';
+
+            $atoms_dir = dirname(__DIR__) . '/data/atoms';
+            $available_atoms = [];
+            if (is_dir($atoms_dir)) {
+                $dirs = array_filter(glob($atoms_dir . '/*'), 'is_dir');
+                foreach ($dirs as $dir) {
+                    $available_atoms[] = basename($dir);
+                }
+            }
+            $atoms_list = implode(', ', $available_atoms);
+
+            $master_instructions = "Eres el motor técnico de mutación del DOM para ESCMS. Tu función es recibir peticiones y, si estas requieren modificaciones en el diseño, generar los comandos de mutación.\n\n" .
+            "ÁTOMOS DISPONIBLES EN EL SISTEMA (Usa EXACTAMENTE estos nombres en 'type'):\n" .
+            $atoms_list . "\n\n" .
+            "ESTRUCTURA DE LOS COMANDOS:\n" .
+            "Cuando modifiques el Canvas, debes incluir en tu respuesta un bloque JSON con esta estructura exacta. PROHIBIDO usar comentarios (// o /*) dentro del JSON:\n" .
+            "{\n" .
+            "  \"commands\": [\n" .
+            "    {\n" .
+            "      \"action\": \"add_atom\",\n" .
+            "      \"type\": \"Section\",\n" .
+            "      \"target_id\": \"canvas_root\",\n" .
+            "      \"styles\": {\n" .
+            "        \"background-color\": \"red\"\n" .
+            "      }\n" .
+            "    }\n" .
+            "  ]\n" .
+            "}\n\n" .
+            "ACCIONES DE COMANDO PERMITIDAS:\n" .
+            "- \"add_atom\": Añade un bloque nuevo. Requiere \"type\" y \"target_id\". IMPORTANTE: Si el contexto indica un \"Elemento actualmente seleccionado\", DEBES usar su ID como \"target_id\" por defecto. OPCIONALMENTE puedes incluir \"content\" (texto puro), \"styles\", \"attributes\", \"className\", y lo más poderoso: \"children\" (un array anidado de otros átomos que colgarán de este). Usar el array \"children\" es LA MEJOR FORMA de crear estructuras complejas de golpe, en lugar de encadenar múltiples comandos con 'NEW_x'. TRUCO: Para crear un bloque general de columnas usa \"type\": \"Columns\". Pero si el bloque YA EXISTE y el usuario te pide \"añadir UNA columna más\", usa \"type\": \"Container\" con \"className\": \"escms-column\".\n" .
+            "- \"update_atom\": Modifica un bloque existente. Requiere \"target_id\" y las mutaciones dentro de \"content\" (texto puro, NO HTML), \"styles\" (clases CSS/Tailwind) o \"attributes\".\n" .
+            "- \"remove_atom\": Elimina un nodo existente. Requiere \"target_id\".\n" .
+            "- \"move_atom\": Mueve un elemento existente a otra ubicación (re-parenting). Requiere \"target_id\" (ID del elemento a mover) y \"parent_id\" (ID del nuevo contenedor padre donde se inyectará).\n\n" .
+            "CONTEXTO Y JERARQUÍA:\n" .
+            "El nodo raíz por defecto del Canvas es siempre \"canvas_root\". Utiliza los IDs proporcionados en el árbol actual para definir cualquier \"target_id\".";
+
+            $final_instructions = $master_instructions;
+            if ($instructions) {
+                $final_instructions .= "\n\nINSTRUCCIONES ADICIONALES DEL PROYECTO ACTUAL (DADAS POR EL USUARIO):\n" . $instructions;
+            }
 
             if (!$key) $send_json(['status' => 'error', 'msg' => 'No API Key configured'], 400);
 
@@ -587,25 +677,58 @@ if (str_starts_with($route, 'api/')) {
             if ($provider === 'gemini') {
                 if (!$model) $model = 'gemini-1.5-flash-latest';
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . urlencode($key);
-                $payload = json_encode([
+                $req_body = [
                     'contents' => [['parts' => [['text' => $prompt]]]]
-                ]);
+                ];
+                if ($final_instructions) {
+                    $req_body['systemInstruction'] = ['parts' => [['text' => $final_instructions]]];
+                }
+                $payload = json_encode($req_body);
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             } else if ($provider === 'claude') {
                 if (!$model) $model = 'claude-3-haiku-20240307';
                 $url = "https://api.anthropic.com/v1/messages";
-                $payload = json_encode([
+                $req_body = [
                     'model' => $model,
                     'max_tokens' => 1024,
                     'messages' => [['role' => 'user', 'content' => $prompt]]
-                ]);
+                ];
+                if ($final_instructions) {
+                    $req_body['system'] = $final_instructions;
+                }
+                $payload = json_encode($req_body);
                 curl_setopt($ch, CURLOPT_URL, $url);
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Content-Type: application/json',
                     'x-api-key: ' . $key,
-                    'anthropic-version: 2023-06-01'
+                    'anthropic-version: 2023-06-01',
+                    'Content-Type: application/json'
+                ]);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            } else if (in_array($provider, ['groq', 'deepseek', 'mistral', 'custom'])) {
+                $endpoint = $pdo->query("SELECT v FROM options WHERE k='ai_endpoint'")->fetchColumn() ?: '';
+                $url = '';
+                if ($provider === 'groq') $url = 'https://api.groq.com/openai/v1/chat/completions';
+                else if ($provider === 'deepseek') $url = 'https://api.deepseek.com/chat/completions';
+                else if ($provider === 'mistral') $url = 'https://api.mistral.ai/v1/chat/completions';
+                else if ($provider === 'custom') $url = rtrim($endpoint, '/') . '/chat/completions';
+
+                $msgs = [];
+                if ($final_instructions) {
+                    $msgs[] = ['role' => 'system', 'content' => $final_instructions];
+                }
+                $msgs[] = ['role' => 'user', 'content' => $prompt];
+
+                $payload = json_encode([
+                    'model' => $model,
+                    'messages' => $msgs
+                ]);
+                
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Authorization: Bearer ' . $key,
+                    'Content-Type: application/json'
                 ]);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             } else {
@@ -621,13 +744,15 @@ if (str_starts_with($route, 'api/')) {
                 $send_json(['status' => 'error', 'msg' => 'API Error', 'details' => $response ?: $err], 500);
             }
 
-            $resData = json_decode($response, true);
+            $data = json_decode($response, true);
             $text = '';
             
             if ($provider === 'gemini') {
-                $text = $resData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
             } else if ($provider === 'claude') {
-                $text = $resData['content'][0]['text'] ?? '';
+                $text = $data['content'][0]['text'] ?? '';
+            } else if (in_array($provider, ['groq', 'deepseek', 'mistral', 'custom'])) {
+                $text = $data['choices'][0]['message']['content'] ?? '';
             }
 
             $send_json(['status' => 'success', 'text' => $text]);

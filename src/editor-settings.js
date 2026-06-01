@@ -106,15 +106,16 @@ class EscmsGlobalSettings {
         sidebar.style.gap = '0.5rem';
 
         const tabs = [
-            { id: 'general', label: 'General' },
-            { id: 'layout', label: 'Layout & Colors' },
-            { id: 'typography', label: 'Typography' },
-            { id: 'seo', label: 'Global SEO' }
+            { id: 'general', labelKey: 'settings.tab_ide' },
+            { id: 'layout', labelKey: 'settings.tab_layout' },
+            { id: 'typography', labelKey: 'settings.tab_typography' },
+            { id: 'seo', labelKey: 'settings.tab_seo' }
         ];
 
         tabs.forEach(tab => {
             const btn = document.createElement('button');
-            btn.textContent = tab.label;
+            btn.setAttribute('data-i18n', tab.labelKey);
+            btn.textContent = this.i18n ? (this.i18n.dictionary[tab.labelKey] || tab.labelKey) : tab.labelKey;
             btn.style.background = 'transparent';
             btn.style.border = 'none';
             btn.style.color = 'rgba(245, 245, 245, 0.6)';
@@ -189,7 +190,7 @@ class EscmsGlobalSettings {
         this.overlay.appendChild(style);
 
         document.body.appendChild(this.overlay);
-        this.switchTab('layout');
+        this.switchTab('general');
 
         if (this.i18n) {
             this.i18n.translateDOM(this.overlay);
@@ -241,10 +242,11 @@ class EscmsGlobalSettings {
         return { group, input };
     }
 
-    createTabContent(titleText) {
+    createTabContent(titleKey) {
         const tab = document.createElement('div');
         const heading = document.createElement('h2');
-        heading.textContent = titleText;
+        heading.setAttribute('data-i18n', titleKey);
+        heading.textContent = this.i18n ? (this.i18n.dictionary[titleKey] || titleKey) : titleKey;
         heading.style.marginTop = '0';
         heading.style.marginBottom = '2rem';
         heading.style.fontWeight = '500';
@@ -279,7 +281,7 @@ class EscmsGlobalSettings {
     }
 
     createGeneralTab() {
-        const tab = this.createTabContent('General');
+        const tab = this.createTabContent('settings.tab_ide');
         
         const createToggleSetting = (titleKey, descKey, settingKey, value, onChange) => {
             const group = document.createElement('div');
@@ -334,12 +336,279 @@ class EscmsGlobalSettings {
                 window.escmsAutoZoom = val;
             }
         ));
+
+        // AI Copilot Settings
+        const hr = document.createElement('hr');
+        hr.style.border = 'none';
+        hr.style.borderTop = '1px solid rgba(255,255,255,0.05)';
+        hr.style.margin = '2rem 0';
+        tab.appendChild(hr);
+
+        const aiTitle = document.createElement('h3');
+        aiTitle.innerHTML = `${icons.ai || ''} <span data-i18n="settings.ai_title">${this.i18n ? (this.i18n.dictionary['settings.ai_title'] || 'AI Copilot Setup') : 'AI Copilot Setup'}</span>`;
+        aiTitle.style.display = 'flex';
+        aiTitle.style.alignItems = 'center';
+        aiTitle.style.gap = '8px';
+        aiTitle.style.fontWeight = '500';
+        aiTitle.style.marginTop = '0';
+        aiTitle.style.marginBottom = '1rem';
+        const aiSvg = aiTitle.querySelector('svg');
+        if (aiSvg) { aiSvg.style.width = '20px'; aiSvg.style.height = '20px'; }
+        tab.appendChild(aiTitle);
+
+        const aiForm = document.createElement('div');
+        aiForm.innerHTML = `<div data-i18n="settings.ai_loading" style="color: rgba(245,245,245,0.4); font-size: 0.8rem;">${this.i18n ? (this.i18n.dictionary['settings.ai_loading'] || 'Loading AI settings...') : 'Loading AI settings...'}</div>`;
+        tab.appendChild(aiForm);
+
+        (async () => {
+            try {
+                const res = await fetch('/api/ai/settings');
+                const data = await res.json();
+                if (data.status === 'success') {
+                    let provider = data.provider || 'gemini';
+                    let model = data.model || '';
+                    let endpoint = data.endpoint || '';
+                    let instructions = data.instructions || '';
+                    const hasKey = data.has_key;
+
+                    aiForm.innerHTML = '';
+                    aiForm.style.display = 'flex';
+                    aiForm.style.flexDirection = 'column';
+                    aiForm.style.gap = '1rem';
+
+                    const selectContainer = document.createElement('div');
+                    if (typeof EscmsSelect !== 'undefined') {
+                        const selectControl = new EscmsSelect(null, [
+                            {value: 'gemini', label: 'Google Gemini'},
+                            {value: 'claude', label: 'Anthropic Claude'},
+                            {value: 'mistral', label: 'Mistral AI'},
+                            {value: 'groq', label: 'Groq'},
+                            {value: 'deepseek', label: 'DeepSeek'},
+                            {value: 'custom', label: 'Custom'}
+                        ], provider, (val) => { 
+                            provider = val; 
+                            updateEndpointVisibility(); 
+                        });
+                        selectContainer.appendChild(selectControl.element);
+                    }
+
+                    const endpointContainer = document.createElement('div');
+                    const labelEndpoint = document.createElement('label');
+                    labelEndpoint.setAttribute('data-i18n', 'settings.ai_endpoint');
+                    labelEndpoint.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_endpoint'] || 'Endpoint URL (Custom only)') : 'Endpoint URL (Custom only)';
+                    labelEndpoint.style.color = 'rgba(245,245,245,0.6)';
+                    labelEndpoint.style.fontSize = '0.8rem';
+                    labelEndpoint.style.display = 'block';
+                    labelEndpoint.style.marginBottom = '0.5rem';
+
+                    const inputEndpoint = document.createElement('input');
+                    inputEndpoint.type = 'text';
+                    inputEndpoint.setAttribute('data-i18n-placeholder', 'settings.ai_endpoint_placeholder');
+                    inputEndpoint.placeholder = this.i18n ? (this.i18n.dictionary['settings.ai_endpoint_placeholder'] || 'https://your-api.com/v1') : 'https://your-api.com/v1';
+                    inputEndpoint.value = endpoint;
+                    inputEndpoint.className = 'escms-settings-input';
+
+                    endpointContainer.appendChild(labelEndpoint);
+                    endpointContainer.appendChild(inputEndpoint);
+
+                    const updateEndpointVisibility = () => {
+                        endpointContainer.style.display = provider === 'custom' ? 'block' : 'none';
+                    };
+                    updateEndpointVisibility();
+
+                    const keyContainer = document.createElement('div');
+                    const labelKey = document.createElement('label');
+                    labelKey.setAttribute('data-i18n', 'settings.ai_apikey');
+                    labelKey.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_apikey'] || 'API Key') : 'API Key';
+                    labelKey.style.color = 'rgba(245,245,245,0.6)';
+                    labelKey.style.fontSize = '0.8rem';
+                    labelKey.style.display = 'block';
+                    labelKey.style.marginBottom = '0.5rem';
+
+                    const inputKey = document.createElement('input');
+                    inputKey.type = 'password';
+                    inputKey.setAttribute('data-i18n-placeholder', hasKey ? 'settings.ai_apikey_placeholder_has' : 'settings.ai_apikey_placeholder');
+                    inputKey.placeholder = hasKey ? 
+                        (this.i18n ? (this.i18n.dictionary['settings.ai_apikey_placeholder_has'] || '•••••••••••••••• (Leave blank to keep existing)') : '•••••••••••••••• (Leave blank to keep existing)') : 
+                        (this.i18n ? (this.i18n.dictionary['settings.ai_apikey_placeholder'] || 'Paste your API key here...') : 'Paste your API key here...');
+                    inputKey.className = 'escms-settings-input';
+
+                    keyContainer.appendChild(labelKey);
+                    keyContainer.appendChild(inputKey);
+
+                    const btnLoad = document.createElement('button');
+                    btnLoad.setAttribute('data-i18n', 'settings.ai_btn_load');
+                    btnLoad.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_btn_load'] || 'Load Models') : 'Load Models';
+                    btnLoad.style.background = 'var(--accent-solid)';
+                    btnLoad.style.color = '#fff';
+                    btnLoad.style.border = 'none';
+                    btnLoad.style.padding = '0.75rem';
+                    btnLoad.style.borderRadius = '6px';
+                    btnLoad.style.cursor = 'pointer';
+                    btnLoad.style.fontWeight = '500';
+                    btnLoad.style.marginTop = '0.5rem';
+                    btnLoad.style.maxWidth = '200px';
+
+                    const modelContainer = document.createElement('div');
+                    modelContainer.style.display = model ? 'flex' : 'none';
+                    modelContainer.style.flexDirection = 'column';
+                    modelContainer.style.gap = '1rem';
+
+                    const instructionsContainer = document.createElement('div');
+                    instructionsContainer.style.display = model ? 'block' : 'none';
+                    const labelInstructions = document.createElement('label');
+                    labelInstructions.setAttribute('data-i18n', 'settings.ai_instructions');
+                    labelInstructions.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_instructions'] || 'System Instructions') : 'System Instructions';
+                    labelInstructions.style.color = 'rgba(245,245,245,0.6)';
+                    labelInstructions.style.fontSize = '0.8rem';
+                    labelInstructions.style.display = 'block';
+                    labelInstructions.style.marginBottom = '0.5rem';
+
+                    const inputInstructions = document.createElement('textarea');
+                    inputInstructions.setAttribute('data-i18n-placeholder', 'settings.ai_instructions_placeholder');
+                    inputInstructions.placeholder = this.i18n ? (this.i18n.dictionary['settings.ai_instructions_placeholder'] || 'You are an expert web designer...') : 'You are an expert web designer...';
+                    inputInstructions.value = instructions;
+                    inputInstructions.className = 'escms-settings-input';
+                    inputInstructions.style.resize = 'vertical';
+                    inputInstructions.style.minHeight = '80px';
+
+                    instructionsContainer.appendChild(labelInstructions);
+                    instructionsContainer.appendChild(inputInstructions);
+
+                    const btnSave = document.createElement('button');
+                    btnSave.setAttribute('data-i18n', 'settings.ai_btn_save');
+                    btnSave.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_btn_save'] || 'Save Configuration') : 'Save Configuration';
+                    btnSave.style.background = 'rgba(255,255,255,0.1)';
+                    btnSave.style.color = '#fff';
+                    btnSave.style.border = '1px solid rgba(255,255,255,0.2)';
+                    btnSave.style.padding = '0.75rem';
+                    btnSave.style.borderRadius = '6px';
+                    btnSave.style.cursor = 'pointer';
+                    btnSave.style.fontWeight = '500';
+                    btnSave.style.maxWidth = '200px';
+
+                    btnLoad.addEventListener('click', async () => {
+                        const key = inputKey.value.trim();
+                        if (!key && !hasKey) {
+                            inputKey.style.animation = 'escms-shake 0.4s';
+                            setTimeout(() => inputKey.style.animation = '', 400);
+                            return;
+                        }
+
+                        if (provider === 'custom' && !inputEndpoint.value.trim()) {
+                            inputEndpoint.style.animation = 'escms-shake 0.4s';
+                            setTimeout(() => inputEndpoint.style.animation = '', 400);
+                            return;
+                        }
+
+                        btnLoad.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_btn_loading'] || 'Loading...') : 'Loading...';
+                        btnLoad.style.opacity = '0.7';
+
+                        try {
+                            const payloadLoad = {provider: provider, key: key};
+                            if (provider === 'custom') payloadLoad.endpoint = inputEndpoint.value.trim();
+
+                            const mRes = await fetch('/api/ai/models', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify(payloadLoad)
+                            });
+                            const mData = await mRes.json();
+                            
+                            btnLoad.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_btn_load'] || 'Load Models') : 'Load Models';
+                            btnLoad.style.opacity = '1';
+
+                            if (mData.status === 'success' && mData.models && mData.models.length > 0) {
+                                btnLoad.style.display = 'none';
+                                modelContainer.style.display = 'flex';
+                                instructionsContainer.style.display = 'block';
+                                modelContainer.innerHTML = '';
+                                
+                                // Reset model if the loaded ones don't include it
+                                if (!mData.models.find(m => m.value === model)) {
+                                    model = mData.models[0].value;
+                                }
+
+                                const selectModel = new EscmsSelect(null, mData.models, model, (val) => {
+                                    model = val;
+                                });
+                                
+                                const labelModel = document.createElement('label');
+                                labelModel.setAttribute('data-i18n', 'settings.ai_model');
+                                labelModel.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_model'] || 'AI Model') : 'AI Model';
+                                labelModel.style.color = 'rgba(245,245,245,0.6)';
+                                labelModel.style.fontSize = '0.8rem';
+                                labelModel.style.display = 'block';
+                                labelModel.style.marginBottom = '0.5rem';
+
+                                modelContainer.appendChild(labelModel);
+                                modelContainer.appendChild(selectModel.element);
+                                modelContainer.appendChild(btnSave);
+                            } else {
+                                alert('Error loading models: ' + (mData.msg || 'No models found'));
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            btnLoad.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_btn_load'] || 'Load Models') : 'Load Models';
+                            btnLoad.style.opacity = '1';
+                            alert('Network error while loading models');
+                        }
+                    });
+
+                    btnSave.addEventListener('click', async () => {
+                        const key = inputKey.value.trim();
+                        btnSave.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_btn_saving'] || 'Saving...') : 'Saving...';
+                        
+                        const payload = {provider: provider, model: model};
+                        if (key) payload.key = key;
+                        if (provider === 'custom') payload.endpoint = inputEndpoint.value.trim();
+                        payload.instructions = inputInstructions.value.trim();
+
+                        try {
+                            const sRes = await fetch('/api/ai/settings', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify(payload)
+                            });
+                            const sData = await sRes.json();
+                            if (sData.status === 'success') {
+                                if (window.escmsEditor && window.escmsEditor.playSound) {
+                                    window.escmsEditor.playSound('success');
+                                }
+                                btnSave.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_btn_saved'] || 'Saved!') : 'Saved!';
+                                setTimeout(() => btnSave.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_btn_save'] || 'Save Configuration') : 'Save Configuration', 2000);
+                                if (window.escmsEditor && window.escmsEditor.leftpanel && window.escmsEditor.leftpanel.copilot) {
+                                    window.escmsEditor.leftpanel.copilot.checkSettings();
+                                }
+                            } else {
+                                alert('Error saving config');
+                                btnSave.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_btn_save'] || 'Save Configuration') : 'Save Configuration';
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            btnSave.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_btn_save'] || 'Save Configuration') : 'Save Configuration';
+                        }
+                    });
+
+                    aiForm.appendChild(selectContainer);
+                    aiForm.appendChild(endpointContainer);
+                    aiForm.appendChild(keyContainer);
+                    aiForm.appendChild(btnLoad);
+                    aiForm.appendChild(modelContainer);
+                    aiForm.appendChild(instructionsContainer);
+                    aiForm.appendChild(btnSave);
+                }
+            } catch (err) {
+                console.error(err);
+                aiForm.innerHTML = `<div data-i18n="settings.ai_error" style="color: #ef4444; font-size: 0.8rem;">${this.i18n ? (this.i18n.dictionary['settings.ai_error'] || 'Error loading AI settings') : 'Error loading AI settings'}</div>`;
+            }
+        })();
         
         return tab;
     }
 
     createLayoutTab() {
-        const tab = this.createTabContent('Layout & Colors');
+        const tab = this.createTabContent('settings.tab_layout');
         tab.appendChild(this.createInputGroup('settings.max_width', 'number', (val) => this.applyStyleVariable('--max-width', val ? `${val}px` : '')).group);
         
         const bgColor = new EscmsColorPicker('settings.page_bg_color', '#ffffff', 100, (val) => this.applyStyleVariable('--bg-color', val.rgba));
@@ -361,7 +630,7 @@ class EscmsGlobalSettings {
     }
 
     createTypographyTab() {
-        const tab = this.createTabContent('Typography');
+        const tab = this.createTabContent('settings.tab_typography');
         
         const fontUrlGroup = document.createElement('div');
         fontUrlGroup.className = 'escms-settings-group';
@@ -482,7 +751,7 @@ class EscmsGlobalSettings {
     }
 
     createSeoTab() {
-        const tab = this.createTabContent('Global SEO');
+        const tab = this.createTabContent('settings.tab_seo');
         tab.appendChild(this.createInputGroup('settings.site_title', 'text').group);
         tab.appendChild(this.createInputGroup('settings.meta_desc', 'textarea').group);
         return tab;
