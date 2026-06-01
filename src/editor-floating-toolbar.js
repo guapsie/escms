@@ -174,9 +174,10 @@ class EscmsFloatingToolbar {
         this.linkContainer.style.display = 'none'; // reset link input
         this.linkInput.value = '';
         
-        // Position it above the selection
-        const top = (rect.top - containerRect.top) - this.element.offsetHeight - 8;
-        const left = (rect.left - containerRect.left) + (rect.width / 2) - (this.element.offsetWidth / 2);
+        // Position it above the selection, accounting for canvas zoom scale
+        const zoom = (window.escmsEditor && window.escmsEditor.canvas) ? window.escmsEditor.canvas.currentZoom : 1;
+        const top = ((rect.top - containerRect.top) / zoom) - this.element.offsetHeight - 8;
+        const left = ((rect.left - containerRect.left) / zoom) + ((rect.width / zoom) / 2) - (this.element.offsetWidth / 2);
         
         this.element.style.top = `${Math.max(10, top)}px`;
         this.element.style.left = `${Math.max(10, left)}px`;

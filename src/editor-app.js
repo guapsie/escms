@@ -10,6 +10,7 @@ class EscmsEditor {
         this.selection = null;
         this.settings = null;
         this.autosave = null;
+        this.history = null;
         this.seoView = null;
         this.htmlView = null;
     }
@@ -59,6 +60,9 @@ class EscmsEditor {
         this.autosave = new EscmsAutosave(this.i18n);
         this.autosave.init(docRoot, null, statusIndicator);
 
+        this.history = new EscmsHistory();
+        this.history.init(docRoot);
+
         this.setupShortcuts();
         
         window.addEventListener('escms-page-selected', (e) => {
@@ -82,6 +86,11 @@ class EscmsEditor {
                 this.autosave.pageId = page.id;
                 this.autosave.updateStatus('topbar.saved');
             }
+            
+            if (this.history) {
+                this.history.clear();
+                this.history.pushState();
+            }
         });
 
         await this.loadLocale();
@@ -96,6 +105,14 @@ class EscmsEditor {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
                 e.preventDefault();
                 if (this.autosave) this.autosave.saveToServer();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                if (this.history) this.history.undo();
+            }
+            if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) {
+                e.preventDefault();
+                if (this.history) this.history.redo();
             }
         });
     }

@@ -636,9 +636,31 @@ if (str_starts_with($route, 'api/')) {
             }
             $atoms_list = implode(', ', $available_atoms);
 
-            $master_instructions = "Eres el motor técnico de mutación del DOM para ESCMS. Tu función es recibir peticiones y, si estas requieren modificaciones en el diseño, generar los comandos de mutación.\n\n" .
+            $media_dir = dirname(__DIR__) . '/data/media';
+            $available_media = [];
+            if (is_dir($media_dir)) {
+                $files = array_filter(glob($media_dir . '/*.*'), 'is_file');
+                usort($files, function($a, $b) {
+                    return filemtime($b) - filemtime($a);
+                });
+                $files = array_slice($files, 0, 50);
+                foreach ($files as $file) {
+                    $available_media[] = '/data/media/' . basename($file);
+                }
+            }
+            $media_list = empty($available_media) ? "No hay imágenes subidas." : implode(', ', $available_media);
+            if (count($available_media) === 50) {
+                $media_list .= " (... y más ocultas para ahorrar contexto)";
+            }
+
+            $master_instructions = "Eres ESCMS Copilot, el asistente IA integrado directamente en el editor del CMS. Tu función es doble:\n" .
+            "1) Eres consciente de la página que el usuario está editando. Puedes conversar libremente, dar tu opinión sobre el diseño o el SEO, y responder a preguntas generales de forma coloquial, cruda y directa (acorde a tu personalidad configurada).\n" .
+            "2) Tienes la capacidad de mutar el DOM. Si el usuario te pide modificaciones estructurales o de diseño, DEBES emitir el bloque JSON de comandos.\n" .
+            "Si el usuario solo está charlando o pidiendo opinión, responde SOLO con texto. Si te pide crear o modificar elementos, incluye SIEMPRE tu bloque JSON.\n\n" .
             "ÁTOMOS DISPONIBLES EN EL SISTEMA (Usa EXACTAMENTE estos nombres en 'type'):\n" .
             $atoms_list . "\n\n" .
+            "BIBLIOTECA DE MEDIOS DEL USUARIO (Imágenes reales que puedes usar en atributos 'src'):\n" .
+            $media_list . "\n\n" .
             "ESTRUCTURA DE LOS COMANDOS:\n" .
             "Cuando modifiques el Canvas, debes incluir en tu respuesta un bloque JSON con esta estructura exacta. PROHIBIDO usar comentarios (// o /*) dentro del JSON:\n" .
             "{\n" .
@@ -657,7 +679,9 @@ if (str_starts_with($route, 'api/')) {
             "- \"add_atom\": Añade un bloque nuevo. Requiere \"type\" y \"target_id\". IMPORTANTE: Si el contexto indica un \"Elemento actualmente seleccionado\", DEBES usar su ID como \"target_id\" por defecto. OPCIONALMENTE puedes incluir \"content\" (texto puro), \"styles\", \"attributes\", \"className\", y lo más poderoso: \"children\" (un array anidado de otros átomos que colgarán de este). Usar el array \"children\" es LA MEJOR FORMA de crear estructuras complejas de golpe, en lugar de encadenar múltiples comandos con 'NEW_x'. TRUCO: Para crear un bloque general de columnas usa \"type\": \"Columns\". Pero si el bloque YA EXISTE y el usuario te pide \"añadir UNA columna más\", usa \"type\": \"Container\" con \"className\": \"escms-column\".\n" .
             "- \"update_atom\": Modifica un bloque existente. Requiere \"target_id\" y las mutaciones dentro de \"content\" (texto puro, NO HTML), \"styles\" (clases CSS/Tailwind) o \"attributes\".\n" .
             "- \"remove_atom\": Elimina un nodo existente. Requiere \"target_id\".\n" .
-            "- \"move_atom\": Mueve un elemento existente a otra ubicación (re-parenting). Requiere \"target_id\" (ID del elemento a mover) y \"parent_id\" (ID del nuevo contenedor padre donde se inyectará).\n\n" .
+            "- \"move_atom\": Mueve un elemento existente a otra ubicación (re-parenting). Requiere \"target_id\" (ID del elemento a mover) y \"parent_id\" (ID del nuevo contenedor padre donde se inyectará).\n" .
+            "- \"duplicate_atom\": Duplica un nodo existente (incluyendo todos sus hijos y estilos) y lo inserta a continuación del original. Requiere \"target_id\" (ID del elemento a clonar) y opcionalmente \"copies\" (número de clones, por defecto 1).\n" .
+            "- \"undo\": Deshace el último cambio o estado del editor. Úsalo ÚNICAMENTE cuando el usuario te pida expresamente \"deshacer\", \"quitar lo último\", o te diga que lo que acabas de hacer \"está mal/es una mierda\". No requiere parámetros.\n\n" .
             "CONTEXTO Y JERARQUÍA:\n" .
             "El nodo raíz por defecto del Canvas es siempre \"canvas_root\". Utiliza los IDs proporcionados en el árbol actual para definir cualquier \"target_id\".";
 

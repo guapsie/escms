@@ -3,6 +3,17 @@ class EscmsSelection {
         this.selectedNode = null;
     }
 
+    clearSelection() {
+        if (this.selectedNode) {
+            this.selectedNode.classList.remove('escms-selected');
+            if (this.selectedNode.hasAttribute('contenteditable')) {
+                this.selectedNode.removeAttribute('contenteditable');
+            }
+            this.selectedNode = null;
+            window.dispatchEvent(new CustomEvent('escms-element-selected', { detail: { node: null } }));
+        }
+    }
+
     init(shadowRoot, documentRoot, emptyText = 'Drop atoms here') {
         const style = document.createElement('style');
         style.textContent = `

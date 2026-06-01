@@ -33,6 +33,7 @@ const enFallback = Object.freeze({
     "network.modal_warning": "Absolute Privacy: No tracking, no cookies, no central server data retention. One for all, and all for one.",
     "network.toggle_label": "Join the Decentralized Network",
     "leftpanel.cat_layout": "Layout",
+    "leftpanel.cat_text": "Typography",
     "leftpanel.cat_content": "Content",
     "leftpanel.cat_embeds": "Embeds",
     "leftpanel.cat_downloaded": "Downloaded",

@@ -86,6 +86,34 @@ class EscmsCanvas {
             }
             this.updateScaler();
         });
+
+        this.viewport.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                
+                const oldZoom = this.currentZoom;
+                const hostRect = this.host.getBoundingClientRect();
+                const unscaledX = (e.clientX - hostRect.left) / oldZoom;
+                const unscaledY = (e.clientY - hostRect.top) / oldZoom;
+
+                let delta = -e.deltaY * 0.005;
+                if (delta > 0.2) delta = 0.2;
+                if (delta < -0.2) delta = -0.2;
+                
+                const newZoom = Math.max(0.25, Math.min(3, this.currentZoom + delta));
+                
+                if (newZoom !== oldZoom) {
+                    this.setZoom(newZoom, true);
+                    
+                    const newHostRect = this.host.getBoundingClientRect();
+                    const currentScreenX = newHostRect.left + unscaledX * newZoom;
+                    const currentScreenY = newHostRect.top + unscaledY * newZoom;
+                    
+                    this.viewport.scrollLeft += (currentScreenX - e.clientX);
+                    this.viewport.scrollTop += (currentScreenY - e.clientY);
+                }
+            }
+        }, { passive: false });
     }
 
     createToolbar() {
@@ -258,10 +286,27 @@ class EscmsCanvas {
         this.setZoom(targetZoom);
     }
 
-    setZoom(scale) {
+    setZoom(scale, isPinch = false) {
         this.currentZoom = Math.max(0.25, Math.min(3, scale));
+        
+        if (isPinch) {
+            this.host.style.transition = 'none';
+            this.scaler.style.transition = 'none';
+        } else {
+            this.host.style.transition = 'transform 0.5s ease, width 0.5s ease';
+            this.scaler.style.transition = 'width 0.5s ease, height 0.5s ease, margin 0.5s ease';
+        }
+
         this.host.style.transform = `scale(${this.currentZoom})`;
         this.updateScaler();
+
+        if (isPinch) {
+            clearTimeout(this.pinchTimeout);
+            this.pinchTimeout = setTimeout(() => {
+                this.host.style.transition = 'transform 0.5s ease, width 0.5s ease';
+                this.scaler.style.transition = 'width 0.5s ease, height 0.5s ease, margin 0.5s ease';
+            }, 150);
+        }
     }
 
     updateScaler() {
@@ -301,28 +346,36 @@ class EscmsCanvas {
     }
 
     focusNode(node, clientX, clientY) {
-        this.setZoom(1.5);
+        let clickX_in_unscaled_host;
+        let clickY_in_unscaled_host;
+
+        if (clientX !== undefined && clientY !== undefined) {
+            // Get coordinates relative to current scaled host BEFORE zoom animation
+            const hostRect = this.host.getBoundingClientRect();
+            const screenX = clientX - hostRect.left;
+            const screenY = clientY - hostRect.top;
+            
+            clickX_in_unscaled_host = screenX / this.currentZoom;
+            clickY_in_unscaled_host = screenY / this.currentZoom;
+        }
+
+        const targetZoom = 1.5;
+        this.setZoom(targetZoom);
         
         setTimeout(() => {
             let targetScrollLeft;
             let targetScrollTop;
             
             if (clientX !== undefined && clientY !== undefined) {
-                // Zoom exactly to where the user clicked
-                // First get the mouse position relative to the scaled container
-                const hostRect = this.host.getBoundingClientRect();
-                const viewportRect = this.viewport.getBoundingClientRect();
+                const scaledX = clickX_in_unscaled_host * targetZoom;
+                const scaledY = clickY_in_unscaled_host * targetZoom;
+
+                const padX = Math.round(this.viewport.clientWidth / 2);
+                const padY = Math.round(this.viewport.clientHeight / 2);
                 
-                const clickX_in_host = clientX - hostRect.left;
-                const clickY_in_host = clientY - hostRect.top;
-                
-                const padX = Math.round(viewportRect.width / 2);
-                const padY = Math.round(viewportRect.height / 2);
-                
-                targetScrollLeft = (padX + clickX_in_host) - (viewportRect.width * 0.25);
-                targetScrollTop = (padY + clickY_in_host) - (viewportRect.height * 0.25);
+                targetScrollLeft = (padX + scaledX) - (this.viewport.clientWidth * 0.25);
+                targetScrollTop = (padY + scaledY) - (this.viewport.clientHeight * 0.25);
             } else {
-                // Fallback to node center if no coordinates
                 let offsetLeft = 0;
                 let offsetTop = 0;
                 let curr = node;
@@ -336,13 +389,13 @@ class EscmsCanvas {
                 const clientWidth = node.clientWidth || node.offsetWidth || 0;
                 const clientHeight = node.clientHeight || node.offsetHeight || 0;
 
-                const scaledLeft = offsetLeft * this.currentZoom;
-                const scaledTop = offsetTop * this.currentZoom;
-                const scaledWidth = clientWidth * this.currentZoom;
-                const scaledHeight = clientHeight * this.currentZoom;
+                const scaledLeft = offsetLeft * targetZoom;
+                const scaledTop = offsetTop * targetZoom;
+                const scaledWidth = clientWidth * targetZoom;
+                const scaledHeight = clientHeight * targetZoom;
 
-                const padX = this.currentZoom > 1 ? Math.round(this.viewport.clientWidth / 2) : 0;
-                const padY = this.currentZoom > 1 ? Math.round(this.viewport.clientHeight / 2) : 0;
+                const padX = targetZoom > 1 ? Math.round(this.viewport.clientWidth / 2) : 0;
+                const padY = targetZoom > 1 ? Math.round(this.viewport.clientHeight / 2) : 0;
 
                 if (scaledWidth > this.viewport.clientWidth * 0.8) {
                     targetScrollLeft = (padX + scaledLeft) - 40;
@@ -386,6 +439,7 @@ class EscmsCanvas {
         const tabs = [
             { id: 'editor', label: 'EDITOR' },
             { id: 'html', label: 'HTML' },
+            { id: 'css', label: 'CSS' },
             { id: 'seo', label: 'SEO' }
         ];
 

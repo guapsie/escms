@@ -23,6 +23,24 @@ class EscmsInspector {
         this.sectionsContainer.style.display = 'none'; // Hide by default until selection
         this.container.appendChild(this.sectionsContainer);
 
+        this.emptyState = document.createElement('div');
+        this.emptyState.style.display = 'flex';
+        this.emptyState.style.flexDirection = 'column';
+        this.emptyState.style.alignItems = 'center';
+        this.emptyState.style.justifyContent = 'center';
+        this.emptyState.style.height = '100%';
+        this.emptyState.style.color = 'rgba(245,245,245,0.3)';
+        this.emptyState.style.textAlign = 'center';
+        this.emptyState.style.gap = '1rem';
+        this.emptyState.innerHTML = `
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" />
+                <path d="m12 12 4 10 1.7-4.3L22 16Z" />
+            </svg>
+            <div style="font-size: 0.85rem; font-weight: 500;" data-i18n="inspector.empty_state">${this.i18n ? (this.i18n.dictionary['inspector.empty_state'] || 'Select an element to edit') : 'Select an element to edit'}</div>
+        `;
+        this.container.appendChild(this.emptyState);
+
         this.renderSections();
 
         window.addEventListener('escms-element-selected', (e) => {
@@ -30,10 +48,12 @@ class EscmsInspector {
             this.selectedNode = node;
 
             if (node && node.id !== 'document-root') {
+                this.emptyState.style.display = 'none';
                 this.sectionsContainer.style.display = 'block';
                 this.syncDOMToUI();
             } else {
                 this.sectionsContainer.style.display = 'none';
+                this.emptyState.style.display = 'flex';
             }
         });
     }

@@ -29,6 +29,20 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
             display: grid;
             grid-template-rows: 50px 1fr;
         }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
         #escms-topbar {
             border-bottom: 1px solid var(--border-color);
         }
@@ -140,6 +154,7 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
     <script src="/assets/js/editor-floating-toolbar.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-parser.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-autosave.js?v=<?= time() ?>"></script>
+    <script src="/assets/js/editor-history.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-medialibrary.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-app.js?v=<?= time() ?>"></script>
 </body>

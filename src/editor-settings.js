@@ -104,12 +104,10 @@ class EscmsGlobalSettings {
         sidebar.style.display = 'flex';
         sidebar.style.flexDirection = 'column';
         sidebar.style.gap = '0.5rem';
-
         const tabs = [
             { id: 'general', labelKey: 'settings.tab_ide' },
             { id: 'layout', labelKey: 'settings.tab_layout' },
-            { id: 'typography', labelKey: 'settings.tab_typography' },
-            { id: 'seo', labelKey: 'settings.tab_seo' }
+            { id: 'typography', labelKey: 'settings.tab_typography' }
         ];
 
         tabs.forEach(tab => {
@@ -145,17 +143,20 @@ class EscmsGlobalSettings {
             sidebar.appendChild(btn);
         });
 
+
+
         this.contentArea = document.createElement('div');
+        this.contentArea.className = 'escms-settings-content';
         this.contentArea.style.flexGrow = '1';
         this.contentArea.style.paddingLeft = '60px';
+        this.contentArea.style.paddingRight = '30px';
         this.contentArea.style.overflowY = 'auto';
         this.contentArea.style.paddingBottom = '80px';
 
         this.tabContents = {
             general: this.createGeneralTab(),
             layout: this.createLayoutTab(),
-            typography: this.createTypographyTab(),
-            seo: this.createSeoTab()
+            typography: this.createTypographyTab()
         };
 
         Object.values(this.tabContents).forEach(content => {
@@ -377,6 +378,7 @@ class EscmsGlobalSettings {
                     aiForm.style.gap = '1rem';
 
                     const selectContainer = document.createElement('div');
+                    selectContainer.style.maxWidth = '450px';
                     if (typeof EscmsSelect !== 'undefined') {
                         const selectControl = new EscmsSelect(null, [
                             {value: 'gemini', label: 'Google Gemini'},
@@ -453,6 +455,7 @@ class EscmsGlobalSettings {
                     modelContainer.style.display = model ? 'flex' : 'none';
                     modelContainer.style.flexDirection = 'column';
                     modelContainer.style.gap = '1rem';
+                    modelContainer.style.maxWidth = '450px';
 
                     const instructionsContainer = document.createElement('div');
                     instructionsContainer.style.display = model ? 'block' : 'none';
@@ -478,9 +481,9 @@ class EscmsGlobalSettings {
                     const btnSave = document.createElement('button');
                     btnSave.setAttribute('data-i18n', 'settings.ai_btn_save');
                     btnSave.textContent = this.i18n ? (this.i18n.dictionary['settings.ai_btn_save'] || 'Save Configuration') : 'Save Configuration';
-                    btnSave.style.background = 'rgba(255,255,255,0.1)';
+                    btnSave.style.background = 'var(--accent-solid)';
                     btnSave.style.color = '#fff';
-                    btnSave.style.border = '1px solid rgba(255,255,255,0.2)';
+                    btnSave.style.border = 'none';
                     btnSave.style.padding = '0.75rem';
                     btnSave.style.borderRadius = '6px';
                     btnSave.style.cursor = 'pointer';
@@ -543,7 +546,9 @@ class EscmsGlobalSettings {
 
                                 modelContainer.appendChild(labelModel);
                                 modelContainer.appendChild(selectModel.element);
-                                modelContainer.appendChild(btnSave);
+                                btnSave.style.display = 'block';
+                                btnSave.style.background = 'var(--accent-solid)';
+                                btnSave.style.cursor = 'pointer';
                             } else {
                                 alert('Error loading models: ' + (mData.msg || 'No models found'));
                             }
@@ -597,6 +602,10 @@ class EscmsGlobalSettings {
                     aiForm.appendChild(modelContainer);
                     aiForm.appendChild(instructionsContainer);
                     aiForm.appendChild(btnSave);
+                    
+                    if (!model) {
+                        btnSave.style.display = 'none';
+                    }
                 }
             } catch (err) {
                 console.error(err);
@@ -747,13 +756,6 @@ class EscmsGlobalSettings {
         tab.appendChild(fontUrlGroup);
         
         tab.appendChild(this.createInputGroup('settings.body_font', 'text', (val) => this.applyStyleVariable('--font-family', val)).group);
-        return tab;
-    }
-
-    createSeoTab() {
-        const tab = this.createTabContent('settings.tab_seo');
-        tab.appendChild(this.createInputGroup('settings.site_title', 'text').group);
-        tab.appendChild(this.createInputGroup('settings.meta_desc', 'textarea').group);
         return tab;
     }
 }

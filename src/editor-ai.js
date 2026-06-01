@@ -163,26 +163,29 @@ class EscmsCopilot {
         this.promptInput.placeholder = this.i18n ? (this.i18n.dictionary['ai.chat_placeholder'] || 'Ask Copilot...') : 'Ask Copilot...';
         this.promptInput.style.width = '100%';
         this.promptInput.style.boxSizing = 'border-box';
-        this.promptInput.style.minHeight = '42px';
-        this.promptInput.style.maxHeight = '150px';
+        this.promptInput.style.minHeight = '48px';
+        this.promptInput.style.maxHeight = '250px';
         this.promptInput.style.background = 'rgba(255,255,255,0.05)';
         this.promptInput.style.border = '1px solid rgba(255,255,255,0.1)';
-        this.promptInput.style.borderRadius = '21px';
+        this.promptInput.style.borderRadius = '24px';
         this.promptInput.style.color = '#fff';
-        this.promptInput.style.padding = '0.6rem 3rem 0.6rem 1rem';
+        this.promptInput.style.padding = '0.85rem 3rem 0.85rem 1.25rem';
         this.promptInput.style.outline = 'none';
         this.promptInput.style.resize = 'none';
         this.promptInput.style.fontFamily = 'inherit';
-        this.promptInput.style.fontSize = '0.85rem';
+        this.promptInput.style.fontSize = '0.9rem';
         this.promptInput.style.lineHeight = '1.4';
         this.promptInput.style.transition = 'border-color 0.2s';
+        this.promptInput.style.overflow = 'hidden';
         
         this.promptInput.addEventListener('focus', () => this.promptInput.style.borderColor = 'var(--accent-faint)');
         this.promptInput.addEventListener('blur', () => this.promptInput.style.borderColor = 'rgba(255,255,255,0.1)');
 
         this.promptInput.addEventListener('input', () => {
-            this.promptInput.style.height = '42px';
-            this.promptInput.style.height = Math.min(this.promptInput.scrollHeight, 150) + 'px';
+            this.promptInput.style.height = '48px';
+            const sHeight = this.promptInput.scrollHeight;
+            this.promptInput.style.height = Math.min(sHeight, 250) + 'px';
+            this.promptInput.style.overflow = sHeight > 250 ? 'auto' : 'hidden';
         });
 
         this.promptInput.addEventListener('keydown', (e) => {
@@ -193,21 +196,22 @@ class EscmsCopilot {
         });
 
         const btnSend = document.createElement('button');
-        btnSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>';
+        btnSend.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-send"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M21.864 3.549l-6.454 17.868a1.55 1.55 0 0 1 -1.41 .903a1.54 1.54 0 0 1 -1.394 -.874l-2.88 -5.759zm-1.414 -1.414l-12.139 12.138l-5.728 -2.864a1.55 1.55 0 0 1 -.903 -1.409c0 -.606 .353 -1.157 .981 -1.44z" /></svg>';
         btnSend.style.position = 'absolute';
-        btnSend.style.right = '12px';
-        btnSend.style.bottom = '11px';
-        btnSend.style.background = 'var(--accent-solid)';
-        btnSend.style.color = '#fff';
+        btnSend.style.right = '18px';
+        btnSend.style.bottom = '20px';
+        btnSend.style.background = 'transparent';
+        btnSend.style.color = 'var(--accent-solid)';
         btnSend.style.border = 'none';
-        btnSend.style.borderRadius = '50%';
-        btnSend.style.width = '36px';
-        btnSend.style.height = '36px';
+        btnSend.style.padding = '0';
+        btnSend.style.width = '24px';
+        btnSend.style.height = '24px';
         btnSend.style.cursor = 'pointer';
         btnSend.style.display = 'flex';
         btnSend.style.alignItems = 'center';
         btnSend.style.justifyContent = 'center';
         btnSend.style.transition = 'transform 0.1s, opacity 0.2s';
+        btnSend.style.opacity = '0.9';
 
         btnSend.addEventListener('mousedown', () => btnSend.style.transform = 'scale(0.9)');
         btnSend.addEventListener('mouseup', () => btnSend.style.transform = 'none');
@@ -233,7 +237,8 @@ class EscmsCopilot {
         if (!text) return;
 
         this.promptInput.value = '';
-        this.promptInput.style.height = '40px';
+        this.promptInput.style.height = '48px';
+        this.promptInput.style.overflow = 'hidden';
         this.appendMessage('user', text);
 
         const typingId = this.appendMessage('assistant', '<span class="escms-typing">...</span>');
@@ -322,7 +327,7 @@ class EscmsCopilot {
         wrapper.style.alignItems = role === 'user' ? 'flex-end' : 'flex-start';
 
         const bubble = document.createElement('div');
-        bubble.style.maxWidth = '92%';
+        bubble.style.maxWidth = '98%';
         bubble.style.padding = '0.5rem 0.75rem';
         bubble.style.fontSize = '0.8rem';
         bubble.style.lineHeight = '1.5';
@@ -454,7 +459,19 @@ class EscmsCopilot {
         const docRoot = window.escmsEditor.canvas.host.shadowRoot.getElementById('document-root');
         if (!docRoot) return "Canvas is empty.";
 
+        const selected = window.escmsEditor.leftpanel.selectedNode;
         let map = "";
+        
+        const isAncestorOfSelected = (node) => {
+            if (!selected) return false;
+            let curr = selected;
+            while(curr) {
+                if (curr === node) return true;
+                curr = curr.parentNode;
+            }
+            return false;
+        };
+
         const traverse = (node, depth) => {
             if (node.nodeType !== Node.ELEMENT_NODE) return;
             const tag = node.tagName.toLowerCase();
@@ -464,13 +481,22 @@ class EscmsCopilot {
             const id = node.id;
             const indent = '  '.repeat(depth);
             map += `${indent}- ${tag} (id: ${id})\n`;
+            
+            const isAncestor = isAncestorOfSelected(node);
+            if (!isAncestor && depth >= 3) {
+                const childCount = node.children.length;
+                if (childCount > 0) {
+                    map += `${indent}  [+ ${childCount} elementos ocultos para ahorrar contexto]\n`;
+                }
+                return;
+            }
+            
             Array.from(node.children).forEach(child => traverse(child, depth + 1));
         };
         
         map += `- div (id: canvas_root)\n`;
         Array.from(docRoot.children).forEach(child => traverse(child, 1));
         
-        const selected = window.escmsEditor.leftpanel.selectedNode;
         if (selected) {
             map += `\nElemento actualmente seleccionado: ${selected.tagName.toLowerCase()} (id: ${selected.id || 'no-id'})`;
         }
@@ -668,11 +694,54 @@ class EscmsCopilot {
                 } else {
                     if (!parentNode) errors.push(`Comando ${idx + 1}: No se encontró el nuevo padre con ID '${cmd.parent_id}'.`);
                 }
+            } else if (cmd.action === 'duplicate_atom') {
+                if (target && target.id !== 'document-root') {
+                    const parent = target.parentNode;
+                    const copies = cmd.copies ? parseInt(cmd.copies) : 1;
+                    
+                    const cloneNodeAndRenewIds = (node) => {
+                        const clone = node.cloneNode(false);
+                        clone.id = 'escms-' + Math.random().toString(36).substr(2, 9);
+                        Array.from(node.children).forEach(child => {
+                            clone.appendChild(cloneNodeAndRenewIds(child));
+                        });
+                        return clone;
+                    };
+
+                    let currentRef = target;
+                    for (let i = 0; i < copies; i++) {
+                        const clone = cloneNodeAndRenewIds(target);
+                        if (currentRef.nextSibling) {
+                            parent.insertBefore(clone, currentRef.nextSibling);
+                        } else {
+                            parent.appendChild(clone);
+                        }
+                        currentRef = clone;
+                    }
+
+                    if (parent && parent.classList && parent.classList.contains('escms-columns')) {
+                        const count = parent.children.length;
+                        parent.setAttribute('data-columns', count);
+                        parent.style.gridTemplateColumns = count > 0 ? `repeat(${count}, 1fr)` : 'none';
+                    }
+                } else if (target && target.id === 'document-root') {
+                    errors.push(`Comando ${idx + 1}: No se puede duplicar el canvas raíz.`);
+                }
+            } else if (cmd.action === 'undo') {
+                if (window.escmsEditor && window.escmsEditor.history) {
+                    window.escmsEditor.history.undo();
+                }
             }
         });
 
-        if (errors.length === 0 && window.escmsEditor && window.escmsEditor.playSound) {
-            window.escmsEditor.playSound('success');
+        if (errors.length === 0 && window.escmsEditor) {
+            if (window.escmsEditor.playSound) {
+                window.escmsEditor.playSound('success');
+            }
+            if (window.escmsEditor.history && commands.some(c => c.action !== 'undo')) {
+                // Forzar guardado sincrono de este lote de cambios en la historia
+                window.escmsEditor.history.pushState();
+            }
         }
 
         return errors.join('<br>');

@@ -1,8 +1,8 @@
 class EscmsGradientControl {
-    constructor(labelKey, i18n, initialValues = { angle: 90, c1: '#3b82f6', a1: 100, stop1: 0, c2: '#1e3a8a', a2: 100, stop2: 100, enabled: false }, onChangeCallback) {
+    constructor(labelKey, i18n, initialValues = { type: 'linear', angle: 90, c1: '#3b82f6', a1: 100, stop1: 0, c2: '#1e3a8a', a2: 100, stop2: 100, enabled: false }, onChangeCallback) {
         this.labelKey = labelKey;
         this.i18n = i18n;
-        this.values = { stop1: 0, stop2: 100, ...initialValues };
+        this.values = { type: 'linear', stop1: 0, stop2: 100, ...initialValues };
         this.onChange = onChangeCallback;
         this.element = this.render();
     }
@@ -42,10 +42,20 @@ class EscmsGradientControl {
         this.bodyWrapper.style.display = this.values.enabled ? 'block' : 'none';
         this.bodyWrapper.style.marginTop = '0.5rem';
 
+        this.typeSelect = new EscmsSelect(null, [
+            { label: 'Linear', value: 'linear' },
+            { label: 'Radial (Glow)', value: 'radial' }
+        ], this.values.type, (val) => {
+            this.values.type = val;
+            this.angleSlider.element.style.display = val === 'linear' ? 'block' : 'none';
+            this.triggerChange();
+        });
+
         this.angleSlider = new EscmsSlider(null, 0, 360, 1, this.values.angle, (val) => {
             this.values.angle = val;
             this.triggerChange();
         }, 'deg');
+        this.angleSlider.element.style.display = this.values.type === 'linear' ? 'block' : 'none';
         
         const colorsRow = document.createElement('div');
         colorsRow.style.display = 'grid';
@@ -89,6 +99,7 @@ class EscmsGradientControl {
         colorsRow.appendChild(col1Wrap);
         colorsRow.appendChild(col2Wrap);
         
+        this.bodyWrapper.appendChild(this.typeSelect.element);
         this.bodyWrapper.appendChild(this.angleSlider.element);
         this.bodyWrapper.appendChild(colorsRow);
 
@@ -114,8 +125,16 @@ class EscmsGradientControl {
             let rgba1 = this.values.rgba1 || this._hexToRgba(this.values.c1, this.values.a1);
             let rgba2 = this.values.rgba2 || this._hexToRgba(this.values.c2, this.values.a2);
             
+            let cssStr = '';
+            if (this.values.type === 'radial') {
+                cssStr = `radial-gradient(circle, ${rgba1} ${this.values.stop1}%, ${rgba2} ${this.values.stop2}%)`;
+            } else {
+                cssStr = `linear-gradient(${this.values.angle}deg, ${rgba1} ${this.values.stop1}%, ${rgba2} ${this.values.stop2}%)`;
+            }
+            
             this.onChange({
                 enabled: true,
+                type: this.values.type,
                 angle: this.values.angle,
                 c1: this.values.c1,
                 a1: this.values.a1,
@@ -123,7 +142,7 @@ class EscmsGradientControl {
                 c2: this.values.c2,
                 a2: this.values.a2,
                 stop2: this.values.stop2,
-                cssString: `linear-gradient(${this.values.angle}deg, ${rgba1} ${this.values.stop1}%, ${rgba2} ${this.values.stop2}%)`
+                cssString: cssStr
             });
         }
     }
@@ -135,6 +154,13 @@ class EscmsGradientControl {
             this.values.enabled = newValues.enabled;
             this.enableToggle.setValue(newValues.enabled, false);
             this.bodyWrapper.style.display = newValues.enabled ? 'block' : 'none';
+            changed = true;
+        }
+
+        if (newValues.type !== undefined && this.values.type !== newValues.type) {
+            this.values.type = newValues.type;
+            this.typeSelect.setValue(newValues.type, false);
+            this.angleSlider.element.style.display = newValues.type === 'linear' ? 'block' : 'none';
             changed = true;
         }
 
