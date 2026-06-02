@@ -45,12 +45,39 @@ if (file_exists($template_css_path)) {
     $style_css = file_get_contents($template_css_path);
 }
 
-// Cargar fuentes de Google (Extraídas de los ajustes o hardcodeadas por ahora según la plantilla pichi)
-$google_fonts = "https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;500&display=swap";
+// Cargar opciones globales
+$options = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE 'ai_%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
 
-// Cargar variables CSS guardadas por el usuario (cuando esté implementado el guardado en Fase 2)
-$custom_css_vars = '';
-// $settings_path = __DIR__ . '/../data/user-settings/global.json'; // Fase 2
+// Cargar fuentes de Google desde opciones
+$google_fonts_html = "";
+if (!empty($options['google_fonts'])) {
+    $fontsArr = json_decode($options['google_fonts'], true);
+    if (is_array($fontsArr)) {
+        $fontLinks = [];
+        foreach($fontsArr as $url) {
+            $fontLinks[] = '<link href="'.htmlspecialchars($url).'" rel="stylesheet">';
+        }
+        $google_fonts_html = implode("\n    ", $fontLinks);
+    }
+}
+
+// Generar variables CSS
+$custom_css_vars = ":root {\n";
+$css_keys = [
+    '--max-width', 
+    '--color-background', 
+    '--color-text', 
+    '--color-accent', 
+    '--color-link', 
+    '--color-link-hover', 
+    '--font-body'
+];
+foreach ($css_keys as $ck) {
+    if (!empty($options[$ck])) {
+        $custom_css_vars .= "    {$ck}: " . htmlspecialchars($options[$ck]) . ";\n";
+    }
+}
+$custom_css_vars .= "}";
 
 ?>
 <!DOCTYPE html>
@@ -62,9 +89,7 @@ $custom_css_vars = '';
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <?php if ($google_fonts): ?>
-        <link href="<?= $google_fonts ?>" rel="stylesheet">
-    <?php endif; ?>
+    <?= $google_fonts_html ?>
 
     <style>
         /* Estilos del Tema */

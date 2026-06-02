@@ -16,25 +16,60 @@
       "background": "#0a0a0a",
       "text": "#f5f5f5"
     },
-    "width": "1200px"
+    "width": "1200px",
+    "google_fonts": [
+      "https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;500&display=swap"
+    ]
   },
   "globals": {
     "header": [
       {
         "id": "header_1",
         "tag": "header",
-        "classes": ["pichi-header"],
+        "classes": [
+          "pichi-header"
+        ],
         "children": [
           {
             "id": "header_container",
             "tag": "div",
-            "classes": ["pichi-container", "pichi-header-container"],
+            "classes": [
+              "pichi-container",
+              "pichi-header-container"
+            ],
             "children": [
-              { "tag": "h3", "classes": ["pichi-logo"], "children": ["ESCMS"] },
-              { "tag": "nav", "children": [
-                { "tag": "a", "classes": ["pichi-nav-link"], "children": ["Home"] },
-                { "tag": "a", "classes": ["pichi-nav-link"], "children": ["Blog"] }
-              ] }
+              {
+                "tag": "h3",
+                "classes": [
+                  "pichi-logo"
+                ],
+                "children": [
+                  "ESCMS"
+                ]
+              },
+              {
+                "tag": "nav",
+                "children": [
+                  {
+                    "tag": "a",
+                    "classes": [
+                      "pichi-nav-link"
+                    ],
+                    "children": [
+                      "Home"
+                    ]
+                  },
+                  {
+                    "tag": "a",
+                    "classes": [
+                      "pichi-nav-link"
+                    ],
+                    "children": [
+                      "Blog"
+                    ]
+                  }
+                ]
+              }
             ]
           }
         ]
@@ -44,7 +79,9 @@
       {
         "id": "footer_1",
         "tag": "footer",
-        "classes": ["pichi-footer"],
+        "classes": [
+          "pichi-footer"
+        ],
         "children": [
           "Powered by ESCMS - The Zero-Bloat CMS"
         ]
@@ -56,11 +93,40 @@
       {
         "id": "hero_1",
         "tag": "section",
-        "classes": ["pichi-hero"],
+        "classes": [
+          "pichi-hero"
+        ],
         "children": [
-          { "tag": "h1", "classes": ["pichi-hero-title"], "children": ["Welcome to the Pichi Template"] },
-          { "tag": "p", "classes": ["pichi-hero-subtitle"], "children": ["This is the default starting point for your new website. Edit anything directly on the canvas."] },
-          { "tag": "a", "classes": ["pichi-btn"], "attributes": { "href": "/admin" }, "children": ["Get Started"] }
+          {
+            "tag": "h1",
+            "classes": [
+              "pichi-hero-title"
+            ],
+            "children": [
+              "Welcome to the Pichi Template"
+            ]
+          },
+          {
+            "tag": "p",
+            "classes": [
+              "pichi-hero-subtitle"
+            ],
+            "children": [
+              "This is the default starting point for your new website. Edit anything directly on the canvas."
+            ]
+          },
+          {
+            "tag": "a",
+            "classes": [
+              "pichi-btn"
+            ],
+            "attributes": {
+              "href": "/admin"
+            },
+            "children": [
+              "Get Started"
+            ]
+          }
         ]
       }
     ]

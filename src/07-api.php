@@ -102,6 +102,85 @@ if (str_starts_with($route, 'api/')) {
             }
             break;
 
+        case 'api/settings':
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            if ($method === 'GET') {
+                $options = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE 'ai_%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
+                $send_json(['status' => 'success', 'data' => $options]);
+            } elseif ($method === 'POST') {
+                $key = $input['key'] ?? null;
+                $value = $input['value'] ?? null;
+                if (!$key || str_starts_with($key, 'ai_')) $send_json(['status' => 'error', 'msg' => 'Invalid key'], 400);
+                
+                $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+                $stmt->execute([$key, $value]);
+                $send_json(['status' => 'success']);
+            } else {
+                $send_json(['error' => 'Method not allowed'], 405);
+            }
+            break;
+
+        case 'api/ai/settings':
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            if ($method === 'GET') {
+                $ai_opts = $pdo->query("SELECT k, v FROM options WHERE k LIKE 'ai_%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
+                $send_json([
+                    'status' => 'success',
+                    'provider' => $ai_opts['ai_provider'] ?? 'gemini',
+                    'model' => $ai_opts['ai_model'] ?? '',
+                    'endpoint' => $ai_opts['ai_endpoint'] ?? '',
+                    'instructions' => $ai_opts['ai_instructions'] ?? '',
+                    'has_key' => !empty($ai_opts['ai_apikey'])
+                ]);
+            } elseif ($method === 'POST') {
+                $provider = $input['provider'] ?? 'gemini';
+                $model = $input['model'] ?? '';
+                $endpoint = $input['endpoint'] ?? '';
+                $instructions = $input['instructions'] ?? '';
+                $key = $input['key'] ?? '';
+                
+                $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+                $stmt->execute(['ai_provider', $provider]);
+                $stmt->execute(['ai_model', $model]);
+                $stmt->execute(['ai_endpoint', $endpoint]);
+                $stmt->execute(['ai_instructions', $instructions]);
+                if (!empty($key)) {
+                    $stmt->execute(['ai_apikey', $key]);
+                }
+                $send_json(['status' => 'success']);
+            } else {
+                $send_json(['error' => 'Method not allowed'], 405);
+            }
+            break;
+
+        case 'api/ai/models':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            
+            $provider = $input['provider'] ?? 'gemini';
+            $key = $input['key'] ?? '';
+            $endpoint = $input['endpoint'] ?? '';
+            
+            if (empty($key)) {
+                $saved_key = $pdo->query("SELECT v FROM options WHERE k = 'ai_apikey'")->fetchColumn();
+                $key = $saved_key ?: '';
+            }
+            
+            if (empty($key)) {
+                $send_json(['status' => 'error', 'msg' => 'API Key is missing']);
+            }
+            
+            // Simulación rápida, luego implementar llamadas reales
+            $models = [];
+            if ($provider === 'gemini') {
+                $models = [['value' => 'gemini-1.5-pro', 'label' => 'Gemini 1.5 Pro'], ['value' => 'gemini-1.5-flash', 'label' => 'Gemini 1.5 Flash']];
+            } else {
+                $models = [['value' => 'default-model', 'label' => 'Default Model']];
+            }
+            
+            $send_json(['status' => 'success', 'models' => $models]);
+            break;
+
         case 'api/pages/save':
             if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
             if (!EscmsAuth::isLoggedIn()) {
@@ -700,6 +779,37 @@ if (str_starts_with($route, 'api/')) {
                 }
             }
             $send_json(['status' => 'success', 'deleted' => $deleted]);
+            break;
+
+        case 'api/settings':
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            if ($method === 'GET') {
+                try {
+                    $options = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE 'ai_%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
+                    $send_json(['status' => 'success', 'data' => $options]);
+                } catch (Throwable $e) {
+                    $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+                }
+            } else if ($method === 'POST') {
+                try {
+                    $input = json_decode(file_get_contents('php://input'), true);
+                    if (!is_array($input)) throw new RuntimeException('Invalid payload');
+                    
+                    $pdo->beginTransaction();
+                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
+                    foreach ($input as $k => $v) {
+                        if (strpos($k, 'ai_') === 0) continue; // Proteger las claves de AI
+                        $stmt->execute([$k, (string)$v]);
+                    }
+                    $pdo->commit();
+                    $send_json(['status' => 'success']);
+                } catch (Throwable $e) {
+                    if ($pdo->inTransaction()) $pdo->rollBack();
+                    $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+                }
+            } else {
+                $send_json(['error' => 'Method not allowed'], 405);
+            }
             break;
 
         case 'api/ai/settings':

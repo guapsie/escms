@@ -46,9 +46,8 @@ class EscmsMediaLibrary {
         this.modal = document.createElement('div');
         this.modal.className = 'escms-media-library';
         this.modal.style.position = 'fixed';
-        this.modal.style.inset = '0';
-        this.modal.style.backgroundColor = 'rgba(10, 10, 10, 0.85)';
-        this.modal.style.backdropFilter = 'blur(10px)';
+        this.modal.style.inset = '50px 0 0 0';
+        this.modal.style.backgroundColor = 'var(--bg-base, #0a0a0a)';
         this.modal.style.zIndex = '99999';
         this.modal.style.display = 'flex';
         this.modal.style.flexDirection = 'column';
@@ -63,32 +62,27 @@ class EscmsMediaLibrary {
         
         const leftControls = document.createElement('div');
         leftControls.style.display = 'flex';
-        leftControls.style.gap = '1rem';
         leftControls.style.alignItems = 'center';
+        leftControls.style.width = '250px';
         
         const title = document.createElement('h2');
-        title.textContent = 'ESMedia Library';
-        title.style.color = '#fff';
+        title.innerHTML = '<span style="color:var(--text-solid, #fff); opacity:1;">ES</span><span style="color:var(--text-solid, #fff); opacity:0.5;">Media Manager</span>';
         title.style.margin = '0';
         title.style.fontWeight = '500';
+        title.style.fontSize = '0.85rem';
+        title.style.letterSpacing = '1px';
         
-        this.searchInput = document.createElement('input');
-        this.searchInput.type = 'search';
-        this.searchInput.placeholder = 'Search media...';
-        this.searchInput.style.padding = '0.5rem 1rem';
-        this.searchInput.style.borderRadius = '20px';
-        this.searchInput.style.border = '1px solid rgba(255,255,255,0.1)';
-        this.searchInput.style.background = 'rgba(0,0,0,0.5)';
-        this.searchInput.style.color = '#fff';
-        this.searchInput.style.outline = 'none';
-        this.searchInput.style.width = '250px';
-        this.searchInput.addEventListener('input', (e) => this.filterMedia(e.target.value));
+        leftControls.appendChild(title);
 
-        const rightControls = document.createElement('div');
-        rightControls.style.display = 'flex';
-        rightControls.style.gap = '1rem';
-        rightControls.style.alignItems = 'center';
-
+        const middleControls = document.createElement('div');
+        middleControls.style.position = 'relative';
+        middleControls.style.display = 'flex';
+        middleControls.style.alignItems = 'center';
+        middleControls.style.background = 'rgba(255, 255, 255, 0.03)';
+        middleControls.style.borderRadius = '20px';
+        middleControls.style.padding = '4px';
+        middleControls.style.gap = '4px';
+        
         this.hiddenFileInput = document.createElement('input');
         this.hiddenFileInput.type = 'file';
         this.hiddenFileInput.multiple = true;
@@ -100,64 +94,118 @@ class EscmsMediaLibrary {
             }
         });
 
+        const stylePillBtn = (btn) => {
+            btn.style.padding = '0';
+            btn.style.width = '32px';
+            btn.style.height = '32px';
+            btn.style.borderRadius = '16px';
+            btn.style.border = 'none';
+            btn.style.background = 'transparent';
+            btn.style.color = 'rgba(255,255,255,0.6)';
+            btn.style.cursor = 'pointer';
+            btn.style.display = 'flex';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'center';
+            btn.style.transition = 'all 0.2s';
+            btn.addEventListener('mouseenter', () => {
+                if (!btn.classList.contains('active-pill')) {
+                    btn.style.background = 'rgba(255,255,255,0.08)';
+                    btn.style.color = 'var(--accent-solid, #3b82f6)';
+                }
+            });
+            btn.addEventListener('mouseleave', () => {
+                if (!btn.classList.contains('active-pill')) {
+                    btn.style.background = 'transparent';
+                    btn.style.color = 'rgba(255,255,255,0.6)';
+                }
+            });
+        };
+
         this.uploadBtn = document.createElement('button');
-        this.uploadBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
-        this.uploadBtn.title = 'Upload Files';
-        this.uploadBtn.style.padding = '0';
-        this.uploadBtn.style.width = '36px';
-        this.uploadBtn.style.height = '36px';
-        this.uploadBtn.style.borderRadius = '50%';
-        this.uploadBtn.style.border = '1px solid rgba(255,255,255,0.2)';
-        this.uploadBtn.style.background = 'rgba(255,255,255,0.05)';
-        this.uploadBtn.style.color = '#fff';
-        this.uploadBtn.style.cursor = 'pointer';
-        this.uploadBtn.style.display = 'flex';
-        this.uploadBtn.style.alignItems = 'center';
-        this.uploadBtn.style.justifyContent = 'center';
-        this.uploadBtn.style.transition = 'background 0.2s';
-        this.uploadBtn.addEventListener('mouseenter', () => this.uploadBtn.style.background = 'rgba(255,255,255,0.1)');
-        this.uploadBtn.addEventListener('mouseleave', () => this.uploadBtn.style.background = 'rgba(255,255,255,0.05)');
+        this.uploadBtn.innerHTML = window.icons && window.icons.upload ? window.icons.upload : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+        const svgUpload = this.uploadBtn.querySelector('svg');
+        if (svgUpload) { svgUpload.style.width = '16px'; svgUpload.style.height = '16px'; }
+        this.uploadBtn.title = this.i18n ? (this.i18n.dictionary['medialibrary.upload'] || 'Upload Files') : 'Upload Files';
+        stylePillBtn(this.uploadBtn);
         this.uploadBtn.addEventListener('click', () => this.hiddenFileInput.click());
 
         this.deleteToggleBtn = document.createElement('button');
-        this.deleteToggleBtn.textContent = 'Select to Delete';
-        this.deleteToggleBtn.style.padding = '0.5rem 1rem';
-        this.deleteToggleBtn.style.borderRadius = '4px';
-        this.deleteToggleBtn.style.border = '1px solid rgba(239, 68, 68, 0.5)';
-        this.deleteToggleBtn.style.background = 'transparent';
-        this.deleteToggleBtn.style.color = 'rgb(239, 68, 68)';
-        this.deleteToggleBtn.style.cursor = 'pointer';
+        this.deleteToggleBtn.innerHTML = window.icons && window.icons.trash ? window.icons.trash : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>';
+        // Ajustar el SVG en caso de usar window.icons.trash
+        const svgTrash = this.deleteToggleBtn.querySelector('svg');
+        if (svgTrash) { svgTrash.style.width = '14px'; svgTrash.style.height = '14px'; }
+        this.deleteToggleBtn.title = this.i18n ? (this.i18n.dictionary['medialibrary.select_delete'] || 'Select to Delete') : 'Select to Delete';
+        stylePillBtn(this.deleteToggleBtn);
         this.deleteToggleBtn.addEventListener('click', () => this.toggleDeleteMode());
 
         this.executeDeleteBtn = document.createElement('button');
-        this.executeDeleteBtn.textContent = 'Delete (0)';
-        this.executeDeleteBtn.style.padding = '0.5rem 1rem';
-        this.executeDeleteBtn.style.borderRadius = '4px';
+        this.executeDeleteBtn.innerHTML = '<span style="font-size:0.75rem; font-weight:bold;">Delete (0)</span>';
+        this.executeDeleteBtn.title = 'Confirm Deletion';
+        this.executeDeleteBtn.style.padding = '0 1rem';
+        this.executeDeleteBtn.style.height = '32px';
+        this.executeDeleteBtn.style.borderRadius = '16px';
         this.executeDeleteBtn.style.border = 'none';
-        this.executeDeleteBtn.style.background = 'rgb(239, 68, 68)';
+        this.executeDeleteBtn.style.background = '#ef4444';
         this.executeDeleteBtn.style.color = '#fff';
         this.executeDeleteBtn.style.cursor = 'pointer';
         this.executeDeleteBtn.style.display = 'none';
+        this.executeDeleteBtn.style.alignItems = 'center';
+        this.executeDeleteBtn.style.position = 'absolute';
+        this.executeDeleteBtn.style.left = 'calc(100% + 8px)';
+        this.executeDeleteBtn.style.whiteSpace = 'nowrap';
         this.executeDeleteBtn.addEventListener('click', () => this.deleteSelected());
 
+        middleControls.appendChild(this.uploadBtn);
+        middleControls.appendChild(this.deleteToggleBtn);
+        middleControls.appendChild(this.executeDeleteBtn);
+
+        const rightControls = document.createElement('div');
+        rightControls.style.display = 'flex';
+        rightControls.style.gap = '1rem';
+        rightControls.style.alignItems = 'center';
+        rightControls.style.width = '250px';
+        rightControls.style.justifyContent = 'flex-end';
+
+        this.searchInput = document.createElement('input');
+        this.searchInput.type = 'search';
+        this.searchInput.placeholder = 'Search media...';
+        this.searchInput.style.padding = '0.4rem 1rem';
+        this.searchInput.style.borderRadius = '20px';
+        this.searchInput.style.border = '1px solid var(--accent-fade, rgba(59,130,246,0.7))';
+        this.searchInput.style.background = 'var(--accent-faint, rgba(59,130,246,0.3))';
+        this.searchInput.style.color = '#fff';
+        this.searchInput.style.outline = 'none';
+        this.searchInput.style.width = '180px';
+        this.searchInput.style.fontSize = '0.85rem';
+        this.searchInput.style.transition = 'box-shadow 0.2s';
+        this.searchInput.addEventListener('focus', () => {
+            this.searchInput.style.boxShadow = '0 0 0 2px var(--accent-solid, #3b82f6)';
+        });
+        this.searchInput.addEventListener('blur', () => {
+            this.searchInput.style.boxShadow = 'none';
+        });
+        this.searchInput.addEventListener('input', (e) => this.filterMedia(e.target.value));
+
         const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = icons.close || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;"><path d="M18 6l-12 12M6 6l12 12"/></svg>';
+        closeBtn.innerHTML = window.icons && window.icons.close ? window.icons.close : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M18 6l-12 12M6 6l12 12"/></svg>';
+        const svgClose = closeBtn.querySelector('svg');
+        if (svgClose) { svgClose.style.width = '20px'; svgClose.style.height = '20px'; }
         closeBtn.style.background = 'transparent';
         closeBtn.style.border = 'none';
         closeBtn.style.color = '#fff';
         closeBtn.style.cursor = 'pointer';
-        closeBtn.style.opacity = '0.6';
+        closeBtn.style.opacity = '0.4';
+        closeBtn.style.padding = '0';
+        closeBtn.style.transition = 'opacity 0.2s';
+        closeBtn.addEventListener('mouseenter', () => closeBtn.style.opacity = '1');
+        closeBtn.addEventListener('mouseleave', () => closeBtn.style.opacity = '0.4');
         closeBtn.addEventListener('click', () => this.close(null));
-
-        leftControls.appendChild(title);
-        leftControls.appendChild(this.searchInput);
         
-        rightControls.appendChild(this.uploadBtn);
-        rightControls.appendChild(this.deleteToggleBtn);
-        rightControls.appendChild(this.executeDeleteBtn);
+        rightControls.appendChild(this.searchInput);
         rightControls.appendChild(closeBtn);
 
         header.appendChild(leftControls);
+        header.appendChild(middleControls);
         header.appendChild(rightControls);
 
         this.grid = document.createElement('div');
@@ -313,7 +361,7 @@ class EscmsMediaLibrary {
                         check.style.backgroundColor = 'rgb(239, 68, 68)';
                         check.style.border = '2px solid rgb(239, 68, 68)';
                     }
-                    this.executeDeleteBtn.textContent = `Delete (${this.selectedForDeletion.size})`;
+                    this.executeDeleteBtn.innerHTML = '<span style="font-size:0.75rem; font-weight:bold;">Delete (' + this.selectedForDeletion.size + ')</span>';
                 } else {
                     this.close(item.url);
                 }
@@ -342,13 +390,17 @@ class EscmsMediaLibrary {
         this.selectedForDeletion.clear();
         
         if (this.isDeleteMode) {
-            this.deleteToggleBtn.textContent = 'Cancel Delete';
+            this.deleteToggleBtn.classList.add('active-pill');
+            this.deleteToggleBtn.title = 'Cancel Delete';
             this.deleteToggleBtn.style.background = 'rgba(239, 68, 68, 0.2)';
-            this.executeDeleteBtn.style.display = 'block';
-            this.executeDeleteBtn.textContent = 'Delete (0)';
+            this.deleteToggleBtn.style.color = '#ef4444';
+            this.executeDeleteBtn.style.display = 'flex';
+            this.executeDeleteBtn.innerHTML = '<span style="font-size:0.75rem; font-weight:bold;">Delete (0)</span>';
         } else {
-            this.deleteToggleBtn.textContent = 'Select to Delete';
+            this.deleteToggleBtn.classList.remove('active-pill');
+            this.deleteToggleBtn.title = 'Select to Delete';
             this.deleteToggleBtn.style.background = 'transparent';
+            this.deleteToggleBtn.style.color = 'rgba(255,255,255,0.6)';
             this.executeDeleteBtn.style.display = 'none';
         }
 

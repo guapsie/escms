@@ -11,7 +11,7 @@ $needs_assets = !file_exists($root_dir . '/assets/js/editor-app.js');
 if ($needs_install || $needs_assets) {
     $dirs = [
         $data_dir,
-        $data_dir . '/uploads',
+        $data_dir . '/media',
         $data_dir . '/templates',
         $data_dir . '/atoms',
         $data_dir . '/locales',
@@ -138,6 +138,19 @@ if ($needs_install) {
         
         $stmtOpt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('home_page_id', ?)");
         $stmtOpt->execute([$homeId]);
+
+        if (isset($tpl['theme_config'])) {
+            $tc = $tpl['theme_config'];
+            $stmtTheme = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?)");
+            if (!empty($tc['typography']['body'])) $stmtTheme->execute(['--font-body', $tc['typography']['body']]);
+            if (!empty($tc['colors']['background'])) $stmtTheme->execute(['--color-background', $tc['colors']['background']]);
+            if (!empty($tc['colors']['text'])) $stmtTheme->execute(['--color-text', $tc['colors']['text']]);
+            if (!empty($tc['colors']['accent'])) $stmtTheme->execute(['--color-accent', $tc['colors']['accent']]);
+            if (!empty($tc['width'])) $stmtTheme->execute(['--max-width', $tc['width']]);
+            if (isset($tc['google_fonts']) && is_array($tc['google_fonts'])) {
+                $stmtTheme->execute(['google_fonts', json_encode($tc['google_fonts'])]);
+            }
+        }
 
     } catch (PDOException $e) {
         die("Fatal Error: Database creation failed - " . $e->getMessage());

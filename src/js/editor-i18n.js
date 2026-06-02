@@ -78,6 +78,8 @@ const enFallback = Object.freeze({
     "settings.tab_layout": "Layout & Colors",
     "settings.tab_typography": "Typography",
     "settings.tab_seo": "Global SEO",
+    "ai.panel_title": "AI Copilot",
+    "settings.max_width": "Max Width",
     "settings.ai_title": "AI Copilot Setup",
     "settings.ai_loading": "Loading AI settings...",
     "settings.ai_error": "Error loading AI settings",

@@ -21,14 +21,23 @@ class EscmsEditor {
         this.topbar = new EscmsTopBar(this.i18n);
         this.topbar.init();
 
+        this.canvas = new EscmsCanvas();
+        this.canvas.init();
+
+        this.host = document.getElementById('escms-canvas-host');
+        if (!this.host) return;
+
+        this.shadow = this.host.attachShadow({ mode: 'open' });
+        
+        const docRoot = document.createElement('div');
+        docRoot.id = 'document-root';
+        this.shadow.appendChild(docRoot);
+
         this.settings = new EscmsGlobalSettings(this.i18n);
         this.settings.init();
 
         this.inspector = new EscmsInspector(this.i18n);
         this.inspector.init();
-
-        this.canvas = new EscmsCanvas();
-        this.canvas.init();
 
         this.seoView = new EscmsSeoView();
         this.seoView.init(this.canvas.area);
@@ -52,16 +61,6 @@ class EscmsEditor {
         } catch (err) {
             console.error('[ESCMS] Error loading components', err);
         }
-
-        this.host = document.getElementById('escms-canvas-host');
-        if (!this.host) return;
-
-        this.shadow = this.host.attachShadow({ mode: 'open' });
-        
-        const docRoot = document.createElement('div');
-        docRoot.id = 'document-root';
-        
-        this.shadow.appendChild(docRoot);
         
         const emptyText = this.i18n.dictionary['editor.drop_atoms'] || 'Drop atoms here';
 

@@ -47,7 +47,7 @@ class EscmsGlobalSettings {
             await fetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ [key]: value })
+                body: JSON.stringify({ key: key, value: value })
             });
         } catch (e) { console.error('Failed to save settings', e); }
     }
@@ -107,7 +107,8 @@ class EscmsGlobalSettings {
         const tabs = [
             { id: 'general', labelKey: 'settings.tab_ide' },
             { id: 'layout', labelKey: 'settings.tab_layout' },
-            { id: 'typography', labelKey: 'settings.tab_typography' }
+            { id: 'typography', labelKey: 'settings.tab_typography' },
+            { id: 'ai', labelKey: 'ai.panel_title' }
         ];
 
         tabs.forEach(tab => {
@@ -156,7 +157,8 @@ class EscmsGlobalSettings {
         this.tabContents = {
             general: this.createGeneralTab(),
             layout: this.createLayoutTab(),
-            typography: this.createTypographyTab()
+            typography: this.createTypographyTab(),
+            ai: this.createAITab()
         };
 
         Object.values(this.tabContents).forEach(content => {
@@ -214,6 +216,14 @@ class EscmsGlobalSettings {
         Object.entries(this.tabContents).forEach(([id, content]) => {
             content.style.display = id === tabId ? 'block' : 'none';
         });
+    }
+
+    debounceSave(key, value) {
+        if (!this._saveTimers) this._saveTimers = {};
+        if (this._saveTimers[key]) clearTimeout(this._saveTimers[key]);
+        this._saveTimers[key] = setTimeout(() => {
+            this.saveConfig(key, value);
+        }, 800);
     }
 
     createInputGroup(labelKey, inputType = 'text', onChange = null) {
@@ -338,13 +348,12 @@ class EscmsGlobalSettings {
             }
         ));
 
-        // AI Copilot Settings
-        const hr = document.createElement('hr');
-        hr.style.border = 'none';
-        hr.style.borderTop = '1px solid rgba(255,255,255,0.05)';
-        hr.style.margin = '2rem 0';
-        tab.appendChild(hr);
+        return tab;
+    }
 
+    createAITab() {
+        const tab = this.createTabContent('ai.panel_title');
+        
         const aiTitle = document.createElement('h3');
         aiTitle.innerHTML = `${icons.ai || ''} <span data-i18n="settings.ai_title">${this.i18n ? (this.i18n.dictionary['settings.ai_title'] || 'AI Copilot Setup') : 'AI Copilot Setup'}</span>`;
         aiTitle.style.display = 'flex';
@@ -527,7 +536,6 @@ class EscmsGlobalSettings {
                                 instructionsContainer.style.display = 'block';
                                 modelContainer.innerHTML = '';
                                 
-                                // Reset model if the loaded ones don't include it
                                 if (!mData.models.find(m => m.value === model)) {
                                     model = mData.models[0].value;
                                 }
@@ -633,23 +641,41 @@ class EscmsGlobalSettings {
         let currentWidth = this.getStyleVariable('--max-width').replace('px', '');
         if (!currentWidth) currentWidth = '1200';
         
-        const widthGroup = this.createInputGroup('settings.max_width', 'number', (val) => this.applyStyleVariable('--max-width', val ? `${val}px` : ''));
+        const widthGroup = this.createInputGroup('settings.max_width', 'number', (val) => {
+            this.applyStyleVariable('--max-width', val ? `${val}px` : '');
+            this.debounceSave('--max-width', val ? `${val}px` : '');
+        });
         widthGroup.input.value = currentWidth;
         tab.appendChild(widthGroup.group);
         
-        const bgColor = new EscmsColorPicker('settings.page_bg_color', this.getStyleVariable('--color-background') || '#0a0a0a', 100, (val) => this.applyStyleVariable('--color-background', val.rgba));
+        const bgColor = new EscmsColorPicker('settings.page_bg_color', this.getStyleVariable('--color-background') || '#0a0a0a', 100, (val) => {
+            this.applyStyleVariable('--color-background', val.rgba);
+            this.debounceSave('--color-background', val.rgba);
+        });
         tab.appendChild(bgColor.element);
 
-        const textColor = new EscmsColorPicker('settings.text_color', this.getStyleVariable('--color-text') || '#f5f5f5', 100, (val) => this.applyStyleVariable('--color-text', val.rgba));
+        const textColor = new EscmsColorPicker('settings.text_color', this.getStyleVariable('--color-text') || '#f5f5f5', 100, (val) => {
+            this.applyStyleVariable('--color-text', val.rgba);
+            this.debounceSave('--color-text', val.rgba);
+        });
         tab.appendChild(textColor.element);
 
-        const accentColor = new EscmsColorPicker('settings.accent_color', this.getStyleVariable('--color-accent') || '#3b82f6', 100, (val) => this.applyStyleVariable('--color-accent', val.rgba));
+        const accentColor = new EscmsColorPicker('settings.accent_color', this.getStyleVariable('--color-accent') || '#3b82f6', 100, (val) => {
+            this.applyStyleVariable('--color-accent', val.rgba);
+            this.debounceSave('--color-accent', val.rgba);
+        });
         tab.appendChild(accentColor.element);
 
-        const linkColor = new EscmsColorPicker('settings.link_color', this.getStyleVariable('--color-link') || '#3b82f6', 100, (val) => this.applyStyleVariable('--color-link', val.rgba));
+        const linkColor = new EscmsColorPicker('settings.link_color', this.getStyleVariable('--color-link') || '#3b82f6', 100, (val) => {
+            this.applyStyleVariable('--color-link', val.rgba);
+            this.debounceSave('--color-link', val.rgba);
+        });
         tab.appendChild(linkColor.element);
 
-        const linkHoverColor = new EscmsColorPicker('settings.link_hover_color', this.getStyleVariable('--color-link-hover') || '#2563eb', 100, (val) => this.applyStyleVariable('--color-link-hover', val.rgba));
+        const linkHoverColor = new EscmsColorPicker('settings.link_hover_color', this.getStyleVariable('--color-link-hover') || '#2563eb', 100, (val) => {
+            this.applyStyleVariable('--color-link-hover', val.rgba);
+            this.debounceSave('--color-link-hover', val.rgba);
+        });
         tab.appendChild(linkHoverColor.element);
 
         return tab;
@@ -772,7 +798,8 @@ class EscmsGlobalSettings {
 
         tab.appendChild(fontUrlGroup);
         
-        tab.appendChild(this.createInputGroup('settings.body_font', 'text', (val) => this.applyStyleVariable('--font-body', val)).group);
+        renderFontsList();
+        
         return tab;
     }
 }
