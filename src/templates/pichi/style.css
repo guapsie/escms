@@ -4,7 +4,7 @@
 */
 
 :root {
-  --color-primary: #3b82f6;
+  --color-accent: #3b82f6;
   --color-background: #0a0a0a;
   --color-text: #f5f5f5;
   --font-heading: 'Inter', sans-serif;
@@ -27,7 +27,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 a {
-  color: var(--color-primary);
+  color: var(--color-accent);
   text-decoration: none;
 }
 
@@ -35,8 +35,71 @@ a:hover {
   text-decoration: underline;
 }
 
-.escms-container {
+.pichi-container {
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 20px;
+}
+
+.pichi-header {
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.pichi-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pichi-logo {
+  margin: 0;
+  color: var(--color-accent);
+}
+
+.pichi-nav-link {
+  color: var(--color-text);
+  margin-left: 20px;
+  text-decoration: none;
+}
+
+.pichi-footer {
+  padding: 40px 0;
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.9em;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  margin-top: 50px;
+}
+
+.pichi-hero {
+  padding: 100px 20px;
+  text-align: center;
+}
+
+.pichi-hero-title {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.pichi-hero-subtitle {
+  font-size: 1.2rem;
+  color: rgba(255,255,255,0.8);
+  max-width: 600px;
+  margin: 0 auto 40px auto;
+}
+
+.pichi-btn {
+  background: var(--color-accent);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  display: inline-block;
+  transition: filter 0.2s;
+}
+
+.pichi-btn:hover {
+  filter: brightness(1.1);
+  text-decoration: none;
 }

@@ -65,45 +65,44 @@ class EscmsCssView {
         editorWrapper.style.padding = '2rem';
         editorWrapper.style.overflow = 'hidden';
 
+        const sharedStyles = `
+            margin: 0;
+            padding: 1rem;
+            border: none;
+            box-sizing: border-box;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            overflow-wrap: break-word;
+            tab-size: 4;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        `;
+
         this.cssContainer = document.createElement('pre');
-        this.cssContainer.style.margin = '0';
-        this.cssContainer.style.fontFamily = 'monospace';
-        this.cssContainer.style.fontSize = '0.85rem';
-        this.cssContainer.style.lineHeight = '1.5';
-        this.cssContainer.style.color = '#e5e7eb';
-        this.cssContainer.style.whiteSpace = 'pre-wrap';
-        this.cssContainer.style.position = 'absolute';
-        this.cssContainer.style.top = '2rem';
-        this.cssContainer.style.left = '2rem';
-        this.cssContainer.style.right = '2rem';
-        this.cssContainer.style.bottom = '2rem';
-        this.cssContainer.style.overflow = 'hidden'; // Hide its own scrollbar, sync with textarea
-        this.cssContainer.style.pointerEvents = 'none';
-        // Diferente zebra stripe
-        this.cssContainer.style.backgroundImage = 'linear-gradient(rgba(0, 0, 0, 0.15) 50%, transparent 50%)';
-        this.cssContainer.style.backgroundSize = '100% 3em';
-        this.cssContainer.style.backgroundAttachment = 'local';
+        this.cssContainer.style.cssText = sharedStyles + `
+            color: #e5e7eb;
+            overflow: hidden;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.15) 50%, transparent 50%);
+            background-size: 100% 3em;
+            background-attachment: local;
+        `;
 
         this.textarea = document.createElement('textarea');
-        this.textarea.style.margin = '0';
-        this.textarea.style.fontFamily = 'monospace';
-        this.textarea.style.fontSize = '0.85rem';
-        this.textarea.style.lineHeight = '1.5';
-        this.textarea.style.whiteSpace = 'pre-wrap';
-        this.textarea.style.position = 'absolute';
-        this.textarea.style.top = '2rem';
-        this.textarea.style.left = '2rem';
-        this.textarea.style.right = '2rem';
-        this.textarea.style.bottom = '2rem';
-        this.textarea.style.width = 'calc(100% - 4rem)';
-        this.textarea.style.height = 'calc(100% - 4rem)';
-        this.textarea.style.overflow = 'auto';
-        this.textarea.style.background = 'transparent';
-        this.textarea.style.color = 'transparent';
-        this.textarea.style.caretColor = '#34d399'; // Emerald cursor para CSS
-        this.textarea.style.border = 'none';
-        this.textarea.style.outline = 'none';
-        this.textarea.style.resize = 'none';
+        this.textarea.style.cssText = sharedStyles + `
+            overflow: auto;
+            background: transparent;
+            color: transparent;
+            caret-color: #34d399;
+            outline: none;
+            resize: none;
+        `;
         this.textarea.spellcheck = false;
 
         this.textarea.addEventListener('scroll', () => {
@@ -112,8 +111,15 @@ class EscmsCssView {
         });
 
         this.textarea.addEventListener('input', (e) => {
-            this.cssContainer.innerHTML = this.colorizeCss(e.target.value);
+            let formatted = this.colorizeCss(e.target.value);
+            if (e.target.value.endsWith('\n')) {
+                formatted += ' ';
+            }
+            this.cssContainer.innerHTML = formatted;
             btnSave.style.boxShadow = '0 0 10px var(--accent-faint)';
+            
+            // Sync live to canvas
+            this.updateCanvasCss(e.target.value);
         });
 
         editorWrapper.appendChild(this.cssContainer);
@@ -148,8 +154,13 @@ class EscmsCssView {
             const data = await res.json();
             if (data.status === 'success') {
                 this.textarea.value = data.css;
-                this.cssContainer.innerHTML = this.colorizeCss(data.css);
+                let formatted = this.colorizeCss(data.css);
+                if (data.css.endsWith('\n')) formatted += ' ';
+                this.cssContainer.innerHTML = formatted;
                 this.lastSavedValue = data.css;
+                
+                // Inject the stylesheet into the shadow DOM initially
+                this.updateCanvasCss(data.css);
             }
         } catch (e) {
             console.error('Failed to load CSS', e);
@@ -190,7 +201,9 @@ class EscmsCssView {
             const data = await res.json();
             if (data.status === 'success') {
                 this.textarea.value = data.css;
-                this.cssContainer.innerHTML = this.colorizeCss(data.css);
+                let formatted = this.colorizeCss(data.css);
+                if (data.css.endsWith('\n')) formatted += ' ';
+                this.cssContainer.innerHTML = formatted;
                 this.lastSavedValue = data.css;
                 
                 // Update canvas stylesheet
@@ -210,28 +223,128 @@ class EscmsCssView {
                 styleEl.id = 'escms-template-css';
                 host.shadowRoot.insertBefore(styleEl, host.shadowRoot.firstChild);
             }
-            styleEl.textContent = cssString;
+            
+            // Re-scope variables from :root and body to the actual shadow DOM root
+            let scopedCss = cssString.replace(/:root/g, '#document-root');
+            scopedCss = scopedCss.replace(/\bbody\s*{/g, '#document-root {');
+            
+            styleEl.textContent = scopedCss;
         }
     }
 
     colorizeCss(css) {
         let escaped = css.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         
-        // Comentarios
-        escaped = escaped.replace(/(\/\*[\s\S]*?\*\/)/g, '<span style="color: #6b7280; font-style: italic;">$1</span>');
+        let result = '';
+        let state = 0; // 0: Selector, 1: Property, 2: Value
+        let buffer = '';
+        let inQuote = null; // null, "'", or '"'
+        let parens = 0;
         
-        // Selectores (antes de { )
-        escaped = escaped.replace(/([^{]+)(?=\{)/g, '<span style="color: #60a5fa; font-weight: bold;">$1</span>');
-        
-        // Propiedades (antes de : )
-        escaped = escaped.replace(/([{;]\s*)([a-zA-Z-]+)(\s*:)/g, '$1<span style="color: #34d399;">$2</span>$3');
-        
-        // Valores (después de : hasta ; o })
-        escaped = escaped.replace(/(:\s*)([^;}]+)([;}])/g, '$1<span style="color: #fb923c;">$2</span>$3');
-        
-        // Variables css (--var-name)
-        escaped = escaped.replace(/(--[a-zA-Z0-9-]+)/g, '<span style="color: #c084fc;">$1</span>');
+        let i = 0;
+        while (i < escaped.length) {
+            // Check for comment
+            if (!inQuote && escaped.substring(i, i+2) === '/' + '*') {
+                let end = escaped.indexOf('*' + '/', i + 2);
+                if (end === -1) end = escaped.length;
+                else end += 2;
+                let comment = escaped.substring(i, end);
+                
+                result += formatBuffer(buffer, state);
+                buffer = '';
+                
+                result += `<span style="color: #6b7280; font-style: italic;">${comment}</span>`;
+                i = end;
+                continue;
+            }
 
-        return escaped;
+            let char = escaped[i];
+            
+            // Handle quotes
+            if (char === '"' || char === "'") {
+                if (inQuote === char) {
+                    // check if escaped
+                    if (i > 0 && escaped[i-1] !== '\\') {
+                        inQuote = null;
+                    } else if (i > 0 && escaped[i-1] === '\\') {
+                        let bsCount = 0;
+                        let j = i - 1;
+                        while (j >= 0 && escaped[j] === '\\') {
+                            bsCount++;
+                            j--;
+                        }
+                        if (bsCount % 2 === 0) {
+                            inQuote = null;
+                        }
+                    }
+                } else if (!inQuote) {
+                    inQuote = char;
+                }
+            }
+            
+            if (!inQuote) {
+                if (char === '(') parens++;
+                if (char === ')') parens--;
+                if (parens < 0) parens = 0;
+            }
+
+            if (state === 0) { // Selector
+                if (char === '{' && !inQuote) {
+                    result += formatBuffer(buffer, 0) + '{';
+                    buffer = '';
+                    state = 1;
+                } else {
+                    buffer += char;
+                }
+            } else if (state === 1) { // Property
+                if (char === ':' && !inQuote) {
+                    result += formatBuffer(buffer, 1) + ':';
+                    buffer = '';
+                    state = 2;
+                } else if (char === '}' && !inQuote) {
+                    result += formatBuffer(buffer, 1) + '}';
+                    buffer = '';
+                    state = 0;
+                } else {
+                    buffer += char;
+                }
+            } else if (state === 2) { // Value
+                if (char === ';' && !inQuote && parens === 0) {
+                    result += formatBuffer(buffer, 2) + ';';
+                    buffer = '';
+                    state = 1;
+                } else if (char === '}' && !inQuote && parens === 0) {
+                    result += formatBuffer(buffer, 2) + '}';
+                    buffer = '';
+                    state = 0;
+                } else {
+                    buffer += char;
+                }
+            }
+            i++;
+        }
+        
+        result += formatBuffer(buffer, state);
+        return result;
+
+        function formatBuffer(buf, s) {
+            if (!buf) return '';
+            let leadingMatch = buf.match(/^\s*/);
+            let trailingMatch = buf.match(/\s*$/);
+            let leading = leadingMatch ? leadingMatch[0] : '';
+            let trailing = trailingMatch ? trailingMatch[0] : '';
+            
+            if (leading.length === buf.length) return buf; // only whitespace
+            
+            let content = buf.substring(leading.length, buf.length - trailing.length);
+            
+            if (s === 0) return `${leading}<span style="color: #60a5fa; font-weight: bold;">${content}</span>${trailing}`;
+            if (s === 1) return `${leading}<span style="color: #34d399;">${content}</span>${trailing}`;
+            if (s === 2) {
+                let val = content.replace(/(--[a-zA-Z0-9-]+)/g, '<span style="color: #c084fc;">$1</span>');
+                return `${leading}<span style="color: #fb923c;">${val}</span>${trailing}`;
+            }
+            return buf;
+        }
     }
 }

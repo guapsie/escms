@@ -18,29 +18,29 @@ class EscmsSelection {
         const style = document.createElement('style');
         style.textContent = `
             * { outline: none !important; }
-            #document-root {
-                color: var(--text-color, #0a0a0a);
-                background-color: var(--bg-color, #ffffff);
-                font-family: var(--font-family, inherit);
+            :where(#document-root) {
+                color: var(--color-text, #0a0a0a);
+                background-color: var(--color-background, #ffffff);
+                font-family: var(--font-body, inherit);
                 flex: 1;
                 width: 100%;
                 box-sizing: border-box;
             }
-            #document-root a {
-                color: var(--link-color, #3b82f6);
+            :where(#document-root) a {
+                color: var(--color-link, var(--color-accent, #3b82f6));
                 text-decoration: none;
             }
-            #document-root a:hover {
-                color: var(--link-hover-color, #2563eb);
+            :where(#document-root) a:hover {
+                color: var(--color-link-hover, var(--color-accent, #2563eb));
                 text-decoration: underline;
             }
-            #document-root div,
-            #document-root section,
-            #document-root article,
-            #document-root main,
-            #document-root aside,
-            #document-root header,
-            #document-root footer {
+            :where(#document-root) div,
+            :where(#document-root) section,
+            :where(#document-root) article,
+            :where(#document-root) main,
+            :where(#document-root) aside,
+            :where(#document-root) header,
+            :where(#document-root) footer {
                 outline: 1px dotted #cccccc;
                 outline-offset: -1px;
             }

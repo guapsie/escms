@@ -620,19 +620,19 @@ class EscmsGlobalSettings {
         const tab = this.createTabContent('settings.tab_layout');
         tab.appendChild(this.createInputGroup('settings.max_width', 'number', (val) => this.applyStyleVariable('--max-width', val ? `${val}px` : '')).group);
         
-        const bgColor = new EscmsColorPicker('settings.page_bg_color', '#ffffff', 100, (val) => this.applyStyleVariable('--bg-color', val.rgba));
+        const bgColor = new EscmsColorPicker('settings.page_bg_color', '#ffffff', 100, (val) => this.applyStyleVariable('--color-background', val.rgba));
         tab.appendChild(bgColor.element);
 
-        const textColor = new EscmsColorPicker('settings.text_color', '#0a0a0a', 100, (val) => this.applyStyleVariable('--text-color', val.rgba));
+        const textColor = new EscmsColorPicker('settings.text_color', '#0a0a0a', 100, (val) => this.applyStyleVariable('--color-text', val.rgba));
         tab.appendChild(textColor.element);
 
-        const accentColor = new EscmsColorPicker('settings.accent_color', '#3b82f6', 100, (val) => this.applyStyleVariable('--accent-color', val.rgba));
+        const accentColor = new EscmsColorPicker('settings.accent_color', '#3b82f6', 100, (val) => this.applyStyleVariable('--color-accent', val.rgba));
         tab.appendChild(accentColor.element);
 
-        const linkColor = new EscmsColorPicker('settings.link_color', '#3b82f6', 100, (val) => this.applyStyleVariable('--link-color', val.rgba));
+        const linkColor = new EscmsColorPicker('settings.link_color', '#3b82f6', 100, (val) => this.applyStyleVariable('--color-link', val.rgba));
         tab.appendChild(linkColor.element);
 
-        const linkHoverColor = new EscmsColorPicker('settings.link_hover_color', '#2563eb', 100, (val) => this.applyStyleVariable('--link-hover-color', val.rgba));
+        const linkHoverColor = new EscmsColorPicker('settings.link_hover_color', '#2563eb', 100, (val) => this.applyStyleVariable('--color-link-hover', val.rgba));
         tab.appendChild(linkHoverColor.element);
 
         return tab;
@@ -755,7 +755,7 @@ class EscmsGlobalSettings {
 
         tab.appendChild(fontUrlGroup);
         
-        tab.appendChild(this.createInputGroup('settings.body_font', 'text', (val) => this.applyStyleVariable('--font-family', val)).group);
+        tab.appendChild(this.createInputGroup('settings.body_font', 'text', (val) => this.applyStyleVariable('--font-body', val)).group);
         return tab;
     }
 }

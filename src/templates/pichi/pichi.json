@@ -12,7 +12,7 @@
       "body": "Roboto, sans-serif"
     },
     "colors": {
-      "primary": "#3b82f6",
+      "accent": "#3b82f6",
       "background": "#0a0a0a",
       "text": "#f5f5f5"
     },
@@ -23,18 +23,17 @@
       {
         "id": "header_1",
         "tag": "header",
-        "styles": "padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.1);",
+        "classes": ["pichi-header"],
         "children": [
           {
             "id": "header_container",
             "tag": "div",
-            "classes": ["escms-container"],
-            "styles": "display: flex; justify-content: space-between; align-items: center;",
+            "classes": ["pichi-container", "pichi-header-container"],
             "children": [
-              { "tag": "h3", "styles": "margin: 0; color: var(--color-primary);", "children": [{ "tag": "span", "children": ["ESCMS"] }] },
+              { "tag": "h3", "classes": ["pichi-logo"], "children": ["ESCMS"] },
               { "tag": "nav", "children": [
-                { "tag": "a", "styles": "color: var(--color-text); margin-left: 20px; text-decoration: none;", "children": [{ "tag": "span", "children": ["Home"] }] },
-                { "tag": "a", "styles": "color: var(--color-text); margin-left: 20px; text-decoration: none;", "children": [{ "tag": "span", "children": ["Blog"] }] }
+                { "tag": "a", "classes": ["pichi-nav-link"], "children": ["Home"] },
+                { "tag": "a", "classes": ["pichi-nav-link"], "children": ["Blog"] }
               ] }
             ]
           }
@@ -45,9 +44,9 @@
       {
         "id": "footer_1",
         "tag": "footer",
-        "styles": "padding: 40px 0; text-align: center; color: rgba(255,255,255,0.5); font-size: 0.9em; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 50px;",
+        "classes": ["pichi-footer"],
         "children": [
-          { "tag": "span", "children": ["Powered by ESCMS - The Zero-Bloat CMS"] }
+          "Powered by ESCMS - The Zero-Bloat CMS"
         ]
       }
     ]
@@ -57,11 +56,11 @@
       {
         "id": "hero_1",
         "tag": "section",
-        "styles": "padding: 100px 20px; text-align: center;",
+        "classes": ["pichi-hero"],
         "children": [
-          { "tag": "h1", "styles": "font-size: 3rem; margin-bottom: 20px;", "children": [{ "tag": "span", "children": ["Welcome to the Pichi Template"] }] },
-          { "tag": "p", "styles": "font-size: 1.2rem; color: rgba(255,255,255,0.8); max-width: 600px; margin: 0 auto 40px auto;", "children": [{ "tag": "span", "children": ["This is the default starting point for your new website. Edit anything directly on the canvas."] }] },
-          { "tag": "a", "styles": "background: var(--color-primary); color: #fff; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;", "children": [{ "tag": "span", "children": ["Get Started"] }] }
+          { "tag": "h1", "classes": ["pichi-hero-title"], "children": ["Welcome to the Pichi Template"] },
+          { "tag": "p", "classes": ["pichi-hero-subtitle"], "children": ["This is the default starting point for your new website. Edit anything directly on the canvas."] },
+          { "tag": "a", "classes": ["pichi-btn"], "children": ["Get Started"] }
         ]
       }
     ]
