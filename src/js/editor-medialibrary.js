@@ -71,6 +71,13 @@ class EscmsMediaLibrary {
         title.style.fontWeight = '500';
         title.style.fontSize = '0.85rem';
         title.style.letterSpacing = '1px';
+        title.setAttribute('data-i18n', 'medialibrary.title');
+        title.textContent = this.i18n ? (this.i18n.dictionary['medialibrary.title'] || 'Media Manager') : 'Media Manager';
+        // We override textContent above, wait, if we use textContent we lose the span structure!
+        // We must translate just the "Media Manager" part if we want spans, or just let i18n handle it if we inject spans.
+        // Actually, if we use data-i18n, i18nEngine replaces innerHTML. Let's just set innerHTML with the translated text.
+        const translatedTitle = this.i18n ? (this.i18n.dictionary['medialibrary.title'] || 'Media manager') : 'Media manager';
+        title.innerHTML = '<span style="color:var(--text-solid, #fff); opacity:1;">ES</span><span style="color:var(--text-solid, #fff); opacity:0.5;">' + translatedTitle + '</span>';
         
         leftControls.appendChild(title);
 
@@ -109,8 +116,8 @@ class EscmsMediaLibrary {
             btn.style.transition = 'all 0.2s';
             btn.addEventListener('mouseenter', () => {
                 if (!btn.classList.contains('active-pill')) {
-                    btn.style.background = 'rgba(255,255,255,0.08)';
-                    btn.style.color = 'var(--accent-solid, #3b82f6)';
+                    btn.style.background = 'var(--accent-solid, #3b82f6)';
+                    btn.style.color = '#fff';
                 }
             });
             btn.addEventListener('mouseleave', () => {
@@ -155,6 +162,30 @@ class EscmsMediaLibrary {
         this.executeDeleteBtn.style.whiteSpace = 'nowrap';
         this.executeDeleteBtn.addEventListener('click', () => this.deleteSelected());
 
+        this.searchInput = document.createElement('input');
+        this.searchInput.type = 'search';
+        this.searchInput.placeholder = this.i18n ? (this.i18n.dictionary['medialibrary.search'] || 'Search media...') : 'Search media...';
+        this.searchInput.style.padding = '0 1rem';
+        this.searchInput.style.borderRadius = '16px';
+        this.searchInput.style.border = 'none';
+        this.searchInput.style.background = 'transparent';
+        this.searchInput.style.color = '#fff';
+        this.searchInput.style.outline = 'none';
+        this.searchInput.style.width = '140px';
+        this.searchInput.style.height = '32px';
+        this.searchInput.style.fontSize = '0.85rem';
+        this.searchInput.style.transition = 'width 0.2s, background 0.2s';
+        this.searchInput.addEventListener('focus', () => {
+            this.searchInput.style.background = 'rgba(255,255,255,0.05)';
+            this.searchInput.style.width = '180px';
+        });
+        this.searchInput.addEventListener('blur', () => {
+            this.searchInput.style.background = 'transparent';
+            this.searchInput.style.width = '140px';
+        });
+        this.searchInput.addEventListener('input', (e) => this.filterMedia(e.target.value));
+
+        middleControls.appendChild(this.searchInput);
         middleControls.appendChild(this.uploadBtn);
         middleControls.appendChild(this.deleteToggleBtn);
         middleControls.appendChild(this.executeDeleteBtn);
@@ -166,28 +197,9 @@ class EscmsMediaLibrary {
         rightControls.style.width = '250px';
         rightControls.style.justifyContent = 'flex-end';
 
-        this.searchInput = document.createElement('input');
-        this.searchInput.type = 'search';
-        this.searchInput.placeholder = 'Search media...';
-        this.searchInput.style.padding = '0.4rem 1rem';
-        this.searchInput.style.borderRadius = '20px';
-        this.searchInput.style.border = '1px solid var(--accent-fade, rgba(59,130,246,0.7))';
-        this.searchInput.style.background = 'var(--accent-faint, rgba(59,130,246,0.3))';
-        this.searchInput.style.color = '#fff';
-        this.searchInput.style.outline = 'none';
-        this.searchInput.style.width = '180px';
-        this.searchInput.style.fontSize = '0.85rem';
-        this.searchInput.style.transition = 'box-shadow 0.2s';
-        this.searchInput.addEventListener('focus', () => {
-            this.searchInput.style.boxShadow = '0 0 0 2px var(--accent-solid, #3b82f6)';
-        });
-        this.searchInput.addEventListener('blur', () => {
-            this.searchInput.style.boxShadow = 'none';
-        });
-        this.searchInput.addEventListener('input', (e) => this.filterMedia(e.target.value));
-
         const closeBtn = document.createElement('button');
         closeBtn.innerHTML = window.icons && window.icons.close ? window.icons.close : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M18 6l-12 12M6 6l12 12"/></svg>';
+
         const svgClose = closeBtn.querySelector('svg');
         if (svgClose) { svgClose.style.width = '20px'; svgClose.style.height = '20px'; }
         closeBtn.style.background = 'transparent';
@@ -200,8 +212,6 @@ class EscmsMediaLibrary {
         closeBtn.addEventListener('mouseenter', () => closeBtn.style.opacity = '1');
         closeBtn.addEventListener('mouseleave', () => closeBtn.style.opacity = '0.4');
         closeBtn.addEventListener('click', () => this.close(null));
-        
-        rightControls.appendChild(this.searchInput);
         rightControls.appendChild(closeBtn);
 
         header.appendChild(leftControls);
@@ -361,7 +371,8 @@ class EscmsMediaLibrary {
                         check.style.backgroundColor = 'rgb(239, 68, 68)';
                         check.style.border = '2px solid rgb(239, 68, 68)';
                     }
-                    this.executeDeleteBtn.innerHTML = '<span style="font-size:0.75rem; font-weight:bold;">Delete (' + this.selectedForDeletion.size + ')</span>';
+                    const deleteText = this.i18n ? (this.i18n.dictionary['medialibrary.confirm_delete'] || 'Delete') : 'Delete';
+                    this.executeDeleteBtn.innerHTML = '<span style="font-size:0.75rem; font-weight:bold;">' + deleteText + ' (' + this.selectedForDeletion.size + ')</span>';
                 } else {
                     this.close(item.url);
                 }
@@ -391,14 +402,15 @@ class EscmsMediaLibrary {
         
         if (this.isDeleteMode) {
             this.deleteToggleBtn.classList.add('active-pill');
-            this.deleteToggleBtn.title = 'Cancel Delete';
+            this.deleteToggleBtn.title = this.i18n ? (this.i18n.dictionary['medialibrary.cancel_delete'] || 'Cancel Delete') : 'Cancel Delete';
             this.deleteToggleBtn.style.background = 'rgba(239, 68, 68, 0.2)';
             this.deleteToggleBtn.style.color = '#ef4444';
             this.executeDeleteBtn.style.display = 'flex';
-            this.executeDeleteBtn.innerHTML = '<span style="font-size:0.75rem; font-weight:bold;">Delete (0)</span>';
+            const deleteText = this.i18n ? (this.i18n.dictionary['medialibrary.confirm_delete'] || 'Delete') : 'Delete';
+            this.executeDeleteBtn.innerHTML = '<span style="font-size:0.75rem; font-weight:bold;">' + deleteText + ' (0)</span>';
         } else {
             this.deleteToggleBtn.classList.remove('active-pill');
-            this.deleteToggleBtn.title = 'Select to Delete';
+            this.deleteToggleBtn.title = this.i18n ? (this.i18n.dictionary['medialibrary.select_delete'] || 'Select to Delete') : 'Select to Delete';
             this.deleteToggleBtn.style.background = 'transparent';
             this.deleteToggleBtn.style.color = 'rgba(255,255,255,0.6)';
             this.executeDeleteBtn.style.display = 'none';
