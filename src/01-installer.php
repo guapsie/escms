@@ -61,7 +61,55 @@ if ($needs_install) {
             END;
         ");
 
-        // Seeding de página de inicio movido a la API (07-api.php)
+        // 3. Seeding de página de inicio (Pichi Template por defecto)
+        $defaultData = '{"tag":"div","classes":["escms-template-home"],"children":[{"tag":"h2","children":["Welcome to ESCMS"]},{"tag":"p","children":["Edit this page in the admin panel."]}]}';
+        $defaultHtml = '<div class="escms-template-home"><h2>Welcome to ESCMS</h2><p>Edit this page in the admin panel.</p></div>';
+        
+        $tpl_path = dirname(__DIR__) . '/data/templates/pichi/pichi.json';
+        if (file_exists($tpl_path)) {
+            $tpl = json_decode(file_get_contents($tpl_path), true);
+            if (isset($tpl['views']['home'])) {
+                $nodes = $tpl['views']['home'];
+                $nodeTree = ['tag' => 'div', 'classes' => ['escms-template-home'], 'children' => $nodes];
+                $defaultData = json_encode($nodeTree);
+                
+                $jsonToHtml = function($node) use (&$jsonToHtml) {
+                    if (is_string($node)) return htmlspecialchars($node);
+                    if (!is_array($node)) return '';
+                    $tag = $node['tag'] ?? 'div';
+                    $html = "<$tag";
+                    if (!empty($node['id'])) {
+                        $html .= ' id="' . htmlspecialchars($node['id']) . '"';
+                    }
+                    if (!empty($node['classes'])) {
+                        $html .= ' class="' . htmlspecialchars(implode(' ', $node['classes'])) . '"';
+                    }
+                    if (!empty($node['attributes'])) {
+                        foreach ($node['attributes'] as $attrKey => $attrVal) {
+                            $html .= ' ' . htmlspecialchars($attrKey) . '="' . htmlspecialchars($attrVal) . '"';
+                        }
+                    }
+                    $html .= '>';
+                    if (!empty($node['children'])) {
+                        foreach ($node['children'] as $child) {
+                            $html .= $jsonToHtml($child);
+                        }
+                    }
+                    $html .= "</$tag>";
+                    return $html;
+                };
+                
+                $defaultHtml = $jsonToHtml($nodeTree);
+            }
+        }
+
+        $stmt = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html) VALUES (?, ?, ?, ?)");
+        $stmt->execute(['Home', 'home', $defaultData, $defaultHtml]);
+        $homeId = $pdo->lastInsertId();
+        
+        $stmtOpt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('home_page_id', ?)");
+        $stmtOpt->execute([$homeId]);
+
     } catch (PDOException $e) {
         die("Fatal Error: Database creation failed - " . $e->getMessage());
     }
@@ -71,13 +119,12 @@ if ($needs_install) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESCMS Setup</title>
+    <title>Installing ESCMS</title>
     <style>
         :root {
             --bg-base: #0a0a0a;
             --text-solid: #f5f5f5;
             --accent-solid: #3b82f6;
-            --accent-fade: rgba(59, 130, 246, 0.6);
             --accent-faint: rgba(59, 130, 246, 0.3);
         }
         body {
@@ -101,34 +148,25 @@ if ($needs_install) {
             backdrop-filter: blur(10px);
             box-shadow: 0 0 30px var(--accent-faint);
             box-sizing: border-box;
+            animation: pulse 2s infinite;
         }
-        h1 {
-            font-size: 1.5rem;
-            font-weight: 500;
-            margin: 0 0 2rem 0;
+        @keyframes pulse {
+            0% { box-shadow: 0 0 15px var(--accent-faint); }
+            50% { box-shadow: 0 0 40px var(--accent-faint); }
+            100% { box-shadow: 0 0 15px var(--accent-faint); }
         }
-        button {
-            background: var(--accent-solid);
-            color: var(--text-solid);
-            border: none;
-            padding: 1rem 1.5rem;
-            font-size: 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s ease;
-        }
-        button:hover {
-            background: var(--accent-fade);
-        }
+        h1 { font-size: 1.5rem; font-weight: 500; margin: 0; }
+        p { color: rgba(245, 245, 245, 0.6); margin-top: 1rem; }
     </style>
 </head>
 <body>
     <div class="setup-card">
-        <h1>ESCMS Setup</h1>
-        <button id="btn-setup-passkey">Create Admin Passkey</button>
+        <h1>ESCMS</h1>
+        <p>Hold on, installing the system...</p>
     </div>
-    <script src="assets/js/installer.js"></script>
+    <script>
+        setTimeout(() => window.location.href = "/admin", 1500);
+    </script>
 </body>
 </html>';
     exit;

@@ -48,6 +48,7 @@ if (str_starts_with($route, 'api/')) {
                 $stmt->execute([$input['id'], $pem]);
                 
                 unset($_SESSION['auth_challenge']);
+                
                 EscmsAuth::login();
                 
                 $send_json(['status' => 'success']);
@@ -61,7 +62,11 @@ if (str_starts_with($route, 'api/')) {
             try {
                 $challenge = EscmsAuth::generateChallenge();
                 $_SESSION['auth_challenge'] = $challenge;
-                $send_json(['challenge' => $challenge]);
+                
+                $stmt = $pdo->query("SELECT id FROM passkeys");
+                $allowedIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                
+                $send_json(['challenge' => $challenge, 'allowedIds' => $allowedIds]);
             } catch (Throwable $e) {
                 $send_json(['error' => 'Failed to generate challenge'], 500);
             }

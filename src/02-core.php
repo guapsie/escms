@@ -21,10 +21,13 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
 // 2. Sesión Blindada
 if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
         'secure' => $is_https,
         'httponly' => true,
         'samesite' => 'Strict',
     ]);
+    
     session_start();
 }
 

@@ -616,23 +616,40 @@ class EscmsGlobalSettings {
         return tab;
     }
 
+    getStyleVariable(varName) {
+        const host = document.getElementById('escms-canvas-host');
+        if (host && host.shadowRoot) {
+            const root = host.shadowRoot.getElementById('document-root');
+            if (root) {
+                return window.getComputedStyle(root).getPropertyValue(varName).trim();
+            }
+        }
+        return '';
+    }
+
     createLayoutTab() {
         const tab = this.createTabContent('settings.tab_layout');
-        tab.appendChild(this.createInputGroup('settings.max_width', 'number', (val) => this.applyStyleVariable('--max-width', val ? `${val}px` : '')).group);
         
-        const bgColor = new EscmsColorPicker('settings.page_bg_color', '#ffffff', 100, (val) => this.applyStyleVariable('--color-background', val.rgba));
+        let currentWidth = this.getStyleVariable('--max-width').replace('px', '');
+        if (!currentWidth) currentWidth = '1200';
+        
+        const widthGroup = this.createInputGroup('settings.max_width', 'number', (val) => this.applyStyleVariable('--max-width', val ? `${val}px` : ''));
+        widthGroup.input.value = currentWidth;
+        tab.appendChild(widthGroup.group);
+        
+        const bgColor = new EscmsColorPicker('settings.page_bg_color', this.getStyleVariable('--color-background') || '#0a0a0a', 100, (val) => this.applyStyleVariable('--color-background', val.rgba));
         tab.appendChild(bgColor.element);
 
-        const textColor = new EscmsColorPicker('settings.text_color', '#0a0a0a', 100, (val) => this.applyStyleVariable('--color-text', val.rgba));
+        const textColor = new EscmsColorPicker('settings.text_color', this.getStyleVariable('--color-text') || '#f5f5f5', 100, (val) => this.applyStyleVariable('--color-text', val.rgba));
         tab.appendChild(textColor.element);
 
-        const accentColor = new EscmsColorPicker('settings.accent_color', '#3b82f6', 100, (val) => this.applyStyleVariable('--color-accent', val.rgba));
+        const accentColor = new EscmsColorPicker('settings.accent_color', this.getStyleVariable('--color-accent') || '#3b82f6', 100, (val) => this.applyStyleVariable('--color-accent', val.rgba));
         tab.appendChild(accentColor.element);
 
-        const linkColor = new EscmsColorPicker('settings.link_color', '#3b82f6', 100, (val) => this.applyStyleVariable('--color-link', val.rgba));
+        const linkColor = new EscmsColorPicker('settings.link_color', this.getStyleVariable('--color-link') || '#3b82f6', 100, (val) => this.applyStyleVariable('--color-link', val.rgba));
         tab.appendChild(linkColor.element);
 
-        const linkHoverColor = new EscmsColorPicker('settings.link_hover_color', '#2563eb', 100, (val) => this.applyStyleVariable('--color-link-hover', val.rgba));
+        const linkHoverColor = new EscmsColorPicker('settings.link_hover_color', this.getStyleVariable('--color-link-hover') || '#2563eb', 100, (val) => this.applyStyleVariable('--color-link-hover', val.rgba));
         tab.appendChild(linkHoverColor.element);
 
         return tab;

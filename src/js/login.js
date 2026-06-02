@@ -40,6 +40,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Uint8Array(hex.match(/[\da-f]{2}/gi).map(h => parseInt(h, 16))).buffer;
     };
 
+    const base64urlToBuffer = (base64url) => {
+        const padding = '='.repeat((4 - base64url.length % 4) % 4);
+        const base64 = (base64url + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        const rawData = atob(base64);
+        const buffer = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            buffer[i] = rawData.charCodeAt(i);
+        }
+        return buffer.buffer;
+    };
+
     btnLogin.addEventListener('click', async () => {
         try {
             btnLogin.classList.remove('shake-error');
@@ -47,13 +58,20 @@ document.addEventListener('DOMContentLoaded', () => {
             btnLogin.style.pointerEvents = 'none';
 
             const challengeRes = await fetch('/api/login-challenge', { method: 'POST' });
-            const { challenge } = await challengeRes.json();
+            const { challenge, allowedIds } = await challengeRes.json();
             if (!challenge) throw new Error('No challenge received.');
+
+            const allowCredentials = (allowedIds || []).map(id => ({
+                type: 'public-key',
+                id: base64urlToBuffer(id),
+                transports: ['internal', 'usb', 'ble', 'nfc']
+            }));
 
             const credential = await navigator.credentials.get({
                 publicKey: {
                     challenge: hexToBuffer(challenge),
                     rpId: window.location.hostname,
+                    allowCredentials: allowCredentials,
                     userVerification: "discouraged",
                     timeout: 60000
                 }

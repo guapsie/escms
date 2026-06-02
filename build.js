@@ -224,6 +224,10 @@ if ($__is_kamikaze_trigger) {
     // 5. Crear el búnker (.htaccess para /core/)
     file_put_contents(__DIR__ . '/core/.htaccess', "Deny from all\\n");
 
+    // 5.5 Crear el enrutador Apache raíz (.htaccess)
+    $htaccess = "<IfModule mod_rewrite.c>\\nRewriteEngine On\\nRewriteCond %{REQUEST_FILENAME} !-f\\nRewriteCond %{REQUEST_FILENAME} !-d\\nRewriteRule ^(.*)$ index.php [QSA,L]\\n</IfModule>";
+    file_put_contents(__DIR__ . '/.htaccess', $htaccess);
+
     // 6. EL SUICIDIO: Sobrescribir este mismo archivo con el router
     $__router_b64 = '${routerBase64}';
     file_put_contents(__FILE__, base64_decode($__router_b64));

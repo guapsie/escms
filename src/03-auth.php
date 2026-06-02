@@ -94,11 +94,28 @@ class EscmsAuth {
     }
 
     public static function isLoggedIn(): bool {
-        return isset($_SESSION['escms_admin']) && $_SESSION['escms_admin'] === true;
+        global $pdo;
+        if (!isset($_SESSION['escms_admin']) || $_SESSION['escms_admin'] !== true) {
+            return false;
+        }
+        
+        // Ghost session protection: if the DB has no passkeys (e.g. was wiped), no one can be logged in.
+        if (isset($pdo)) {
+            try {
+                $stmt = $pdo->query("SELECT COUNT(*) FROM passkeys");
+                if ($stmt && $stmt->fetchColumn() == 0) {
+                    self::logout();
+                    return false;
+                }
+            } catch (\Throwable $e) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     public static function login(): void {
-        session_regenerate_id(true);
         $_SESSION['escms_admin'] = true;
     }
 

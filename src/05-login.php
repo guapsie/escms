@@ -1,14 +1,22 @@
 <?php
-
 declare(strict_types=1);
 
 if (!EscmsAuth::isLoggedIn() && in_array($route, ['admin', 'login', ''])) {
+    // Verificar si existen passkeys registrados
+    $stmt = $pdo->query("SELECT COUNT(*) FROM passkeys");
+    $has_passkey = $stmt->fetchColumn() > 0;
+    
+    $title = $has_passkey ? "Welcome Back" : "Create Admin";
+    $btn_id = $has_passkey ? "btn-login-passkey" : "btn-setup-passkey";
+    $btn_text = $has_passkey ? "Login with Passkey" : "Create Admin Passkey";
+    $script = $has_passkey ? "/assets/js/login.js" : "/assets/js/installer.js";
+
     echo '<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESCMS Login</title>
+    <title>ESCMS ' . ($has_passkey ? 'Login' : 'Setup') . '</title>
     <style>
         :root {
             --bg-base: #0a0a0a;
@@ -45,10 +53,10 @@ if (!EscmsAuth::isLoggedIn() && in_array($route, ['admin', 'login', ''])) {
 </head>
 <body>
     <div class="login-card">
-        <h1>Welcome Back</h1>
-        <button id="btn-login-passkey">Login with Passkey</button>
+        <h1>' . $title . '</h1>
+        <button id="' . $btn_id . '">' . $btn_text . '</button>
     </div>
-    <script src="/assets/js/login.js"></script>
+    <script src="' . $script . '?v=' . time() . '"></script>
 </body>
 </html>';
     exit;

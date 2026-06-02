@@ -28,8 +28,9 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if (str_starts_with($route, 'api/')) {
     if (file_exists(__DIR__ . '/core/07-api.php')) require_once __DIR__ . '/core/07-api.php';
-} else {
-    // Para simplificar la compatibilidad con el código actual que ejecuta top-to-bottom:
+} elseif ($route === 'admin' || str_starts_with($route, 'admin/')) {
     if (file_exists(__DIR__ . '/core/05-login.php')) require_once __DIR__ . '/core/05-login.php';
     if (file_exists(__DIR__ . '/core/06-editor.php')) require_once __DIR__ . '/core/06-editor.php';
+} else {
+    if (file_exists(__DIR__ . '/core/08-front.php')) require_once __DIR__ . '/core/08-front.php';
 }

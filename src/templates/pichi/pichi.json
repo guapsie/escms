@@ -60,7 +60,7 @@
         "children": [
           { "tag": "h1", "classes": ["pichi-hero-title"], "children": ["Welcome to the Pichi Template"] },
           { "tag": "p", "classes": ["pichi-hero-subtitle"], "children": ["This is the default starting point for your new website. Edit anything directly on the canvas."] },
-          { "tag": "a", "classes": ["pichi-btn"], "children": ["Get Started"] }
+          { "tag": "a", "classes": ["pichi-btn"], "attributes": { "href": "/admin" }, "children": ["Get Started"] }
         ]
       }
     ]
