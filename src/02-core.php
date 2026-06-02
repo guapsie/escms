@@ -40,6 +40,11 @@ if (!defined('ESCMS_HAS_ZIP')) {
 try {
     $pdo = new PDO('sqlite:' . dirname(__DIR__) . '/data/escms.sqlite');
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    try {
+        $pdo->exec("ALTER TABLE components ADD COLUMN template_id VARCHAR(50) DEFAULT 'custom'");
+    } catch (PDOException $e) {
+        // Column already exists or error ignored
+    }
     $config = $pdo->query("SELECT k, v FROM options")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
 } catch (PDOException $e) {
     http_response_code(500);

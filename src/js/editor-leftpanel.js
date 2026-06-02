@@ -6,6 +6,7 @@ class EscmsLeftPanel {
         this.draggedDomNode = null;
         this.treeNodes = new Map();
         this.activeTab = 'elements';
+        this.elementsSubView = 'atoms';
         this.atomCategories = [];
         this.pageManager = new EscmsPageManager(this.i18n);
         this.menuManager = new EscmsMenuManager(this.i18n);
@@ -50,6 +51,16 @@ class EscmsLeftPanel {
             });
             observer.observe(docRoot, { childList: true, subtree: true });
         }
+
+        window.addEventListener('escms-canvas-drop', (e) => {
+            const payload = e.detail.payload;
+            const targetNode = e.detail.targetNode;
+            if (payload && payload.type === 'atom') {
+                this.injectAtom(payload.data, targetNode);
+            } else if (payload && payload.type === 'component') {
+                this.injectComponent(payload.data, targetNode);
+            }
+        });
 
         this.fetchAtoms().then(() => {
             this.render();
@@ -119,7 +130,7 @@ class EscmsLeftPanel {
         this.container.appendChild(this.contentArea);
 
         if (this.activeTab === 'elements') {
-            this.renderElements();
+            this.renderElementsTab();
         } else if (this.activeTab === 'pages') {
             this.pageManager.init(this.contentArea);
         } else if (this.activeTab === 'menus') {
@@ -135,8 +146,55 @@ class EscmsLeftPanel {
         }
     }
 
-    renderElements() {
+    renderElementsTab() {
         this.contentArea.innerHTML = '';
+        
+        const subHeader = document.createElement('div');
+        subHeader.style.display = 'flex';
+        subHeader.style.gap = '15px';
+        subHeader.style.padding = '0 15px 15px 15px';
+        subHeader.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
+        subHeader.style.marginBottom = '10px';
+        subHeader.style.position = 'sticky';
+        subHeader.style.top = '0';
+        subHeader.style.background = 'var(--color-background, #0a0a0a)';
+        subHeader.style.zIndex = '10';
+
+        const createSubTab = (id, i18nKey, defaultText) => {
+            const btn = document.createElement('button');
+            btn.setAttribute('data-i18n', i18nKey);
+            btn.textContent = this.i18n.dictionary[i18nKey] || defaultText;
+            btn.style.background = 'transparent';
+            btn.style.border = 'none';
+            btn.style.fontSize = '0.75rem';
+            btn.style.textTransform = 'uppercase';
+            btn.style.letterSpacing = '1px';
+            btn.style.fontWeight = '600';
+            btn.style.cursor = 'pointer';
+            btn.style.padding = '0';
+            btn.style.color = this.elementsSubView === id ? 'var(--accent-solid)' : 'rgba(245, 245, 245, 0.4)';
+            btn.style.transition = 'color 0.2s';
+            
+            btn.addEventListener('click', () => {
+                this.elementsSubView = id;
+                this.renderElementsTab();
+            });
+            return btn;
+        };
+
+        subHeader.appendChild(createSubTab('atoms', 'leftpanel.atoms', 'ATOMS'));
+        subHeader.appendChild(createSubTab('components', 'leftpanel.components', 'COMPONENTS'));
+        
+        this.contentArea.appendChild(subHeader);
+
+        if (this.elementsSubView === 'atoms') {
+            this.renderElements();
+        } else {
+            this.renderComponents();
+        }
+    }
+
+    renderElements() {
 
         this.atomCategories.forEach(cat => {
             const header = document.createElement('div');
@@ -194,11 +252,189 @@ class EscmsLeftPanel {
 
                 btn.addEventListener('click', () => this.injectAtom(atom));
 
+                btn.draggable = true;
+                btn.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'atom', data: atom }));
+                    e.dataTransfer.effectAllowed = 'copy';
+                });
+
                 grid.appendChild(btn);
             });
 
             this.contentArea.appendChild(grid);
         });
+    }
+
+    renderComponents() {
+
+
+        if (!window.escmsComponents || Object.keys(window.escmsComponents).length === 0) {
+            const empty = document.createElement('div');
+            empty.textContent = 'No components found.';
+            empty.style.color = 'rgba(245, 245, 245, 0.3)';
+            empty.style.fontSize = '0.8rem';
+            empty.style.padding = '0 15px 15px 15px';
+            empty.style.fontStyle = 'italic';
+            this.contentArea.appendChild(empty);
+            return;
+        }
+
+        const grouped = {};
+        Object.values(window.escmsComponents).forEach(comp => {
+            const tpl = comp.template_id || 'custom';
+            if (!grouped[tpl]) grouped[tpl] = [];
+            grouped[tpl].push(comp);
+        });
+
+        Object.keys(grouped).forEach(tpl => {
+            const header = document.createElement('div');
+            const i18nKey = tpl === 'custom' ? 'leftpanel.custom_components' : `template.${tpl}`;
+            header.setAttribute('data-i18n', i18nKey);
+            header.textContent = this.i18n.dictionary[i18nKey] || (tpl === 'custom' ? 'CUSTOM' : tpl.toUpperCase());
+            header.style.fontSize = '0.75rem';
+            header.style.textTransform = 'uppercase';
+            header.style.letterSpacing = '1px';
+            header.style.color = 'rgba(245, 245, 245, 0.4)';
+            header.style.padding = '15px 15px 10px 15px';
+            header.style.fontWeight = '600';
+            this.contentArea.appendChild(header);
+
+            const listContainer = document.createElement('div');
+            listContainer.style.display = 'flex';
+            listContainer.style.flexDirection = 'column';
+            listContainer.style.padding = '0 15px 15px 15px';
+            listContainer.style.gap = '8px';
+
+            grouped[tpl].forEach(comp => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.justifyContent = 'space-between';
+                item.style.background = '#1f1f1f';
+                item.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+                item.style.borderRadius = '6px';
+                item.style.padding = '10px';
+                item.style.cursor = 'pointer';
+                item.style.transition = 'all 0.2s';
+                
+                item.draggable = true;
+                item.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'component', data: comp }));
+                    e.dataTransfer.effectAllowed = 'copy';
+                });
+                
+                const leftDiv = document.createElement('div');
+                leftDiv.style.display = 'flex';
+                leftDiv.style.alignItems = 'center';
+                leftDiv.style.gap = '10px';
+                
+                const iconWrap = document.createElement('div');
+                iconWrap.innerHTML = icons.boxModel || icons.square;
+                iconWrap.style.color = 'var(--accent-solid)';
+                iconWrap.style.width = '16px';
+                iconWrap.style.height = '16px';
+                
+                const svg = iconWrap.querySelector('svg');
+                if (svg) {
+                    svg.style.width = '100%';
+                    svg.style.height = '100%';
+                }
+                
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = comp.name;
+                titleSpan.style.fontSize = '0.85rem';
+                titleSpan.style.color = 'var(--text-solid)';
+                
+                leftDiv.appendChild(iconWrap);
+                leftDiv.appendChild(titleSpan);
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.style.display = 'flex';
+                actionsDiv.style.gap = '5px';
+
+                const editBtn = document.createElement('button');
+                editBtn.innerHTML = icons.edit || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+                editBtn.title = 'Edit Component';
+                editBtn.style.background = 'transparent';
+                editBtn.style.border = 'none';
+                editBtn.style.color = 'rgba(255, 255, 255, 0.4)';
+                editBtn.style.cursor = 'pointer';
+                editBtn.style.transition = 'color 0.2s';
+                
+                const editSvg = editBtn.querySelector('svg');
+                if (editSvg) { editSvg.style.width = '14px'; editSvg.style.height = '14px'; }
+                
+                editBtn.addEventListener('mouseenter', () => editBtn.style.color = 'var(--text-solid)');
+                editBtn.addEventListener('mouseleave', () => editBtn.style.color = 'rgba(255, 255, 255, 0.4)');
+                
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.dispatchEvent(new CustomEvent('escms-component-edit', { detail: { component: comp } }));
+                });
+
+                const addBtn = document.createElement('button');
+                addBtn.innerHTML = icons.plus;
+                addBtn.title = 'Add to Canvas';
+                addBtn.style.background = 'transparent';
+                addBtn.style.border = 'none';
+                addBtn.style.color = 'rgba(255, 255, 255, 0.4)';
+                addBtn.style.cursor = 'pointer';
+                addBtn.style.transition = 'color 0.2s';
+                
+                const plusSvg = addBtn.querySelector('svg');
+                if (plusSvg) { plusSvg.style.width = '16px'; plusSvg.style.height = '16px'; }
+                
+                addBtn.addEventListener('mouseenter', () => addBtn.style.color = 'var(--text-solid)');
+                addBtn.addEventListener('mouseleave', () => addBtn.style.color = 'rgba(255, 255, 255, 0.4)');
+                
+                addBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.injectComponent(comp);
+                });
+                
+                actionsDiv.appendChild(editBtn);
+                actionsDiv.appendChild(addBtn);
+                
+                item.appendChild(leftDiv);
+                item.appendChild(actionsDiv);
+                listContainer.appendChild(item);
+            });
+
+            this.contentArea.appendChild(listContainer);
+        });
+    }
+
+    injectComponent(comp, targetNode = null) {
+        const docRoot = this.shadowRoot.getElementById('document-root');
+        if (!docRoot) return;
+        
+        const el = document.createElement('escms-component');
+        el.setAttribute('ref', comp.ref_id);
+        el.style.outline = '2px dashed #9333ea';
+        el.style.display = 'block';
+        
+        try {
+            const compJson = JSON.parse(comp.editor_data);
+            const compDom = EscmsParser.jsonToDom(compJson);
+            if (compDom) {
+                el.appendChild(compDom);
+            }
+        } catch (e) {
+            console.error('[ESCMS] Error inflating component on inject', e);
+        }
+
+        let target = targetNode || this.selectedNode;
+        if (!target || !['DIV', 'SECTION', 'HEADER', 'FOOTER', 'MAIN', 'ARTICLE'].includes(target.tagName) && target !== docRoot) {
+            target = docRoot;
+        }
+
+        if (target) {
+            target.appendChild(el);
+            setTimeout(() => el.click(), 10);
+            if (window.escmsEditor && window.escmsEditor.autosave) {
+                window.escmsEditor.autosave.saveToServer(); // Trigger autosave
+            }
+        }
     }
 
 async fetchAtoms() {
@@ -514,7 +750,7 @@ async fetchAtoms() {
         });
     }
 
-    injectAtom(atom) {
+    injectAtom(atom, targetNode = null) {
         const el = document.createElement(atom.tag);
         if (atom.textKey) el.textContent = this.i18n.dictionary[atom.textKey] || 'New Text';
         if (atom.styles) {
@@ -538,7 +774,7 @@ async fetchAtoms() {
             });
         }
 
-        let target = this.selectedNode;
+        let target = targetNode || this.selectedNode;
         const docRoot = this.shadowRoot.getElementById('document-root');
 
         if (!target || !['DIV', 'SECTION', 'HEADER', 'FOOTER', 'MAIN', 'ARTICLE'].includes(target.tagName) && target !== docRoot) {
@@ -548,6 +784,9 @@ async fetchAtoms() {
         if (target) {
             target.appendChild(el);
             setTimeout(() => el.click(), 10);
+            if (window.escmsEditor && window.escmsEditor.autosave) {
+                window.escmsEditor.autosave.saveToServer(); // Trigger autosave
+            }
         }
     }
 

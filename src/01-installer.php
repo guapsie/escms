@@ -40,25 +40,44 @@ if ($needs_install) {
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->exec("CREATE TABLE IF NOT EXISTS options (k TEXT PRIMARY KEY, v TEXT)");
         $pdo->exec("CREATE TABLE IF NOT EXISTS passkeys (id TEXT PRIMARY KEY, public_key TEXT, sign_count INTEGER DEFAULT 0)");
-        $pdo->exec("CREATE TABLE IF NOT EXISTS pages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            slug TEXT UNIQUE NOT NULL,
-            editor_data TEXT,
-            public_html TEXT,
-            views INTEGER DEFAULT 0,
-            seo_title TEXT,
-            seo_desc TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
-        
-        $pdo->exec("CREATE TRIGGER IF NOT EXISTS update_pages_updated_at 
-            AFTER UPDATE ON pages
-            FOR EACH ROW
-            BEGIN
-                UPDATE pages SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-            END;
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS pages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                slug TEXT NOT NULL UNIQUE,
+                editor_data TEXT DEFAULT '{}',
+                public_html TEXT DEFAULT '',
+                views INTEGER DEFAULT 0,
+                seo_title TEXT,
+                seo_desc TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE TABLE IF NOT EXISTS components (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                ref_id TEXT NOT NULL UNIQUE,
+                template_id VARCHAR(50) DEFAULT 'custom',
+                editor_data TEXT DEFAULT '{}',
+                public_html TEXT DEFAULT '',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TRIGGER IF NOT EXISTS trigger_pages_updated_at
+              AFTER UPDATE ON pages
+              FOR EACH ROW
+              BEGIN
+                  UPDATE pages SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+              END;
+              
+            CREATE TRIGGER IF NOT EXISTS trigger_components_updated_at
+              AFTER UPDATE ON components
+              FOR EACH ROW
+              BEGIN
+                  UPDATE components SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+              END;
         ");
 
         // 3. Seeding de página de inicio (Pichi Template por defecto)
@@ -100,6 +119,16 @@ if ($needs_install) {
                 };
                 
                 $defaultHtml = $jsonToHtml($nodeTree);
+                if (isset($tpl['globals'])) {
+                    $templateName = $tpl['_manifest']['name'] ?? 'pichi';
+                    foreach ($tpl['globals'] as $refId => $componentNodes) {
+                        $compTree = ['tag' => 'div', 'classes' => ['escms-component'], 'children' => $componentNodes];
+                        $compData = json_encode($compTree);
+                        $compHtml = $jsonToHtml($compTree);
+                        $stmtComp = $pdo->prepare("INSERT INTO components (name, ref_id, template_id, editor_data, public_html) VALUES (?, ?, ?, ?, ?)");
+                        $stmtComp->execute([ucfirst($refId), $refId, $templateName, $compData, $compHtml]);
+                    }
+                }
             }
         }
 

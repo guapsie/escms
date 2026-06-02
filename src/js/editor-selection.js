@@ -88,6 +88,11 @@ class EscmsSelection {
                 outline: 2px solid var(--accent-faint) !important;
                 outline-offset: -2px;
             }
+            .escms-drag-target {
+                outline: 2px dashed var(--accent-faint) !important;
+                outline-offset: -2px;
+                background-color: rgba(59, 130, 246, 0.05) !important;
+            }
 
             /* Preview Mode Overrides */
             #document-root.escms-preview-mode div,
@@ -122,9 +127,19 @@ class EscmsSelection {
             const sel = shadowRoot.getSelection ? shadowRoot.getSelection() : window.getSelection();
             if (sel && !sel.isCollapsed) return;
 
+            // Encontrar el bloque de texto padre si hacemos clic en una etiqueta inline (strong, span, a, etc.)
+            // para hacer editable todo el bloque y no solo un trozo.
+            let target = e.target;
+            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE'];
+            const closestBlock = target.closest(textBlockTags.join(','));
+            
+            if (closestBlock && closestBlock.id !== 'document-root') {
+                target = closestBlock;
+            }
+
             // Si hacemos clic en el nodo que ya está seleccionado, 
             // abortamos para no destruir el cursor ni la selección de texto.
-            if (this.selectedNode === e.target) return;
+            if (this.selectedNode === target) return;
 
             if (this.selectedNode) {
                 this.selectedNode.classList.remove('escms-selected');
@@ -133,13 +148,15 @@ class EscmsSelection {
                 }
             }
 
-            this.selectedNode = e.target;
+            this.selectedNode = target;
             this.selectedNode.classList.add('escms-selected');
 
-            const editableTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'A', 'LI', 'LABEL'];
+            const editableTags = [...textBlockTags, 'SPAN', 'A']; // SPAN y A como fallback si no tienen padre bloque
             if (editableTags.includes(this.selectedNode.tagName)) {
                 this.selectedNode.setAttribute('contenteditable', 'true');
-                setTimeout(() => this.selectedNode.focus(), 10);
+                setTimeout(() => {
+                    this.selectedNode.focus();
+                }, 10);
             }
 
             const event = new CustomEvent('escms-element-selected', {
@@ -150,6 +167,65 @@ class EscmsSelection {
                 }
             });
             window.dispatchEvent(event);
+        });
+
+        documentRoot.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const isAllowed = e.dataTransfer.types.includes('application/json');
+            if (!isAllowed) return;
+
+            e.dataTransfer.dropEffect = 'copy';
+
+            documentRoot.querySelectorAll('.escms-drag-target').forEach(el => el.classList.remove('escms-drag-target'));
+            
+            let target = e.target;
+            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE'];
+            const closestBlock = target.closest(textBlockTags.join(','));
+            
+            if (closestBlock && closestBlock.id !== 'document-root') {
+                target = closestBlock;
+            }
+
+            if (target && target.id !== 'document-root') {
+                target.classList.add('escms-drag-target');
+            }
+        });
+
+        documentRoot.addEventListener('dragleave', (e) => {
+            e.stopPropagation();
+            if (e.target && e.target.classList) {
+                e.target.classList.remove('escms-drag-target');
+            }
+        });
+
+        documentRoot.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            documentRoot.querySelectorAll('.escms-drag-target').forEach(el => el.classList.remove('escms-drag-target'));
+
+            const dataString = e.dataTransfer.getData('application/json');
+            if (dataString) {
+                try {
+                    const payload = JSON.parse(dataString);
+                    let target = e.target;
+                    const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE'];
+                    const closestBlock = target.closest(textBlockTags.join(','));
+                    
+                    if (closestBlock && closestBlock.id !== 'document-root') {
+                        target = closestBlock;
+                    }
+                    
+                    window.dispatchEvent(new CustomEvent('escms-canvas-drop', {
+                        detail: { 
+                            payload: payload, 
+                            targetNode: target 
+                        }
+                    }));
+                } catch (err) {}
+            }
         });
 
         window.addEventListener('keydown', (e) => {
