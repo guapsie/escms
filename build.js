@@ -61,22 +61,40 @@ files.forEach(file => {
     // Ignorar el router (ya aislado)
     if (file === '04-router.php') return;
 
-    if (file.endsWith('.php')) {
+    if (file.endsWith('.php') && fs.statSync(fullPath).isFile()) {
         const content = fs.readFileSync(fullPath, 'utf8');
         payload.php.push({ name: file, b64: Buffer.from(content).toString('base64') });
         console.log(`[+] Empaquetando backend (PHP): ${file}`);
-    } else if (file.endsWith('.js')) {
-        let content = fs.readFileSync(fullPath, 'utf8');
-        content = minifyJS(content);
-        payload.js.push({ name: file, b64: Buffer.from(content).toString('base64') });
-        console.log(`[+] Empaquetando asset JS (Minificado): ${file}`);
-    } else if (file.endsWith('.css')) {
-        let content = fs.readFileSync(fullPath, 'utf8');
-        content = minifyCSS(content);
-        payload.css.push({ name: file, b64: Buffer.from(content).toString('base64') });
-        console.log(`[+] Empaquetando asset CSS (Minificado): ${file}`);
     }
 });
+
+const jsDir = path.join(srcDir, 'js');
+if (fs.existsSync(jsDir)) {
+    const jsFiles = fs.readdirSync(jsDir);
+    jsFiles.forEach(file => {
+        if (file.endsWith('.js') && fs.statSync(path.join(jsDir, file)).isFile()) {
+            const fullPath = path.join(jsDir, file);
+            let content = fs.readFileSync(fullPath, 'utf8');
+            content = minifyJS(content);
+            payload.js.push({ name: file, b64: Buffer.from(content).toString('base64') });
+            console.log(`[+] Empaquetando asset JS (Minificado): ${file}`);
+        }
+    });
+}
+
+const cssDir = path.join(srcDir, 'css');
+if (fs.existsSync(cssDir)) {
+    const cssFiles = fs.readdirSync(cssDir);
+    cssFiles.forEach(file => {
+        if (file.endsWith('.css') && fs.statSync(path.join(cssDir, file)).isFile()) {
+            const fullPath = path.join(cssDir, file);
+            let content = fs.readFileSync(fullPath, 'utf8');
+            content = minifyCSS(content);
+            payload.css.push({ name: file, b64: Buffer.from(content).toString('base64') });
+            console.log(`[+] Empaquetando asset CSS (Minificado): ${file}`);
+        }
+    });
+}
 
 // Leer atoms de src/atoms
 const atomsDir = path.join(srcDir, 'atoms');
