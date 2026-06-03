@@ -1,15 +1,18 @@
 {
-  "name": "Header",
-  "tag": "header",
-  "icon": "caretLineUp",
-  "className": "escms-header",
-  "allowedControls": [
-    "bgColor",
-    "bgGradient",
-    "margin",
-    "padding",
-    "border",
-    "opacity"
-  ],
-  "category": "layout"
+    "name": "Header",
+    "tag": "header",
+    "icon": "caretLineUp",
+    "className": "escms-header",
+    "allowedControls": [
+        "bgColor",
+        "bgGradient",
+        "margin",
+        "padding",
+        "border",
+        "opacity"
+    ],
+    "category": "layout",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

@@ -1,18 +1,21 @@
 {
-  "name": "Button",
-  "tag": "button",
-  "icon": "button",
-  "className": "escms-button",
-  "textKey": "leftpanel.default_button",
-  "allowedControls": [
-    "href",
-    "bgColor",
-    "bgGradient",
-    "margin",
-    "padding",
-    "border",
-    "opacity",
-    "effects"
-  ],
-  "category": "text"
+    "name": "Button",
+    "tag": "button",
+    "icon": "button",
+    "className": "escms-button",
+    "textKey": "leftpanel.default_button",
+    "allowedControls": [
+        "href",
+        "bgColor",
+        "bgGradient",
+        "margin",
+        "padding",
+        "border",
+        "opacity",
+        "effects"
+    ],
+    "category": "text",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

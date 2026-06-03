@@ -1,25 +1,28 @@
 {
-  "name": "Blockquote",
-  "tag": "blockquote",
-  "icon": "quotes",
-  "className": "escms-blockquote",
-  "allowedControls": [
-    "color",
-    "typography",
-    "textAlign",
-    "bgColor",
-    "bgGradient",
-    "margin",
-    "padding",
-    "border",
-    "opacity",
-    "effects"
-  ],
-  "children": [
-    {
-      "tag": "span",
-      "textKey": "leftpanel.default_blockquote"
-    }
-  ],
-  "category": "text"
+    "name": "Blockquote",
+    "tag": "blockquote",
+    "icon": "quotes",
+    "className": "escms-blockquote",
+    "allowedControls": [
+        "color",
+        "typography",
+        "textAlign",
+        "bgColor",
+        "bgGradient",
+        "margin",
+        "padding",
+        "border",
+        "opacity",
+        "effects"
+    ],
+    "children": [
+        {
+            "tag": "span",
+            "textKey": "leftpanel.default_blockquote"
+        }
+    ],
+    "category": "text",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

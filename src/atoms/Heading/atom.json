@@ -1,22 +1,25 @@
 {
-  "name": "Heading",
-  "tag": "h2",
-  "icon": "heading",
-  "className": "escms-heading",
-  "allowedControls": [
-    "color",
-    "typography",
-    "textAlign",
-    "margin",
-    "padding",
-    "opacity",
-    "effects"
-  ],
-  "children": [
-    {
-      "tag": "span",
-      "textKey": "leftpanel.default_heading"
-    }
-  ],
-  "category": "text"
+    "name": "Heading",
+    "tag": "h2",
+    "icon": "heading",
+    "className": "escms-heading",
+    "allowedControls": [
+        "color",
+        "typography",
+        "textAlign",
+        "margin",
+        "padding",
+        "opacity",
+        "effects"
+    ],
+    "children": [
+        {
+            "tag": "span",
+            "textKey": "leftpanel.default_heading"
+        }
+    ],
+    "category": "text",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

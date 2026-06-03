@@ -1,21 +1,24 @@
 {
-  "name": "Vimeo",
-  "tag": "iframe",
-  "icon": "playCircle",
-  "className": "escms-vimeo",
-  "allowedControls": [
-    "src",
-    "margin",
-    "padding",
-    "border",
-    "opacity",
-    "effects"
-  ],
-  "attributes": {
-    "src": "https://player.vimeo.com/video/76979871",
-    "frameborder": "0",
-    "allowfullscreen": "true",
-    "style": "width: 100%; aspect-ratio: 16/9;"
-  },
-  "category": "embeds"
+    "name": "Vimeo",
+    "tag": "iframe",
+    "icon": "playCircle",
+    "className": "escms-vimeo",
+    "allowedControls": [
+        "src",
+        "margin",
+        "padding",
+        "border",
+        "opacity",
+        "effects"
+    ],
+    "attributes": {
+        "src": "https://player.vimeo.com/video/76979871",
+        "frameborder": "0",
+        "allowfullscreen": "true",
+        "style": "width: 100%; aspect-ratio: 16/9;"
+    },
+    "category": "embeds",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

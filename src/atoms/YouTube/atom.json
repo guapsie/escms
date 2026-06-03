@@ -1,21 +1,24 @@
 {
-  "name": "YouTube",
-  "tag": "iframe",
-  "icon": "youtubeLogo",
-  "className": "escms-youtube",
-  "allowedControls": [
-    "src",
-    "margin",
-    "padding",
-    "border",
-    "opacity",
-    "effects"
-  ],
-  "attributes": {
-    "src": "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    "frameborder": "0",
-    "allowfullscreen": "true",
-    "style": "width: 100%; aspect-ratio: 16/9;"
-  },
-  "category": "embeds"
+    "name": "YouTube",
+    "tag": "iframe",
+    "icon": "youtubeLogo",
+    "className": "escms-youtube",
+    "allowedControls": [
+        "src",
+        "margin",
+        "padding",
+        "border",
+        "opacity",
+        "effects"
+    ],
+    "attributes": {
+        "src": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "frameborder": "0",
+        "allowfullscreen": "true",
+        "style": "width: 100%; aspect-ratio: 16/9;"
+    },
+    "category": "embeds",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

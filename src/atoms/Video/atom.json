@@ -1,19 +1,22 @@
 {
-  "name": "Video",
-  "tag": "video",
-  "icon": "videoCamera",
-  "className": "escms-video",
-  "allowedControls": [
-    "src",
-    "margin",
-    "padding",
-    "border",
-    "opacity",
-    "effects"
-  ],
-  "attributes": {
-    "controls": "true",
-    "style": "width: 100%;"
-  },
-  "category": "embeds"
+    "name": "Video",
+    "tag": "video",
+    "icon": "videoCamera",
+    "className": "escms-video",
+    "allowedControls": [
+        "src",
+        "margin",
+        "padding",
+        "border",
+        "opacity",
+        "effects"
+    ],
+    "attributes": {
+        "controls": "true",
+        "style": "width: 100%;"
+    },
+    "category": "embeds",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

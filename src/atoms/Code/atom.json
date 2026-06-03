@@ -1,17 +1,20 @@
 {
-  "name": "Code",
-  "tag": "pre",
-  "icon": "code",
-  "className": "escms-code",
-  "textKey": "leftpanel.default_code",
-  "allowedControls": [
-    "bgColor",
-    "bgGradient",
-    "margin",
-    "padding",
-    "border",
-    "opacity",
-    "effects"
-  ],
-  "category": "text"
+    "name": "Code",
+    "tag": "pre",
+    "icon": "code",
+    "className": "escms-code",
+    "textKey": "leftpanel.default_code",
+    "allowedControls": [
+        "bgColor",
+        "bgGradient",
+        "margin",
+        "padding",
+        "border",
+        "opacity",
+        "effects"
+    ],
+    "category": "text",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

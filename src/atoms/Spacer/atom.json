@@ -1,14 +1,17 @@
 {
-  "name": "Spacer",
-  "tag": "div",
-  "icon": "spacer",
-  "className": "escms-spacer",
-  "allowedControls": [
-    "height"
-  ],
-  "styles": {
-    "width": "100%",
-    "height": "50px"
-  },
-  "category": "layout"
+    "name": "Spacer",
+    "tag": "div",
+    "icon": "spacer",
+    "className": "escms-spacer",
+    "allowedControls": [
+        "height"
+    ],
+    "styles": {
+        "width": "100%",
+        "height": "50px"
+    },
+    "category": "layout",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

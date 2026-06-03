@@ -1,16 +1,19 @@
 {
-  "name": "Section",
-  "tag": "section",
-  "icon": "section",
-  "className": "escms-section",
-  "allowedControls": [
-    "bgColor",
-    "bgGradient",
-    "bgImage",
-    "margin",
-    "padding",
-    "border",
-    "opacity"
-  ],
-  "category": "layout"
+    "name": "Section",
+    "tag": "section",
+    "icon": "section",
+    "className": "escms-section",
+    "allowedControls": [
+        "bgColor",
+        "bgGradient",
+        "bgImage",
+        "margin",
+        "padding",
+        "border",
+        "opacity"
+    ],
+    "category": "layout",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

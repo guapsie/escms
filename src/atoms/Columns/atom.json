@@ -1,36 +1,39 @@
 {
-  "name": "Columns",
-  "tag": "div",
-  "icon": "columns",
-  "className": "escms-columns",
-  "allowedControls": [
-    "columnsCount",
-    "bgColor",
-    "bgGradient",
-    "margin",
-    "padding",
-    "border",
-    "opacity"
-  ],
-  "attributes": {
-    "data-columns": "2"
-  },
-  "styles": {
-    "display": "grid",
-    "gridTemplateColumns": "repeat(2, 1fr)",
-    "gap": "1rem",
-    "width": "100%",
-    "minHeight": "50px"
-  },
-  "children": [
-    {
-      "tag": "div",
-      "className": "escms-column"
+    "name": "Columns",
+    "tag": "div",
+    "icon": "columns",
+    "className": "escms-columns",
+    "allowedControls": [
+        "columnsCount",
+        "bgColor",
+        "bgGradient",
+        "margin",
+        "padding",
+        "border",
+        "opacity"
+    ],
+    "attributes": {
+        "data-columns": "2"
     },
-    {
-      "tag": "div",
-      "className": "escms-column"
-    }
-  ],
-  "category": "layout"
+    "styles": {
+        "display": "grid",
+        "gridTemplateColumns": "repeat(2, 1fr)",
+        "gap": "1rem",
+        "width": "100%",
+        "minHeight": "50px"
+    },
+    "children": [
+        {
+            "tag": "div",
+            "className": "escms-column"
+        },
+        {
+            "tag": "div",
+            "className": "escms-column"
+        }
+    ],
+    "category": "layout",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

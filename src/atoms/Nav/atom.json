@@ -1,15 +1,18 @@
 {
-  "name": "Nav",
-  "tag": "nav",
-  "icon": "compass",
-  "className": "escms-nav",
-  "allowedControls": [
-    "bgColor",
-    "bgGradient",
-    "margin",
-    "padding",
-    "border",
-    "opacity"
-  ],
-  "category": "layout"
+    "name": "Nav",
+    "tag": "nav",
+    "icon": "compass",
+    "className": "escms-nav",
+    "allowedControls": [
+        "bgColor",
+        "bgGradient",
+        "margin",
+        "padding",
+        "border",
+        "opacity"
+    ],
+    "category": "layout",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

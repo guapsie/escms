@@ -1,40 +1,43 @@
 {
-  "name": "Grid",
-  "tag": "div",
-  "icon": "grid",
-  "className": "escms-grid",
-  "allowedControls": [
-    "columnsCount",
-    "bgColor",
-    "bgGradient",
-    "margin",
-    "padding",
-    "border",
-    "opacity"
-  ],
-  "attributes": {
-    "data-columns": "3"
-  },
-  "styles": {
-    "display": "grid",
-    "gridTemplateColumns": "repeat(3, 1fr)",
-    "gap": "1rem",
-    "width": "100%",
-    "minHeight": "50px"
-  },
-  "children": [
-    {
-      "tag": "div",
-      "className": "escms-grid-item"
+    "name": "Grid",
+    "tag": "div",
+    "icon": "grid",
+    "className": "escms-grid",
+    "allowedControls": [
+        "columnsCount",
+        "bgColor",
+        "bgGradient",
+        "margin",
+        "padding",
+        "border",
+        "opacity"
+    ],
+    "attributes": {
+        "data-columns": "3"
     },
-    {
-      "tag": "div",
-      "className": "escms-grid-item"
+    "styles": {
+        "display": "grid",
+        "gridTemplateColumns": "repeat(3, 1fr)",
+        "gap": "1rem",
+        "width": "100%",
+        "minHeight": "50px"
     },
-    {
-      "tag": "div",
-      "className": "escms-grid-item"
-    }
-  ],
-  "category": "layout"
+    "children": [
+        {
+            "tag": "div",
+            "className": "escms-grid-item"
+        },
+        {
+            "tag": "div",
+            "className": "escms-grid-item"
+        },
+        {
+            "tag": "div",
+            "className": "escms-grid-item"
+        }
+    ],
+    "category": "layout",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

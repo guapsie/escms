@@ -1,22 +1,25 @@
 {
-  "name": "Link",
-  "tag": "a",
-  "icon": "link",
-  "className": "escms-link",
-  "allowedControls": [
-    "href",
-    "color",
-    "typography",
-    "margin",
-    "padding",
-    "opacity",
-    "effects"
-  ],
-  "children": [
-    {
-      "tag": "span",
-      "textKey": "leftpanel.default_link"
-    }
-  ],
-  "category": "text"
+    "name": "Link",
+    "tag": "a",
+    "icon": "link",
+    "className": "escms-link",
+    "allowedControls": [
+        "href",
+        "color",
+        "typography",
+        "margin",
+        "padding",
+        "opacity",
+        "effects"
+    ],
+    "children": [
+        {
+            "tag": "span",
+            "textKey": "leftpanel.default_link"
+        }
+    ],
+    "category": "text",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

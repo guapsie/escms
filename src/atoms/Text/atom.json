@@ -1,22 +1,25 @@
 {
-  "name": "Text",
-  "tag": "p",
-  "icon": "textAlignLeft",
-  "className": "escms-text",
-  "allowedControls": [
-    "color",
-    "typography",
-    "textAlign",
-    "margin",
-    "padding",
-    "opacity",
-    "effects"
-  ],
-  "children": [
-    {
-      "tag": "span",
-      "textKey": "leftpanel.default_text"
-    }
-  ],
-  "category": "text"
+    "name": "Text",
+    "tag": "p",
+    "icon": "textAlignLeft",
+    "className": "escms-text",
+    "allowedControls": [
+        "color",
+        "typography",
+        "textAlign",
+        "margin",
+        "padding",
+        "opacity",
+        "effects"
+    ],
+    "children": [
+        {
+            "tag": "span",
+            "textKey": "leftpanel.default_text"
+        }
+    ],
+    "category": "text",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }

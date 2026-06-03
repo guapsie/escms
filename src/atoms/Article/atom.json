@@ -1,15 +1,18 @@
 {
-  "name": "Article",
-  "tag": "article",
-  "icon": "article",
-  "className": "escms-article",
-  "allowedControls": [
-    "bgColor",
-    "bgGradient",
-    "margin",
-    "padding",
-    "border",
-    "opacity"
-  ],
-  "category": "layout"
+    "name": "Article",
+    "tag": "article",
+    "icon": "article",
+    "className": "escms-article",
+    "allowedControls": [
+        "bgColor",
+        "bgGradient",
+        "margin",
+        "padding",
+        "border",
+        "opacity"
+    ],
+    "category": "layout",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
 }
