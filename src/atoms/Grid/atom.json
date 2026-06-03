@@ -10,10 +10,13 @@
         "margin",
         "padding",
         "border",
-        "opacity"
+        "opacity",
+        "ariaLabel"
     ],
     "attributes": {
-        "data-columns": "3"
+        "data-columns": "3",
+        "role": "region",
+        "aria-label": "Grid"
     },
     "styles": {
         "display": "grid",

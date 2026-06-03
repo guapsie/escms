@@ -202,12 +202,14 @@ class EscmsInspector {
         this.attrInputs = {
             src: new EscmsUploadControl('inspector.src_url', this.i18n, '', (val) => this.applyAttribute('src', val)),
             alt: this.createTextInput('inspector.alt_text', (val) => this.applyAttribute('alt', val)),
-            href: this.createTextInput('inspector.href_url', (val) => this.applyAttribute('href', val))
+            href: this.createTextInput('inspector.href_url', (val) => this.applyAttribute('href', val)),
+            ariaLabel: this.createTextInput('inspector.aria_label', (val) => this.applyAttribute('aria-label', val))
         };
 
         this.attrSection.appendChild(this.attrInputs.src.element);
         this.attrSection.appendChild(this.attrInputs.alt.element);
         this.attrSection.appendChild(this.attrInputs.href.element);
+        this.attrSection.appendChild(this.attrInputs.ariaLabel.element);
         this.sectionsContainer.appendChild(this.attrSection);
 
         // --- TYPOGRAPHY ---
@@ -282,6 +284,36 @@ class EscmsInspector {
 
         this.controls.width = this.createTextInput('inspector.width', (val) => this.applyStyle('width', val));
         layoutSection.appendChild(this.controls.width.element);
+
+        this.controls.navDirection = new EscmsButtonGroup('inspector.nav_direction', [
+            { value: 'row', icon: icons.columns || 'H' },
+            { value: 'column', icon: icons.rows || 'V' }
+        ], 'row', (val) => {
+            if (!this.selectedNode || this.isSyncing) return;
+            const ul = this.selectedNode.querySelector('ul');
+            if (ul) ul.style.flexDirection = val;
+            window.dispatchEvent(new Event('escms-dom-mutated'));
+        });
+        layoutSection.appendChild(this.controls.navDirection.element);
+
+        this.controls.navAlign = new EscmsButtonGroup('inspector.nav_align', [
+            { value: 'flex-start', icon: icons.layoutAlignLeft || 'L' },
+            { value: 'center', icon: icons.layoutAlignCenter || 'C' },
+            { value: 'flex-end', icon: icons.layoutAlignRight || 'R' }
+        ], 'flex-start', (val) => {
+            if (!this.selectedNode || this.isSyncing) return;
+            this.selectedNode.style.display = 'flex';
+            this.selectedNode.style.justifyContent = val;
+            
+            // Si la orientación es vertical, justify-content en el nav centrará el bloque entero 
+            // pero para que el texto dentro del ul también se alinee bien, lo ajustamos:
+            const ul = this.selectedNode.querySelector('ul');
+            if (ul) {
+                ul.style.alignItems = val; // Alinea los li en cross-axis si es column, o no afecta si es row y tienen el mismo alto
+            }
+            window.dispatchEvent(new Event('escms-dom-mutated'));
+        });
+        layoutSection.appendChild(this.controls.navAlign.element);
 
         this.controls.imageAlign = new EscmsButtonGroup('inspector.image_align', [
             { value: 'left', icon: icons.textAlignLeft },
@@ -572,6 +604,10 @@ class EscmsInspector {
             this.attrInputs.href.setValue(this.selectedNode.getAttribute('href'), false);
             this.attrInputs.href.element.style.display = 'block';
         }
+        if (allowedControls.includes('ariaLabel')) {
+            this.attrInputs.ariaLabel.setValue(this.selectedNode.getAttribute('aria-label'), false);
+            this.attrInputs.ariaLabel.element.style.display = 'block';
+        }
 
         // Typography
         if (allowedControls.includes('fontFamily')) {
@@ -635,6 +671,19 @@ class EscmsInspector {
         // Layout
         if (allowedControls.includes('width')) {
             this.controls.width.setValue(comp.width !== 'auto' ? comp.width : '', false);
+        }
+
+        if (allowedControls.includes('navDirection')) {
+            const ul = this.selectedNode.querySelector('ul');
+            if (ul) {
+                let dir = window.getComputedStyle(ul).flexDirection;
+                this.controls.navDirection.setValue(dir === 'column' ? 'column' : 'row', false);
+            }
+        }
+
+        if (allowedControls.includes('navAlign')) {
+            let align = comp.justifyContent;
+            this.controls.navAlign.setValue(['flex-start', 'center', 'flex-end'].includes(align) ? align : 'flex-start', false);
         }
 
         if (allowedControls.includes('imageAlign')) {

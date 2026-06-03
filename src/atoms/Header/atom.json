@@ -9,10 +9,14 @@
         "margin",
         "padding",
         "border",
-        "opacity"
+        "opacity",
+        "ariaLabel"
     ],
     "category": "layout",
     "version": "1.0.0",
     "authorized_domain": "localhost",
-    "signature": "default_signature"
+    "signature": "default_signature",
+    "attributes": {
+        "role": "banner"
+    }
 }

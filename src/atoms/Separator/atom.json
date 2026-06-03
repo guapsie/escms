@@ -4,7 +4,8 @@
     "icon": "separator",
     "className": "escms-separator",
     "allowedControls": [
-        "bgColor"
+        "bgColor",
+        "ariaLabel"
     ],
     "styles": {
         "width": "100%",
@@ -15,5 +16,9 @@
     "category": "layout",
     "version": "1.0.0",
     "authorized_domain": "localhost",
-    "signature": "default_signature"
+    "signature": "default_signature",
+    "attributes": {
+        "role": "separator",
+        "aria-hidden": "true"
+    }
 }

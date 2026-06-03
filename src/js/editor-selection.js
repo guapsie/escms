@@ -130,7 +130,7 @@ class EscmsSelection {
             // Encontrar el bloque de texto padre si hacemos clic en una etiqueta inline (strong, span, a, etc.)
             // para hacer editable todo el bloque y no solo un trozo.
             let target = e.target;
-            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE'];
+            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
             const closestBlock = target.closest(textBlockTags.join(','));
             
             if (closestBlock && closestBlock.id !== 'document-root') {
@@ -181,7 +181,7 @@ class EscmsSelection {
             documentRoot.querySelectorAll('.escms-drag-target').forEach(el => el.classList.remove('escms-drag-target'));
             
             let target = e.target;
-            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE'];
+            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
             const closestBlock = target.closest(textBlockTags.join(','));
             
             if (closestBlock && closestBlock.id !== 'document-root') {
@@ -211,7 +211,7 @@ class EscmsSelection {
                 try {
                     const payload = JSON.parse(dataString);
                     let target = e.target;
-                    const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE'];
+                    const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
                     const closestBlock = target.closest(textBlockTags.join(','));
                     
                     if (closestBlock && closestBlock.id !== 'document-root') {

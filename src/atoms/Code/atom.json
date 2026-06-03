@@ -11,7 +11,8 @@
         "padding",
         "border",
         "opacity",
-        "effects"
+        "effects",
+        "ariaLabel"
     ],
     "category": "text",
     "version": "1.0.0",

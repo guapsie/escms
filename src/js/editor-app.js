@@ -110,6 +110,16 @@ class EscmsEditor {
                 this.autosave.updateStatus('topbar.saved');
             }
             
+            if (this.seoView) {
+                this.seoView.setData({
+                    slug: page.slug || '',
+                    title: page.seo_title || page.title || '',
+                    description: page.seo_desc || '',
+                    keywords: page.seo_keywords || '',
+                    language: page.seo_language || 'en'
+                });
+            }
+            
             if (this.history) {
                 this.history.clear();
                 this.history.pushState();
@@ -197,6 +207,41 @@ class EscmsEditor {
                 this.history.clear();
                 this.history.pushState();
             }
+        });
+
+        let seoTimeout = null;
+        window.addEventListener('escms-seo-changed', (e) => {
+            if (!this.currentPageObj) return;
+            const data = e.detail;
+            
+            clearTimeout(seoTimeout);
+            seoTimeout = setTimeout(async () => {
+                try {
+                    await fetch('/api/pages/save_seo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: this.currentPageObj.id,
+                            slug: data.slug,
+                            seo_title: data.title,
+                            seo_desc: data.description,
+                            seo_keywords: data.keywords,
+                            seo_language: data.language
+                        })
+                    });
+                    
+                    // Update slug in local object
+                    if (data.slug) {
+                        this.currentPageObj.slug = data.slug.toLowerCase().replace(/[^a-z0-9\-]/g, '-').replace(/-+/g, '-');
+                    }
+                    if (this.autosave) {
+                        this.autosave.updateStatus('topbar.saved');
+                        setTimeout(() => this.autosave.updateStatus('topbar.draft'), 3000);
+                    }
+                } catch (err) {
+                    console.error('[ESCMS] Error saving SEO', err);
+                }
+            }, 500);
         });
 
         await this.loadLocale();

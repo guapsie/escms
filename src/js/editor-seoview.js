@@ -3,6 +3,7 @@ class EscmsSeoView {
         this.view = null;
         this.inputs = {};
         this.data = {
+            slug: '',
             title: '',
             description: '',
             keywords: '',
@@ -90,6 +91,7 @@ class EscmsSeoView {
             return group;
         };
 
+        wrapper.appendChild(createInput('slug', 'URL Slug', 'text', 'my-page-url'));
         wrapper.appendChild(createInput('title', 'Page Title', 'text', 'My Awesome Page'));
         wrapper.appendChild(createInput('description', 'Meta Description', 'textarea', 'A brief description of this page...'));
         wrapper.appendChild(createInput('keywords', 'Keywords', 'text', 'keyword1, keyword2, keyword3'));

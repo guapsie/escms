@@ -9,13 +9,15 @@
         "padding",
         "border",
         "opacity",
-        "effects"
+        "effects",
+        "ariaLabel"
     ],
     "attributes": {
         "src": "https://www.youtube.com/embed/dQw4w9WgXcQ",
         "frameborder": "0",
         "allowfullscreen": "true",
-        "style": "width: 100%; aspect-ratio: 16/9;"
+        "style": "width: 100%; aspect-ratio: 16/9;",
+        "aria-label": "Media player"
     },
     "category": "embeds",
     "version": "1.0.0",

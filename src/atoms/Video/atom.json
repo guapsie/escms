@@ -9,11 +9,13 @@
         "padding",
         "border",
         "opacity",
-        "effects"
+        "effects",
+        "ariaLabel"
     ],
     "attributes": {
         "controls": "true",
-        "style": "width: 100%;"
+        "style": "width: 100%;",
+        "aria-label": "Media player"
     },
     "category": "embeds",
     "version": "1.0.0",

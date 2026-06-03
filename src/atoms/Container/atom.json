@@ -10,7 +10,8 @@
         "margin",
         "padding",
         "border",
-        "opacity"
+        "opacity",
+        "ariaLabel"
     ],
     "styles": {
         "maxWidth": "var(--max-width)",
@@ -20,5 +21,9 @@
     "category": "layout",
     "version": "1.0.0",
     "authorized_domain": "localhost",
-    "signature": "default_signature"
+    "signature": "default_signature",
+    "attributes": {
+        "role": "region",
+        "aria-label": "Container"
+    }
 }

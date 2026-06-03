@@ -56,7 +56,10 @@ const iconMap = {
     article: 'article',
     compass: 'compass',
     caretLineUp: 'layout-navbar',
-    caretLineDown: 'layout-bottombar'
+    caretLineDown: 'layout-bottombar',
+    layoutAlignLeft: 'layout-align-left',
+    layoutAlignCenter: 'layout-align-center',
+    layoutAlignRight: 'layout-align-right'
 };
 
 const fetchIcon = (name) => {
@@ -91,7 +94,7 @@ async function run() {
         }
     }
     output += '};\n';
-    fs.writeFileSync('src/editor-icons.js', output);
+    fs.writeFileSync('src/js/editor-icons.js', output);
     console.log('Done!');
 }
 

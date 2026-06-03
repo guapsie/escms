@@ -13,7 +13,8 @@
         "padding",
         "border",
         "opacity",
-        "effects"
+        "effects",
+        "ariaLabel"
     ],
     "children": [
         {

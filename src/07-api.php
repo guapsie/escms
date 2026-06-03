@@ -112,8 +112,12 @@ if (str_starts_with($route, 'api/')) {
                 $value = $input['value'] ?? null;
                 if (!$key || str_starts_with($key, 'ai_')) $send_json(['status' => 'error', 'msg' => 'Invalid key'], 400);
                 
+                if (is_bool($value)) {
+                    $value = $value ? '1' : '0';
+                }
+
                 $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
-                $stmt->execute([$key, $value]);
+                $stmt->execute([$key, (string)$value]);
                 $send_json(['status' => 'success']);
             } else {
                 $send_json(['error' => 'Method not allowed'], 405);
@@ -350,7 +354,7 @@ if (str_starts_with($route, 'api/')) {
             try {
                 $id = $_GET['id'] ?? null;
                 if (!$id) throw new RuntimeException('ID required');
-                $stmt = $pdo->prepare("SELECT id, title, slug, editor_data FROM pages WHERE id = ?");
+                $stmt = $pdo->prepare("SELECT id, title, slug, editor_data, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE id = ?");
                 $stmt->execute([$id]);
                 $page = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$page) throw new RuntimeException('Page not found');
@@ -578,28 +582,7 @@ if (str_starts_with($route, 'api/')) {
                 $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
             }
             break;
-        case 'api/settings':
-            if ($method === 'GET') {
-                if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
-                $send_json(['status' => 'success', 'data' => $config]);
-            } elseif ($method === 'POST') {
-                if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
-                try {
-                    $pdo->beginTransaction();
-                    foreach ($input as $k => $v) {
-                        $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
-                        $stmt->execute([$k, is_bool($v) ? ($v ? '1' : '0') : (string)$v]);
-                    }
-                    $pdo->commit();
-                    $send_json(['status' => 'success']);
-                } catch (Throwable $e) {
-                    $pdo->rollBack();
-                    $send_json(['status' => 'error', 'msg' => $e->getMessage()], 500);
-                }
-            } else {
-                $send_json(['error' => 'Method not allowed'], 405);
-            }
-            break;
+
 
 
         case 'api/menus':
@@ -781,69 +764,35 @@ if (str_starts_with($route, 'api/')) {
             $send_json(['status' => 'success', 'deleted' => $deleted]);
             break;
 
-        case 'api/settings':
+        case 'api/pages/save_seo':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
             if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
-            if ($method === 'GET') {
-                try {
-                    $options = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE 'ai_%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
-                    $send_json(['status' => 'success', 'data' => $options]);
-                } catch (Throwable $e) {
-                    $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            try {
+                $id = $input['id'] ?? null;
+                if (!$id) throw new RuntimeException('ID required');
+                
+                $slug = trim($input['slug'] ?? '');
+                // Basic sanitation for the slug: replace spaces with hyphens, lowercase, remove invalid chars
+                $slug = strtolower(preg_replace('/[^a-zA-Z0-9\-]/', '-', preg_replace('/\s+/', '-', $slug)));
+                
+                $seo_title = $input['seo_title'] ?? null;
+                $seo_desc = $input['seo_desc'] ?? null;
+                $seo_keywords = $input['seo_keywords'] ?? null;
+                $seo_language = $input['seo_language'] ?? null;
+                
+                // Check if slug exists on another page
+                $stmtSlug = $pdo->prepare("SELECT id FROM pages WHERE slug = ? AND id != ?");
+                $stmtSlug->execute([$slug, $id]);
+                if ($stmtSlug->fetch()) {
+                    throw new RuntimeException('Slug already in use by another page');
                 }
-            } else if ($method === 'POST') {
-                try {
-                    $input = json_decode(file_get_contents('php://input'), true);
-                    if (!is_array($input)) throw new RuntimeException('Invalid payload');
-                    
-                    $pdo->beginTransaction();
-                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
-                    foreach ($input as $k => $v) {
-                        if (strpos($k, 'ai_') === 0) continue; // Proteger las claves de AI
-                        $stmt->execute([$k, (string)$v]);
-                    }
-                    $pdo->commit();
-                    $send_json(['status' => 'success']);
-                } catch (Throwable $e) {
-                    if ($pdo->inTransaction()) $pdo->rollBack();
-                    $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
-                }
-            } else {
-                $send_json(['error' => 'Method not allowed'], 405);
-            }
-            break;
-
-        case 'api/ai/settings':
-            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
-            if ($method === 'GET') {
-                $provider = $pdo->query("SELECT v FROM options WHERE k='ai_provider'")->fetchColumn() ?: 'gemini';
-                $key = $pdo->query("SELECT v FROM options WHERE k='ai_key'")->fetchColumn() ?: '';
-                $model = $pdo->query("SELECT v FROM options WHERE k='ai_model'")->fetchColumn() ?: '';
-                $endpoint = $pdo->query("SELECT v FROM options WHERE k='ai_endpoint'")->fetchColumn() ?: '';
-                $instructions = $pdo->query("SELECT v FROM options WHERE k='ai_instructions'")->fetchColumn() ?: '';
-                $send_json(['status' => 'success', 'provider' => $provider, 'has_key' => !empty($key), 'model' => $model, 'endpoint' => $endpoint, 'instructions' => $instructions]);
-            } else if ($method === 'POST') {
-                $input = json_decode(file_get_contents('php://input'), true);
-                if (isset($input['provider'])) {
-                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('ai_provider', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
-                    $stmt->execute([$input['provider']]);
-                }
-                if (isset($input['key'])) {
-                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('ai_key', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
-                    $stmt->execute([trim($input['key'])]);
-                }
-                if (isset($input['model'])) {
-                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('ai_model', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
-                    $stmt->execute([$input['model']]);
-                }
-                if (isset($input['endpoint'])) {
-                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('ai_endpoint', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
-                    $stmt->execute([trim($input['endpoint'])]);
-                }
-                if (isset($input['instructions'])) {
-                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('ai_instructions', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
-                    $stmt->execute([trim($input['instructions'])]);
-                }
+                
+                $stmt = $pdo->prepare("UPDATE pages SET slug = ?, seo_title = ?, seo_desc = ?, seo_keywords = ?, seo_language = ? WHERE id = ?");
+                $stmt->execute([$slug, $seo_title, $seo_desc, $seo_keywords, $seo_language, $id]);
+                
                 $send_json(['status' => 'success']);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
             }
             break;
 

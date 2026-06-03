@@ -42,9 +42,13 @@ try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     try {
         $pdo->exec("ALTER TABLE components ADD COLUMN template_id VARCHAR(50) DEFAULT 'custom'");
-    } catch (PDOException $e) {
-        // Column already exists or error ignored
-    }
+    } catch (PDOException $e) {}
+    try {
+        $pdo->exec("ALTER TABLE pages ADD COLUMN seo_keywords TEXT");
+    } catch (PDOException $e) {}
+    try {
+        $pdo->exec("ALTER TABLE pages ADD COLUMN seo_language TEXT");
+    } catch (PDOException $e) {}
     $config = $pdo->query("SELECT k, v FROM options")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
 } catch (PDOException $e) {
     http_response_code(500);

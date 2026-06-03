@@ -410,6 +410,7 @@ class EscmsLeftPanel {
         
         const el = document.createElement('escms-component');
         el.setAttribute('ref', comp.ref_id);
+        el.setAttribute('data-name', comp.name || 'Component');
         el.style.outline = '2px dashed #9333ea';
         el.style.display = 'block';
         
@@ -501,7 +502,10 @@ async fetchAtoms() {
             }
 
             if (!isAtom) {
-                if (domNode.classList.contains('escms-column')) {
+                if (tag === 'escms-component') {
+                    displayName = domNode.getAttribute('data-name') || 'Component';
+                    iconSvg = icons.box || icons.square; // Un icono genérico si no hay components icon
+                } else if (domNode.classList.contains('escms-column')) {
                     displayName = 'Column';
                     iconSvg = icons.columns;
                 } else if (domNode.classList.contains('escms-grid-item')) {
@@ -762,7 +766,42 @@ async fetchAtoms() {
         if (atom.attributes) {
             Object.entries(atom.attributes).forEach(([k, v]) => el.setAttribute(k, v));
         }
-        if (atom.children) {
+        if (atom.name === 'Nav') {
+            el.style.display = 'flex';
+            el.style.width = '100%';
+            const ul = document.createElement('ul');
+            ul.style.listStyle = 'none';
+            ul.style.display = 'flex';
+            ul.style.gap = '20px';
+            ul.style.margin = '0';
+            ul.style.padding = '0';
+            ul.className = 'escms-nav-list';
+            
+            if (this.pageManager && this.pageManager.pages && this.pageManager.pages.length > 0) {
+                this.pageManager.pages.forEach(page => {
+                    const li = document.createElement('li');
+                    li.className = 'escms-nav-item';
+                    const a = document.createElement('a');
+                    a.className = 'escms-nav-link';
+                    a.href = page.is_home ? '/' : '/' + page.slug;
+                    a.textContent = page.title;
+                    a.style.textDecoration = 'none';
+                    a.style.color = 'inherit';
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = '#';
+                a.textContent = 'Home';
+                a.style.textDecoration = 'none';
+                a.style.color = 'inherit';
+                li.appendChild(a);
+                ul.appendChild(li);
+            }
+            el.appendChild(ul);
+        } else if (atom.children) {
             atom.children.forEach(childAtom => {
                 const childEl = document.createElement(childAtom.tag);
                 if (childAtom.textKey) childEl.textContent = this.i18n.dictionary[childAtom.textKey] || 'Item';
