@@ -24,6 +24,7 @@ class EscmsMediaLibrary {
     }
 
     async open() {
+        if (this.modal) return;
         return new Promise((resolve) => {
             this.resolvePromise = resolve;
             this.buildUI();
@@ -47,7 +48,9 @@ class EscmsMediaLibrary {
         this.modal.className = 'escms-media-library';
         this.modal.style.position = 'fixed';
         this.modal.style.inset = '50px 0 0 0';
-        this.modal.style.backgroundColor = 'var(--bg-base, #0a0a0a)';
+        this.modal.style.backgroundColor = 'rgba(10, 10, 10, 0.85)';
+        this.modal.style.backdropFilter = 'blur(16px)';
+        this.modal.style.webkitBackdropFilter = 'blur(16px)';
         this.modal.style.zIndex = '99999';
         this.modal.style.display = 'flex';
         this.modal.style.flexDirection = 'column';

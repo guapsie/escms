@@ -16,6 +16,10 @@ class EscmsGlobalSettings {
         this.gearBtn = document.getElementById('btn-settings');
         if (this.gearBtn) {
             this.gearBtn.addEventListener('click', () => {
+                if (this.overlay.style.display === 'block') return;
+                if (window.escmsMediaLibrary && window.escmsMediaLibrary.modal) {
+                    window.escmsMediaLibrary.close();
+                }
                 this.overlay.style.display = 'block';
             });
         }
@@ -60,7 +64,9 @@ class EscmsGlobalSettings {
         this.overlay.style.left = '0';
         this.overlay.style.right = '0';
         this.overlay.style.bottom = '0';
-        this.overlay.style.background = 'var(--bg-base, #0a0a0a)';
+        this.overlay.style.background = 'rgba(10, 10, 10, 0.85)';
+        this.overlay.style.backdropFilter = 'blur(16px)';
+        this.overlay.style.webkitBackdropFilter = 'blur(16px)';
         this.overlay.style.zIndex = '9999';
         this.overlay.style.display = 'none';
 

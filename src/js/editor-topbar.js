@@ -103,6 +103,9 @@ class EscmsTopBar {
         const btnMedia = this.container.querySelector('#btn-media');
         if (btnMedia) {
             btnMedia.addEventListener('click', () => {
+                if (window.escmsEditor && window.escmsEditor.settings && window.escmsEditor.settings.overlay.style.display === 'block') {
+                    window.escmsEditor.settings.overlay.style.display = 'none';
+                }
                 if (!window.escmsMediaLibrary) {
                     window.escmsMediaLibrary = new EscmsMediaLibrary(this.i18n);
                 }

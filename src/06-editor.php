@@ -9,25 +9,32 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="editor_title"></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-base: #0a0a0a;
-            --text-solid: #f5f5f5;
-            --accent-solid: #3b82f6;
-            --accent-fade: rgba(59, 130, 246, 0.6);
-            --accent-faint: rgba(59, 130, 246, 0.3);
-            --border-color: rgba(255, 255, 255, 0.05);
+            --bg-canvas: #000000;
+            --bg-panel: #0a0a0a;
+            --bg-surface: #111111;
+            --bg-hover: #1f1f1f;
+            --text-solid: #ededed;
+            --text-muted: #a1a1aa;
+            --text-faint: #52525b;
+            --accent-solid: #3b82f6; /* Beautiful Blue */
+            --accent-fade: rgba(59, 130, 246, 0.2);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(255, 255, 255, 0.15);
         }
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--bg-base);
+            background-color: var(--bg-canvas);
             color: var(--text-solid);
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: Inter, -apple-system, sans-serif;
             height: 100vh;
             overflow: hidden;
             display: grid;
             grid-template-rows: 50px 1fr;
+            -webkit-font-smoothing: antialiased;
         }
         ::-webkit-scrollbar {
             width: 6px;
@@ -44,24 +51,41 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
             background: rgba(255, 255, 255, 0.2);
         }
         #escms-topbar {
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+            position: relative;
         }
         #escms-main {
             display: grid;
-            grid-template-columns: 250px 1fr 300px;
+            grid-template-columns: 260px 1fr 300px;
             height: 100%;
             overflow: hidden;
+        }
+        #escms-left-panel, #escms-inspector {
+            background-color: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
         }
         #escms-left-panel {
             border-right: 1px solid var(--border-color);
         }
+        #escms-inspector {
+            border-left: 1px solid var(--border-color);
+        }
         #escms-canvas-wrapper {
             display: flex;
             overflow: auto;
+            background-color: var(--bg-canvas);
+            background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
         }
-            #escms-inspector {
-                border-left: 1px solid var(--border-color);
-            }
             /* Preview Mode */
             body.escms-preview-mode #escms-topbar,
             body.escms-preview-mode #escms-left-panel,
