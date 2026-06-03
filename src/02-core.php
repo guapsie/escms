@@ -49,6 +49,9 @@ try {
     try {
         $pdo->exec("ALTER TABLE pages ADD COLUMN seo_language TEXT");
     } catch (PDOException $e) {}
+    try {
+        $pdo->exec("ALTER TABLE pages ADD COLUMN status VARCHAR(20) DEFAULT 'draft'");
+    } catch (PDOException $e) {}
     $config = $pdo->query("SELECT k, v FROM options")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
 } catch (PDOException $e) {
     http_response_code(500);

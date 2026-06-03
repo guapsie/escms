@@ -11,9 +11,13 @@ if (!isset($pdo)) {
 $slug = $route === '' ? 'home' : $route;
 
 try {
-    $stmt = $pdo->prepare("SELECT title, public_html FROM pages WHERE slug = ?");
+    $stmt = $pdo->prepare("SELECT title, public_html, status FROM pages WHERE slug = ?");
     $stmt->execute([$slug]);
     $page = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($page && $page['status'] !== 'published') {
+        $page = false;
+    }
 
     if (!$page) {
         $stmt = $pdo->prepare("SELECT title, public_html FROM pages WHERE slug = '404'");
@@ -37,6 +41,17 @@ try {
 
 $title = htmlspecialchars($page['title']);
 $content = $page['public_html'];
+
+// Inyección dinámica de componentes para que el Frontend siempre muestre la última versión
+$content = preg_replace_callback('/<!-- ESCMS_COMPONENT:([a-zA-Z0-9_-]+) -->/', function($matches) use ($pdo) {
+    try {
+        $stmt = $pdo->prepare("SELECT public_html FROM components WHERE ref_id = ?");
+        $stmt->execute([$matches[1]]);
+        return $stmt->fetchColumn() ?: '';
+    } catch (Throwable $e) {
+        return '';
+    }
+}, $content);
 
 // Cargar el CSS del tema activo (por ahora asumimos pichi)
 $style_css = '';

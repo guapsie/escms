@@ -73,7 +73,8 @@ class EscmsAutosave {
                 const payload = {
                     id: this.pageId,
                     editor_data: JSON.stringify(editorData),
-                    public_html: publicHtml // Dejamos que PHP compile el HTML en el backend
+                    public_html: publicHtml, // Dejamos que PHP compile el HTML en el backend
+                    status: (window.escmsEditor && window.escmsEditor.currentPage && window.escmsEditor.currentPage.status) ? window.escmsEditor.currentPage.status : 'draft'
                 };
 
                 const res = await fetch('/api/pages/save', {

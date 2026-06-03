@@ -48,6 +48,7 @@ if ($needs_install) {
                 editor_data TEXT DEFAULT '{}',
                 public_html TEXT DEFAULT '',
                 views INTEGER DEFAULT 0,
+                status VARCHAR(20) DEFAULT 'draft',
                 seo_title TEXT,
                 seo_desc TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

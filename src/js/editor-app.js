@@ -80,6 +80,8 @@ class EscmsEditor {
         this.history = new EscmsHistory();
         this.history.init(docRoot);
 
+        this.columnResizer = new EscmsColumnResizer(this.shadow);
+
         this.setupShortcuts();
         
         window.addEventListener('escms-page-selected', (e) => {
@@ -108,6 +110,10 @@ class EscmsEditor {
                 this.autosave.pageId = page.id;
                 this.autosave.componentId = null;
                 this.autosave.updateStatus('topbar.saved');
+            }
+            
+            if (this.topBar) {
+                this.topBar.setStatus(page.status || 'draft');
             }
             
             if (this.seoView) {

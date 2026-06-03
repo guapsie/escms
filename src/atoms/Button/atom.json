@@ -1,18 +1,19 @@
 {
     "name": "Button",
-    "tag": "button",
+    "tag": "a",
     "icon": "button",
     "className": "escms-button",
     "textKey": "leftpanel.default_button",
     "allowedControls": [
         "href",
+        "typography",
+        "color",
         "bgColor",
         "bgGradient",
         "margin",
         "padding",
         "border",
         "opacity",
-        "effects",
         "ariaLabel"
     ],
     "category": "text",

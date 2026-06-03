@@ -9,7 +9,6 @@ class EscmsLeftPanel {
         this.elementsSubView = 'atoms';
         this.atomCategories = [];
         this.pageManager = new EscmsPageManager(this.i18n);
-        this.menuManager = new EscmsMenuManager(this.i18n);
         if (typeof EscmsCopilot !== 'undefined') {
             this.copilot = new EscmsCopilot(this.i18n);
         }
@@ -116,7 +115,6 @@ class EscmsLeftPanel {
         header.appendChild(createTab('elements', icons.atom, 'Elements'));
         header.appendChild(createTab('layers', icons.stack, 'Layers'));
         header.appendChild(createTab('pages', icons.file, 'Pages'));
-        header.appendChild(createTab('menus', icons.menu2, 'Menus'));
         header.appendChild(createTab('ai', icons.ai, 'Copilot AI'));
 
         this.contentArea = document.createElement('div');
@@ -133,8 +131,6 @@ class EscmsLeftPanel {
             this.renderElementsTab();
         } else if (this.activeTab === 'pages') {
             this.pageManager.init(this.contentArea);
-        } else if (this.activeTab === 'menus') {
-            this.menuManager.init(this.contentArea);
         } else if (this.activeTab === 'ai') {
             if (this.copilot) {
                 this.copilot.init(this.contentArea);
@@ -777,29 +773,24 @@ async fetchAtoms() {
             ul.style.padding = '0';
             ul.className = 'escms-nav-list';
             
-            if (this.pageManager && this.pageManager.pages && this.pageManager.pages.length > 0) {
-                this.pageManager.pages.forEach(page => {
-                    const li = document.createElement('li');
-                    li.className = 'escms-nav-item';
-                    const a = document.createElement('a');
-                    a.className = 'escms-nav-link';
-                    a.href = page.is_home ? '/' : '/' + page.slug;
-                    a.textContent = page.title;
-                    a.style.textDecoration = 'none';
-                    a.style.color = 'inherit';
-                    li.appendChild(a);
-                    ul.appendChild(li);
-                });
-            } else {
+            const links = [
+                { text: 'Home', href: '/' },
+                { text: 'About', href: '/about' },
+                { text: 'Contact', href: '/contact' }
+            ];
+            
+            links.forEach(link => {
                 const li = document.createElement('li');
+                li.className = 'escms-nav-item';
                 const a = document.createElement('a');
-                a.href = '#';
-                a.textContent = 'Home';
+                a.className = 'escms-nav-link';
+                a.href = link.href;
+                a.textContent = link.text;
                 a.style.textDecoration = 'none';
                 a.style.color = 'inherit';
                 li.appendChild(a);
                 ul.appendChild(li);
-            }
+            });
             el.appendChild(ul);
         } else if (atom.children) {
             atom.children.forEach(childAtom => {

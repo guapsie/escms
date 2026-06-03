@@ -88,14 +88,15 @@ class EscmsTopBar {
         const textSlot = btnToggle.querySelector('[data-i18n]');
 
         btnToggle.addEventListener('click', () => {
+            if (!window.escmsEditor || !window.escmsEditor.currentPage) return;
             this.isPublished = !this.isPublished;
+            const newStatus = this.isPublished ? 'published' : 'draft';
+            window.escmsEditor.currentPage.status = newStatus;
             
-            btnToggle.classList.toggle('published', this.isPublished);
-            iconSlot.innerHTML = this.isPublished ? icons.globe : icons.pencil;
-            textSlot.setAttribute('data-i18n', this.isPublished ? 'topbar.published' : 'topbar.draft');
+            this.setStatus(newStatus);
             
-            if (this.i18n) {
-                this.i18n.translateDOM(btnToggle);
+            if (window.escmsEditor.autosave) {
+                window.escmsEditor.autosave.saveToServer();
             }
         });
 
@@ -108,7 +109,9 @@ class EscmsTopBar {
                 window.escmsMediaLibrary.open();
             });
         }
-
+        
+        // ... (resto intacto)
+        
         const btnNetwork = this.container.querySelector('#btn-network');
         if (btnNetwork) {
             btnNetwork.addEventListener('click', () => this.showNetworkModal());
@@ -118,21 +121,34 @@ class EscmsTopBar {
         if (btnFullscreen) {
             btnFullscreen.addEventListener('click', () => {
                 if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen().catch(err => {
-                        console.error('[ESCMS Fullscreen Error]', err);
-                    });
+                    document.documentElement.requestFullscreen().catch(err => {});
                 } else {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
-                    }
+                    if (document.exitFullscreen) document.exitFullscreen();
                 }
             });
-
             document.addEventListener('fullscreenchange', () => {
                 btnFullscreen.innerHTML = document.fullscreenElement ? icons.arrowsIn : icons.arrowsOut;
             });
         }
     }
+
+    setStatus(status) {
+        this.isPublished = (status === 'published');
+        const btnToggle = this.container.querySelector('#btn-toggle-publish');
+        if (!btnToggle) return;
+        const iconSlot = btnToggle.querySelector('.icon-slot');
+        const textSlot = btnToggle.querySelector('[data-i18n]');
+        
+        btnToggle.classList.toggle('published', this.isPublished);
+        iconSlot.innerHTML = this.isPublished ? icons.globe : icons.pencil;
+        textSlot.setAttribute('data-i18n', this.isPublished ? 'topbar.published' : 'topbar.draft');
+        
+        if (this.i18n) {
+            this.i18n.translateDOM(btnToggle);
+        }
+    }
+
+
 
     showNetworkModal() {
         let modal = document.getElementById('escms-network-modal');

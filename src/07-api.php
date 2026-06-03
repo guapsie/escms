@@ -193,6 +193,7 @@ if (str_starts_with($route, 'api/')) {
             try {
                 $id = $input['id'] ?? null;
                 $editor_data = $input['editor_data'] ?? '{}';
+                $status = $input['status'] ?? 'draft';
                 
                 // Compilador PHP
                 $jsonToHtml = function($node) use (&$jsonToHtml, $pdo) {
@@ -201,10 +202,7 @@ if (str_starts_with($route, 'api/')) {
                     $tag = $node['tag'] ?? 'div';
                     
                     if ($tag === 'escms-component' && !empty($node['ref'])) {
-                        $stmt = $pdo->prepare("SELECT public_html FROM components WHERE ref_id = ?");
-                        $stmt->execute([$node['ref']]);
-                        $compHtml = $stmt->fetchColumn();
-                        return $compHtml ?: ''; // Inyectamos el HTML puro del componente
+                        return '<!-- ESCMS_COMPONENT:' . htmlspecialchars($node['ref']) . ' -->';
                     }
 
                     $html = "<$tag";
@@ -236,13 +234,13 @@ if (str_starts_with($route, 'api/')) {
                 $public_html = $jsonToHtml($nodeTree);
 
                 if ($id) {
-                    $stmt = $pdo->prepare("UPDATE pages SET editor_data = ?, public_html = ? WHERE id = ?");
-                    $stmt->execute([$editor_data, $public_html, $id]);
+                    $stmt = $pdo->prepare("UPDATE pages SET editor_data = ?, public_html = ?, status = ? WHERE id = ?");
+                    $stmt->execute([$editor_data, $public_html, $status, $id]);
                 } else {
                     $title = 'Draft ' . date('Y-m-d H:i:s');
                     $slug = 'draft-' . bin2hex(random_bytes(4));
-                    $stmt = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html) VALUES (?, ?, ?, ?)");
-                    $stmt->execute([$title, $slug, $editor_data, $public_html]);
+                    $stmt = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html, status) VALUES (?, ?, ?, ?, ?)");
+                    $stmt->execute([$title, $slug, $editor_data, $public_html, $status]);
                     $id = $pdo->lastInsertId();
                 }
 
@@ -256,7 +254,7 @@ if (str_starts_with($route, 'api/')) {
             if ($method !== 'GET') $send_json(['error' => 'Method not allowed'], 405);
             if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
             try {
-                $pages = $pdo->query("SELECT id, title, slug, views, updated_at FROM pages ORDER BY updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+                $pages = $pdo->query("SELECT id, title, slug, views, status, updated_at FROM pages ORDER BY updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
                 
                 if (count($pages) === 0) {
                     $defaultData = '{"tag":"div","classes":["escms-container"],"styles":"max-width: var(--max-width); margin: 0px auto; padding: 20px;","children":[{"tag":"h2","children":["Welcome to ESCMS"]},{"tag":"p","children":["This is your brand new lightweight CMS."]}]}';
@@ -281,7 +279,7 @@ if (str_starts_with($route, 'api/')) {
                     
                     $config['home_page_id'] = $homeId; // Update in memory so the loop below sees it
                     
-                    $pages = $pdo->query("SELECT id, title, slug, views, updated_at FROM pages ORDER BY updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+                    $pages = $pdo->query("SELECT id, title, slug, views, status, updated_at FROM pages ORDER BY updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
                 }
 
                 $home_id = (int)($config['home_page_id'] ?? 0);
@@ -354,7 +352,7 @@ if (str_starts_with($route, 'api/')) {
             try {
                 $id = $_GET['id'] ?? null;
                 if (!$id) throw new RuntimeException('ID required');
-                $stmt = $pdo->prepare("SELECT id, title, slug, editor_data, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE id = ?");
+                $stmt = $pdo->prepare("SELECT id, title, slug, editor_data, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE id = ?");
                 $stmt->execute([$id]);
                 $page = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$page) throw new RuntimeException('Page not found');
@@ -585,31 +583,7 @@ if (str_starts_with($route, 'api/')) {
 
 
 
-        case 'api/menus':
-            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
-            if ($method === 'GET') {
-                try {
-                    $stmt = $pdo->prepare("SELECT v FROM options WHERE k = 'main_menu'");
-                    $stmt->execute();
-                    $result = $stmt->fetchColumn();
-                    $menus = $result ? json_decode($result, true) : [];
-                    $send_json(['status' => 'success', 'menus' => $menus]);
-                } catch (Throwable $e) {
-                    $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
-                }
-            } elseif ($method === 'POST') {
-                try {
-                    $menusJson = json_encode($input['menus'] ?? []);
-                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('main_menu', ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v");
-                    $stmt->execute([$menusJson]);
-                    $send_json(['status' => 'success']);
-                } catch (Throwable $e) {
-                    $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
-                }
-            } else {
-                $send_json(['error' => 'Method not allowed'], 405);
-            }
-            break;
+
         case 'api/atoms':
             if ($method !== 'GET') $send_json(['error' => 'Method not allowed'], 405);
             if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);

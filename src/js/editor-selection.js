@@ -44,6 +44,11 @@ class EscmsSelection {
                 outline: 1px dotted #cccccc;
                 outline-offset: -1px;
             }
+            .escms-main {
+                min-height: 100px;
+                width: 100%;
+                box-sizing: border-box;
+            }
             .escms-section {
                 min-height: 50px;
                 padding: 2rem;
@@ -65,18 +70,7 @@ class EscmsSelection {
                 background-color: rgba(59, 130, 246, 0.05);
                 position: relative;
             }
-            .escms-column:empty::after, .escms-grid-item:empty::after, .escms-container:empty::after, .escms-section:empty::after {
-                content: '${emptyText}';
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                position: absolute;
-                inset: 0;
-                color: rgba(59, 130, 246, 0.6);
-                font-family: monospace;
-                font-size: 0.75rem;
-                pointer-events: none;
-            }
+
             blockquote {
                 border-left: 4px solid var(--accent-solid, #3b82f6);
                 padding-left: 1rem;

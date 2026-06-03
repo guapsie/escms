@@ -646,6 +646,14 @@ class EscmsGlobalSettings {
             this.debounceSave('--max-width', val ? `${val}px` : '');
         });
         widthGroup.input.value = currentWidth;
+        
+        const widthDesc = document.createElement('div');
+        widthDesc.setAttribute('data-i18n', 'settings.max_width_desc');
+        widthDesc.style.fontSize = '0.75rem';
+        widthDesc.style.color = 'rgba(245,245,245,0.5)';
+        widthDesc.style.marginTop = '0.25rem';
+        widthGroup.group.appendChild(widthDesc);
+        
         tab.appendChild(widthGroup.group);
         
         const bgColor = new EscmsColorPicker('settings.page_bg_color', this.getStyleVariable('--color-background') || '#0a0a0a', 100, (val) => {

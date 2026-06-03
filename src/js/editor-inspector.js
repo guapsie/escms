@@ -56,6 +56,16 @@ class EscmsInspector {
                 this.emptyState.style.display = 'flex';
             }
         });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .escms-inspector-text-input:focus {
+                border-color: var(--accent-faint) !important;
+                box-shadow: 0 0 10px var(--accent-faint) !important;
+                outline: none !important;
+            }
+        `;
+        this.container.appendChild(style);
     }
 
     createSection(titleI18n) {
@@ -202,7 +212,7 @@ class EscmsInspector {
         this.attrInputs = {
             src: new EscmsUploadControl('inspector.src_url', this.i18n, '', (val) => this.applyAttribute('src', val)),
             alt: this.createTextInput('inspector.alt_text', (val) => this.applyAttribute('alt', val)),
-            href: this.createTextInput('inspector.href_url', (val) => this.applyAttribute('href', val)),
+            href: this.createHrefInput('inspector.href_url', (val) => this.applyAttribute('href', val)),
             ariaLabel: this.createTextInput('inspector.aria_label', (val) => this.applyAttribute('aria-label', val))
         };
 
@@ -390,6 +400,8 @@ class EscmsInspector {
         input.style.boxSizing = 'border-box';
         input.style.fontFamily = 'monospace';
         input.style.fontSize = '0.8rem';
+        input.className = 'escms-inspector-text-input';
+        input.style.transition = 'border-color 0.2s, box-shadow 0.2s';
 
         input.addEventListener('input', (e) => onChange(e.target.value));
 
@@ -401,6 +413,145 @@ class EscmsInspector {
             input: input,
             show: () => container.style.display = 'block',
             hide: () => container.style.display = 'none',
+            setValue: (val) => input.value = val || ''
+        };
+    }
+
+    createHrefInput(i18nKey, onChange) {
+        const wrapper = document.createElement('div');
+        wrapper.style.marginBottom = '0.75rem';
+        wrapper.style.display = 'none';
+
+        const label = document.createElement('div');
+        label.setAttribute('data-i18n', i18nKey);
+        label.style.fontSize = '0.75rem';
+        label.style.color = 'rgba(245, 245, 245, 0.6)';
+        label.style.marginBottom = '0.35rem';
+
+        const inputContainer = document.createElement('div');
+        inputContainer.style.position = 'relative';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.style.width = '100%';
+        input.style.background = '#121212';
+        input.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        input.style.color = 'var(--text-solid)';
+        input.style.padding = '0.5rem';
+        input.style.paddingRight = '2rem';
+        input.style.borderRadius = '4px';
+        input.style.boxSizing = 'border-box';
+        input.style.fontFamily = 'monospace';
+        input.style.fontSize = '0.8rem';
+        input.className = 'escms-inspector-text-input';
+        input.style.transition = 'border-color 0.2s, box-shadow 0.2s';
+        
+        const arrow = document.createElement('span');
+        arrow.innerHTML = '&#9662;';
+        arrow.style.position = 'absolute';
+        arrow.style.right = '0.75rem';
+        arrow.style.top = '50%';
+        arrow.style.transform = 'translateY(-50%)';
+        arrow.style.fontSize = '0.7rem';
+        arrow.style.color = 'rgba(245, 245, 245, 0.4)';
+        arrow.style.cursor = 'pointer';
+
+        const dropdown = document.createElement('div');
+        dropdown.style.position = 'absolute';
+        dropdown.style.top = '100%';
+        dropdown.style.left = '0';
+        dropdown.style.width = '100%';
+        dropdown.style.marginTop = '0.25rem';
+        dropdown.style.background = 'rgba(10, 10, 10, 0.95)';
+        dropdown.style.backdropFilter = 'blur(10px)';
+        dropdown.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        dropdown.style.borderRadius = '6px';
+        dropdown.style.zIndex = '1000';
+        dropdown.style.display = 'none';
+        dropdown.style.flexDirection = 'column';
+        dropdown.style.overflowY = 'auto';
+        dropdown.style.overflowX = 'hidden';
+        dropdown.style.maxHeight = '200px';
+        dropdown.style.boxSizing = 'border-box';
+        dropdown.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.5)';
+        
+        // Custom scrollbar
+        dropdown.className = 'escms-select-dropdown'; 
+        
+        let isOpen = false;
+        const toggleDropdown = (e) => {
+            if (e) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+            isOpen = !isOpen;
+            dropdown.style.display = isOpen ? 'flex' : 'none';
+            if (isOpen) {
+                input.style.borderColor = 'var(--accent-faint)';
+                input.style.boxShadow = '0 0 10px var(--accent-faint)';
+            } else {
+                input.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                input.style.boxShadow = 'none';
+            }
+        };
+
+        const closeDropdown = () => {
+            isOpen = false;
+            dropdown.style.display = 'none';
+            input.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+            input.style.boxShadow = 'none';
+        };
+
+        arrow.addEventListener('mousedown', toggleDropdown);
+        
+        // Let the user type without immediately closing, but close on outside click
+        document.addEventListener('mousedown', (e) => {
+            if (isOpen && !inputContainer.contains(e.target)) {
+                closeDropdown();
+            }
+        });
+
+        // Fetch pages and populate
+        fetch('/api/pages/list').then(res => res.json()).then(data => {
+            if (data.status === 'success' && data.pages) {
+                data.pages.forEach(p => {
+                    const opt = document.createElement('div');
+                    const val = p.is_home ? '/' : '/' + p.slug;
+                    opt.innerHTML = `<strong style="display:block; font-size:0.8rem; color:var(--text-solid);">${p.title}</strong><span style="font-size:0.65rem; color:rgba(255,255,255,0.4); font-family:monospace;">${val}</span>`;
+                    opt.style.padding = '0.5rem 0.75rem';
+                    opt.style.cursor = 'pointer';
+                    opt.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
+                    opt.style.transition = 'background 0.2s';
+                    
+                    opt.addEventListener('mouseenter', () => opt.style.background = 'rgba(255, 255, 255, 0.05)');
+                    opt.addEventListener('mouseleave', () => opt.style.background = 'transparent');
+                    
+                    opt.addEventListener('mousedown', (e) => {
+                        e.preventDefault(); // Prevent input blur
+                        input.value = val;
+                        onChange(val);
+                        closeDropdown();
+                    });
+                    
+                    dropdown.appendChild(opt);
+                });
+            }
+        }).catch(() => {});
+
+        input.addEventListener('input', (e) => onChange(e.target.value));
+
+        inputContainer.appendChild(input);
+        inputContainer.appendChild(arrow);
+        inputContainer.appendChild(dropdown);
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(inputContainer);
+
+        return {
+            element: wrapper,
+            input: input,
+            show: () => wrapper.style.display = 'block',
+            hide: () => wrapper.style.display = 'none',
             setValue: (val) => input.value = val || ''
         };
     }

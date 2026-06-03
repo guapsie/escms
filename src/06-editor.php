@@ -148,7 +148,7 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
     <script src="/assets/js/editor-htmlview.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-cssview.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-pagemanager.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-menumanager.js?v=<?= time() ?>"></script>
+
     <script src="/assets/js/editor-ai.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-leftpanel.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-selection.js?v=<?= time() ?>"></script>
@@ -156,6 +156,7 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
     <script src="/assets/js/editor-parser.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-autosave.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-history.js?v=<?= time() ?>"></script>
+    <script src="/assets/js/editor-column-resizer.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-medialibrary.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-app.js?v=<?= time() ?>"></script>
 </body>
