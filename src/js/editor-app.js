@@ -88,23 +88,34 @@ class EscmsEditor {
             const page = e.detail.page;
             this.currentPageObj = page;
             
-            const existingBanner = document.getElementById('escms-component-banner');
-            if (existingBanner) existingBanner.remove();
-
-            docRoot.innerHTML = '';
+            // Premium Canvas Transition
+            docRoot.style.transition = 'none';
+            docRoot.style.opacity = '0';
+            docRoot.style.transform = 'scale(0.98)';
             
-            if (page.editor_data) {
-                try {
-                    const parsedRoot = EscmsParser.jsonToDom(JSON.parse(page.editor_data));
-                    if (parsedRoot) {
-                        while(parsedRoot.firstChild) {
-                            docRoot.appendChild(parsedRoot.firstChild);
+            setTimeout(() => {
+                const existingBanner = document.getElementById('escms-component-banner');
+                if (existingBanner) existingBanner.remove();
+
+                docRoot.innerHTML = '';
+                
+                if (page.editor_data) {
+                    try {
+                        const parsedRoot = EscmsParser.jsonToDom(JSON.parse(page.editor_data));
+                        if (parsedRoot) {
+                            while(parsedRoot.firstChild) {
+                                docRoot.appendChild(parsedRoot.firstChild);
+                            }
                         }
+                    } catch (err) {
+                        console.error('[ESCMS] Error parsing page data', err);
                     }
-                } catch (err) {
-                    console.error('[ESCMS] Error parsing page data', err);
                 }
-            }
+                
+                void docRoot.offsetWidth; // Force reflow
+                docRoot.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                docRoot.style.opacity = '1';
+                docRoot.style.transform = 'scale(1)';
             
             if (this.autosave) {
                 this.autosave.pageId = page.id;
@@ -130,6 +141,7 @@ class EscmsEditor {
                 this.history.clear();
                 this.history.pushState();
             }
+            }, 50);
         });
 
         window.addEventListener('escms-component-edit', (e) => {
@@ -141,7 +153,7 @@ class EscmsEditor {
                 banner = document.createElement('div');
                 banner.id = 'escms-component-banner';
                 banner.style.position = 'absolute';
-                banner.style.top = '20px';
+                banner.style.bottom = '100px';
                 banner.style.left = '50%';
                 banner.style.transform = 'translateX(-50%)';
                 banner.style.zIndex = '100';
@@ -186,20 +198,31 @@ class EscmsEditor {
                 banner.appendChild(backBtn);
             }
 
-            docRoot.innerHTML = '';
+            // Premium Canvas Transition
+            docRoot.style.transition = 'none';
+            docRoot.style.opacity = '0';
+            docRoot.style.transform = 'scale(0.98)';
             
-            if (comp.editor_data) {
-                try {
-                    const parsedRoot = EscmsParser.jsonToDom(JSON.parse(comp.editor_data));
-                    if (parsedRoot) {
-                        while(parsedRoot.firstChild) {
-                            docRoot.appendChild(parsedRoot.firstChild);
+            setTimeout(() => {
+                docRoot.innerHTML = '';
+                
+                if (comp.editor_data) {
+                    try {
+                        const parsedRoot = EscmsParser.jsonToDom(JSON.parse(comp.editor_data));
+                        if (parsedRoot) {
+                            while(parsedRoot.firstChild) {
+                                docRoot.appendChild(parsedRoot.firstChild);
+                            }
                         }
+                    } catch (err) {
+                        console.error('[ESCMS] Error parsing component data', err);
                     }
-                } catch (err) {
-                    console.error('[ESCMS] Error parsing component data', err);
                 }
-            }
+                
+                void docRoot.offsetWidth; // Force reflow
+                docRoot.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                docRoot.style.opacity = '1';
+                docRoot.style.transform = 'scale(1)';
             
             if (this.autosave) {
                 this.autosave.pageId = null;
@@ -213,6 +236,7 @@ class EscmsEditor {
                 this.history.clear();
                 this.history.pushState();
             }
+            }, 50);
         });
 
         let seoTimeout = null;
@@ -280,3 +304,102 @@ document.addEventListener('DOMContentLoaded', () => {
     window.escmsEditor = app;
     app.init();
 });
+
+// Global Toast System (Premium UX)
+window.escmsToast = function(msg, type = 'info') {
+    let container = document.getElementById('escms-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'escms-toast-container';
+        container.style.position = 'fixed';
+        container.style.bottom = '20px';
+        container.style.right = '20px';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '10px';
+        container.style.zIndex = '99999';
+        container.style.pointerEvents = 'none';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.style.background = 'rgba(10, 10, 10, 0.85)';
+    toast.style.backdropFilter = 'blur(12px)';
+    toast.style.color = '#fff';
+    toast.style.padding = '12px 20px';
+    toast.style.borderRadius = '8px';
+    toast.style.fontSize = '0.85rem';
+    toast.style.display = 'flex';
+    toast.style.alignItems = 'center';
+    toast.style.gap = '10px';
+    toast.style.transform = 'translateY(20px)';
+    toast.style.opacity = '0';
+    toast.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    toast.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+    
+    let glowColor = 'var(--accent-solid)';
+    if (type === 'error') glowColor = '#ef4444';
+    
+    toast.style.border = `1px solid ${glowColor}`;
+    toast.style.boxShadow = `0 4px 20px ${type === 'error' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`;
+
+    let iconSvg = '';
+    if (type === 'error') {
+        iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${glowColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+    } else {
+        iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${glowColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+    }
+
+    toast.innerHTML = `${iconSvg} <span style="font-weight: 500;">${msg}</span>`;
+    container.appendChild(toast);
+    
+    // Play sound
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        if (type === 'error') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.2);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        } else {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+    } catch (e) {}
+
+    requestAnimationFrame(() => {
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+    });
+
+    if (type === 'error') {
+        toast.animate([
+            { transform: 'translateX(0)' },
+            { transform: 'translateX(-5px)' },
+            { transform: 'translateX(5px)' },
+            { transform: 'translateX(-5px)' },
+            { transform: 'translateX(5px)' },
+            { transform: 'translateX(0)' }
+        ], { duration: 300, easing: 'ease-in-out' });
+    }
+
+    setTimeout(() => {
+        toast.style.transform = 'translateY(10px)';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+};

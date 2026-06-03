@@ -11,7 +11,7 @@ if (!isset($pdo)) {
 $slug = $route === '' ? 'home' : $route;
 
 try {
-    $stmt = $pdo->prepare("SELECT title, public_html, status FROM pages WHERE slug = ?");
+    $stmt = $pdo->prepare("SELECT title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE slug = ?");
     $stmt->execute([$slug]);
     $page = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -20,7 +20,7 @@ try {
     }
 
     if (!$page) {
-        $stmt = $pdo->prepare("SELECT title, public_html FROM pages WHERE slug = '404'");
+        $stmt = $pdo->prepare("SELECT title, public_html, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE slug = '404'");
         $stmt->execute();
         $page = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -28,7 +28,8 @@ try {
             http_response_code(404);
             $page = [
                 'title' => '404 - Not Found',
-                'public_html' => '<div style="text-align:center; padding: 100px 20px; font-family: sans-serif;"><h1>404</h1><p>The requested page could not be found.</p></div>'
+                'public_html' => '<div style="text-align:center; padding: 100px 20px; font-family: sans-serif;"><h1>404</h1><p>The requested page could not be found.</p></div>',
+                'seo_language' => 'en'
             ];
         } else {
             http_response_code(404);
@@ -39,7 +40,10 @@ try {
     die("Database error: " . $e->getMessage());
 }
 
-$title = htmlspecialchars($page['title']);
+$title = !empty($page['seo_title']) ? htmlspecialchars($page['seo_title']) : htmlspecialchars($page['title']);
+$meta_desc = !empty($page['seo_desc']) ? '<meta name="description" content="'.htmlspecialchars($page['seo_desc']).'">' : '';
+$meta_keywords = !empty($page['seo_keywords']) ? '<meta name="keywords" content="'.htmlspecialchars($page['seo_keywords']).'">' : '';
+$html_lang = !empty($page['seo_language']) ? htmlspecialchars($page['seo_language']) : 'en';
 $content = $page['public_html'];
 
 // Inyección dinámica de componentes para que el Frontend siempre muestre la última versión
@@ -96,11 +100,13 @@ $custom_css_vars .= "}";
 
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= $html_lang ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title ?></title>
+    <?= $meta_desc ?>
+    <?= $meta_keywords ?>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

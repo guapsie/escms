@@ -168,54 +168,23 @@ class EscmsBgImageControl {
         this.clearBtn.style.alignItems = 'center';
         this.clearBtn.style.justifyContent = 'center';
 
-        this.fileInput = document.createElement('input');
-        this.fileInput.type = 'file';
-        this.fileInput.style.display = 'none';
-
-        this.uploadBtn.addEventListener('click', () => {
-            this.fileInput.click();
+        this.uploadBtn.addEventListener('click', async () => {
+            if (!window.escmsMediaLibrary) {
+                window.escmsMediaLibrary = new EscmsMediaLibrary(this.i18n);
+            }
+            const url = await window.escmsMediaLibrary.open();
+            if (url) {
+                this.setValue({ image: url, size: this.bgSize, repeat: this.bgRepeat, position: this.bgPosition }, true);
+            }
         });
 
         this.clearBtn.addEventListener('click', () => {
             this.setValue({ image: '', size: 'cover', repeat: 'no-repeat', position: 'center' }, true);
         });
 
-        this.fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            this.uploadBtn.style.opacity = '0.5';
-            this.uploadBtn.disabled = true;
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const res = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
-                
-                if (data.status === 'success' && data.url) {
-                    this.setValue({ image: data.url, size: this.bgSize, repeat: this.bgRepeat, position: this.bgPosition }, true);
-                } else {
-                    alert('Upload failed: ' + (data.msg || 'Unknown error'));
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Upload error');
-            } finally {
-                this.uploadBtn.style.opacity = '1';
-                this.uploadBtn.disabled = false;
-                this.fileInput.value = '';
-            }
-        });
-
         row.appendChild(this.preview);
         row.appendChild(this.uploadBtn);
         row.appendChild(this.clearBtn);
-        row.appendChild(this.fileInput);
 
         this.element.appendChild(label);
         this.element.appendChild(row);

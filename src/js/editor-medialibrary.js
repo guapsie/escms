@@ -5,6 +5,8 @@ class EscmsMediaLibrary {
         this.filteredMedia = [];
         this.selectedForDeletion = new Set();
         this.isDeleteMode = false;
+        this.isMultiSelect = false;
+        this.selectedItems = new Set();
         
         this.pageSize = 40;
         this.currentPage = 0;
@@ -23,8 +25,10 @@ class EscmsMediaLibrary {
         this.sentinel.style.height = '20px';
     }
 
-    async open() {
+    async open(options = {}) {
         if (this.modal) return;
+        this.isMultiSelect = options.multi || false;
+        this.selectedItems.clear();
         return new Promise((resolve) => {
             this.resolvePromise = resolve;
             this.buildUI();
@@ -43,9 +47,15 @@ class EscmsMediaLibrary {
         }
     }
 
+    insertSelected() {
+        if (this.selectedItems.size > 0) {
+            this.close(Array.from(this.selectedItems));
+        }
+    }
+
     buildUI() {
         this.modal = document.createElement('div');
-        this.modal.className = 'escms-media-library';
+        this.modal.className = 'escms-media-library escms-anim-fade';
         this.modal.style.position = 'fixed';
         this.modal.style.inset = '50px 0 0 0';
         this.modal.style.backgroundColor = 'rgba(10, 10, 10, 0.85)';
@@ -216,6 +226,23 @@ class EscmsMediaLibrary {
         closeBtn.addEventListener('mouseleave', () => closeBtn.style.opacity = '0.4');
         closeBtn.addEventListener('click', () => this.close(null));
         rightControls.appendChild(closeBtn);
+        
+        if (this.isMultiSelect) {
+            this.insertBtn = document.createElement('button');
+            this.insertBtn.innerHTML = '<span style="font-size:0.75rem; font-weight:bold;">Insert (0)</span>';
+            this.insertBtn.style.background = 'var(--accent-solid)';
+            this.insertBtn.style.color = 'var(--text-solid)';
+            this.insertBtn.style.border = 'none';
+            this.insertBtn.style.borderRadius = '20px';
+            this.insertBtn.style.padding = '0 16px';
+            this.insertBtn.style.height = '32px';
+            this.insertBtn.style.cursor = 'pointer';
+            this.insertBtn.style.display = 'none';
+            this.insertBtn.style.alignItems = 'center';
+            this.insertBtn.style.justifyContent = 'center';
+            this.insertBtn.addEventListener('click', () => this.insertSelected());
+            middleControls.appendChild(this.insertBtn);
+        }
 
         header.appendChild(leftControls);
         header.appendChild(middleControls);
@@ -358,9 +385,13 @@ class EscmsMediaLibrary {
                 wrapper.style.transform = 'none';
             });
 
-            // Re-eval delete mode visuals on hover/render
-            if (this.isDeleteMode) {
+            // Re-eval delete/multi mode visuals on hover/render
+            if (this.isDeleteMode || this.isMultiSelect) {
                 check.style.display = 'flex';
+                if (this.isMultiSelect && this.selectedItems.has(item.url)) {
+                    check.style.backgroundColor = 'var(--accent-solid)';
+                    check.style.border = '2px solid var(--accent-solid)';
+                }
             }
 
             wrapper.addEventListener('click', () => {
@@ -376,6 +407,22 @@ class EscmsMediaLibrary {
                     }
                     const deleteText = this.i18n ? (this.i18n.dictionary['medialibrary.confirm_delete'] || 'Delete') : 'Delete';
                     this.executeDeleteBtn.innerHTML = '<span style="font-size:0.75rem; font-weight:bold;">' + deleteText + ' (' + this.selectedForDeletion.size + ')</span>';
+                } else if (this.isMultiSelect) {
+                    if (this.selectedItems.has(item.url)) {
+                        this.selectedItems.delete(item.url);
+                        check.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                        check.style.border = '2px solid #fff';
+                    } else {
+                        this.selectedItems.add(item.url);
+                        check.style.backgroundColor = 'var(--accent-solid)';
+                        check.style.border = '2px solid var(--accent-solid)';
+                    }
+                    if (this.selectedItems.size > 0) {
+                        this.insertBtn.style.display = 'flex';
+                        this.insertBtn.innerHTML = '<span style="font-size:0.75rem; font-weight:bold;">Insert (' + this.selectedItems.size + ')</span>';
+                    } else {
+                        this.insertBtn.style.display = 'none';
+                    }
                 } else {
                     this.close(item.url);
                 }

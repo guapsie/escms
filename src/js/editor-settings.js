@@ -21,6 +21,9 @@ class EscmsGlobalSettings {
                     window.escmsMediaLibrary.close();
                 }
                 this.overlay.style.display = 'block';
+                this.overlay.classList.remove('escms-anim-fade');
+                void this.overlay.offsetWidth; // Force reflow
+                this.overlay.classList.add('escms-anim-fade');
             });
         }
 

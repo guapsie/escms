@@ -258,7 +258,7 @@ class EscmsColorPicker {
             onclick: (e) => e.stopPropagation()
         }, this.alphaSlider.element);
 
-        this.element = el('div', { class: 'escms-ui-mb' }, [
+        this.element = el('div', { class: 'escms-ui-mb', style: 'position: relative;' }, [
             this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : null,
             this.button,
             this.dropdown
@@ -452,5 +452,41 @@ class EscmsButtonGroup {
             });
             if (triggerCallback && this.onChange) this.onChange(this.value);
         }
+    }
+}
+
+class EscmsCollectionControl {
+    constructor(labelKey, i18n, value = [], onChangeCallback) {
+        this.labelKey = labelKey;
+        this.i18n = i18n;
+        this.value = value;
+        this.onChange = onChangeCallback;
+
+        const labelText = this.i18n && this.i18n.dictionary[this.labelKey] ? this.i18n.dictionary[this.labelKey] : 'Manage Collection';
+
+        this.btn = el('button', {
+            class: 'escms-inspector-btn',
+            style: 'width: 100%; background: var(--accent-solid); color: var(--text-solid); border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: 500;',
+            onclick: async () => {
+                if (!window.escmsMediaLibrary) {
+                    window.escmsMediaLibrary = new EscmsMediaLibrary(this.i18n);
+                }
+                const urls = await window.escmsMediaLibrary.open({ multi: true });
+                if (urls && Array.isArray(urls)) {
+                    this.value = urls;
+                    if (this.onChange) this.onChange(this.value);
+                }
+            }
+        }, labelText);
+
+        this.element = el('div', { class: 'escms-ui-mb' }, [
+            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label', style: 'margin-bottom: 0.5rem;' }) : null,
+            this.btn
+        ]);
+    }
+
+    setValue(val, triggerCallback = false) {
+        this.value = val || [];
+        if (triggerCallback && this.onChange) this.onChange(this.value);
     }
 }

@@ -91,6 +91,20 @@ class EscmsInspector {
 
     applyStyle(prop, value) {
         if (!this.selectedNode || this.isSyncing) return;
+        
+        if (this.selectedNode.classList.contains('escms-portfolio')) {
+            // Portfolio intercepts background/border/etc to style its children via CSS variables
+            if (['background', 'background-color', 'background-image', 'border', 'border-radius', 'border-width', 'border-color', 'border-style'].includes(prop)) {
+                if (value === '' || value === 'none') {
+                    this.selectedNode.style.removeProperty(`--item-${prop}`);
+                } else {
+                    this.selectedNode.style.setProperty(`--item-${prop}`, value);
+                }
+                window.dispatchEvent(new Event('escms-dom-mutated'));
+                return;
+            }
+        }
+
         if (value === '' || value === 'none') {
             this.selectedNode.style.removeProperty(prop);
         } else {
@@ -195,6 +209,46 @@ class EscmsInspector {
         window.dispatchEvent(new Event('escms-dom-mutated'));
     }
 
+    updateGridItemWidth(val) {
+        if (!this.selectedNode || this.isSyncing) return;
+        this.selectedNode.setAttribute('data-item-width', val);
+        this.selectedNode.style.gridTemplateColumns = `repeat(auto-fill, minmax(${val}px, 1fr))`;
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+    }
+
+    updateImageCollection(urls) {
+        if (!this.selectedNode || this.isSyncing) return;
+        this.selectedNode.setAttribute('data-collection', JSON.stringify(urls));
+        
+        // Clear current children
+        this.selectedNode.innerHTML = '';
+        
+        // Append new images
+        urls.forEach(url => {
+            const item = document.createElement('div');
+            item.className = 'escms-portfolio-item';
+            
+            // Link item to parent's CSS variables
+            item.style.background = 'var(--item-background, transparent)';
+            item.style.backgroundColor = 'var(--item-background-color, transparent)';
+            item.style.backgroundImage = 'var(--item-background-image, none)';
+            item.style.border = 'var(--item-border, none)';
+            item.style.borderRadius = 'var(--item-border-radius, 0)';
+            item.style.overflow = 'hidden';
+
+            const img = document.createElement('img');
+            img.src = url;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.display = 'block';
+            item.appendChild(img);
+            this.selectedNode.appendChild(item);
+        });
+
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+    }
+
     renderSections() {
         // --- STRUCTURE ---
         this.structureSection = this.createSection('inspector.structure');
@@ -202,6 +256,12 @@ class EscmsInspector {
 
         this.controls.columnsCount = new EscmsSlider('inspector.columns_count', 1, 12, 1, 2, (val) => this.updateColumns(val), '');
         this.structureSection.appendChild(this.controls.columnsCount.element);
+
+        this.controls.gridItemWidth = new EscmsSlider('inspector.grid_item_width', 100, 1000, 10, 250, (val) => this.updateGridItemWidth(val), 'px');
+        this.structureSection.appendChild(this.controls.gridItemWidth.element);
+
+        this.controls.imageCollection = new EscmsCollectionControl('inspector.image_collection', this.i18n, [], (val) => this.updateImageCollection(val));
+        this.structureSection.appendChild(this.controls.imageCollection.element);
 
         this.sectionsContainer.appendChild(this.structureSection);
 
@@ -742,6 +802,18 @@ class EscmsInspector {
             this.controls.columnsCount.setValue(cols, false);
         }
 
+        if (allowedControls.includes('gridItemWidth') && this.selectedNode.hasAttribute('data-item-width')) {
+            let width = parseInt(this.selectedNode.getAttribute('data-item-width')) || 250;
+            this.controls.gridItemWidth.setValue(width, false);
+        }
+
+        if (allowedControls.includes('imageCollection')) {
+            let colStr = this.selectedNode.getAttribute('data-collection');
+            let urls = [];
+            try { if (colStr) urls = JSON.parse(colStr); } catch(e) {}
+            this.controls.imageCollection.setValue(urls, false);
+        }
+
         // Sync Attributes
         if (allowedControls.includes('src')) {
             this.attrInputs.src.setValue(this.selectedNode.getAttribute('src'), false);
@@ -800,17 +872,23 @@ class EscmsInspector {
 
         // Background
         if (allowedControls.includes('bgColor')) {
-            let bgColor = this._rgbaToHexA(comp.backgroundColor);
+            let bColor = comp.backgroundColor;
+            if (this.selectedNode.classList.contains('escms-portfolio')) bColor = this.selectedNode.style.getPropertyValue('--item-background-color') || bColor;
+            let bgColor = this._rgbaToHexA(bColor);
             this.controls.bgColor.setValue(bgColor.hex, bgColor.alpha, false);
         }
 
         if (allowedControls.includes('bgGradient')) {
-            let gradient = this._parseGradient(comp.backgroundImage);
+            let bGradient = comp.backgroundImage;
+            if (this.selectedNode.classList.contains('escms-portfolio')) bGradient = this.selectedNode.style.getPropertyValue('--item-background-image') || bGradient;
+            let gradient = this._parseGradient(bGradient);
             this.controls.bgGradient.setValue(gradient, false);
         }
 
         if (allowedControls.includes('bgImage')) {
-            let bgImg = comp.backgroundImage !== 'none' && !comp.backgroundImage.includes('gradient') ? comp.backgroundImage : '';
+            let bImg = comp.backgroundImage;
+            if (this.selectedNode.classList.contains('escms-portfolio')) bImg = this.selectedNode.style.getPropertyValue('--item-background-image') || bImg;
+            let bgImg = bImg !== 'none' && !bImg.includes('gradient') ? bImg : '';
             this.controls.bgImage.setValue({
                 image: bgImg,
                 size: comp.backgroundSize,
@@ -856,7 +934,15 @@ class EscmsInspector {
 
         if (allowedControls.includes('margin')) this.controls.margin.setValue(this._parseSpacing(comp.margin), false);
         if (allowedControls.includes('padding')) this.controls.padding.setValue(this._parseSpacing(comp.padding), false);
-        if (allowedControls.includes('border')) this.controls.border.setValue(this._parseBorder(comp.border, comp.borderRadius), false);
+        if (allowedControls.includes('border')) {
+            let b = comp.border;
+            let br = comp.borderRadius;
+            if (this.selectedNode.classList.contains('escms-portfolio')) {
+                b = this.selectedNode.style.getPropertyValue('--item-border') || 'none';
+                br = this.selectedNode.style.getPropertyValue('--item-border-radius') || '0px';
+            }
+            this.controls.border.setValue(this._parseBorder(b, br), false);
+        }
 
         // Visibility
         if (allowedControls.includes('opacity')) this.controls.opacity.setValue(this.selectedNode.style.opacity !== '' ? Math.round(parseFloat(this.selectedNode.style.opacity) * 100) : 100, false);

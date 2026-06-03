@@ -127,6 +127,11 @@ class EscmsLeftPanel {
         this.container.appendChild(header);
         this.container.appendChild(this.contentArea);
 
+        // Animate tab content change
+        this.contentArea.classList.remove('escms-anim-fade');
+        void this.contentArea.offsetWidth; // Force reflow
+        this.contentArea.classList.add('escms-anim-fade');
+
         if (this.activeTab === 'elements') {
             this.renderElementsTab();
         } else if (this.activeTab === 'pages') {
@@ -504,8 +509,8 @@ async fetchAtoms() {
                 } else if (domNode.classList.contains('escms-column')) {
                     displayName = 'Column';
                     iconSvg = icons.columns;
-                } else if (domNode.classList.contains('escms-grid-item')) {
-                    displayName = 'Grid Item';
+                } else if (domNode.classList.contains('escms-portfolio-item')) {
+                    displayName = 'Portfolio Item';
                     iconSvg = icons.grid;
                 } else {
                     if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'a'].includes(tag)) iconSvg = icons.textT;

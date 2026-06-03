@@ -36,6 +36,30 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
             grid-template-rows: 50px 1fr;
             -webkit-font-smoothing: antialiased;
         }
+        
+        /* Micro-Interactions */
+        button { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s, border-color 0.2s; }
+        button:active { transform: scale(0.95); }
+        .escms-sidebar-tab:active { transform: scale(0.95); }
+        
+        
+        /* UI Animations */
+        @keyframes escmsFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes escmsSlideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes escmsScaleUp {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .escms-anim-fade { animation: escmsFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .escms-anim-slide-up { animation: escmsSlideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .escms-anim-scale-up { animation: escmsScaleUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;

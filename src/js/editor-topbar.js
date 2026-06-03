@@ -88,10 +88,10 @@ class EscmsTopBar {
         const textSlot = btnToggle.querySelector('[data-i18n]');
 
         btnToggle.addEventListener('click', () => {
-            if (!window.escmsEditor || !window.escmsEditor.currentPage) return;
+            if (!window.escmsEditor || !window.escmsEditor.currentPageObj) return;
             this.isPublished = !this.isPublished;
             const newStatus = this.isPublished ? 'published' : 'draft';
-            window.escmsEditor.currentPage.status = newStatus;
+            window.escmsEditor.currentPageObj.status = newStatus;
             
             this.setStatus(newStatus);
             

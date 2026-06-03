@@ -62,10 +62,15 @@ class EscmsAutosave {
                         window.escmsComponents[this.componentRefId].editor_data = payload.editor_data;
                     }
                     this.updateStatus('topbar.saved');
-                    setTimeout(() => this.updateStatus('topbar.draft'), 3000);
+                    setTimeout(() => {
+                        const st = (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.status === 'published') ? 'topbar.published' : 'topbar.draft';
+                        this.updateStatus(st);
+                    }, 3000);
                 } else {
                     console.error('[ESCMS Autosave Component Error]', data.msg);
-                    this.updateStatus('topbar.draft');
+                    if (window.escmsToast) window.escmsToast(data.msg || 'Error saving component', 'error');
+                    const st = (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.status === 'published') ? 'topbar.published' : 'topbar.draft';
+                    this.updateStatus(st);
                 }
             } else {
                 // Guardado normal de página
@@ -74,7 +79,7 @@ class EscmsAutosave {
                     id: this.pageId,
                     editor_data: JSON.stringify(editorData),
                     public_html: publicHtml, // Dejamos que PHP compile el HTML en el backend
-                    status: (window.escmsEditor && window.escmsEditor.currentPage && window.escmsEditor.currentPage.status) ? window.escmsEditor.currentPage.status : 'draft'
+                    status: (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.status) ? window.escmsEditor.currentPageObj.status : 'draft'
                 };
 
                 const res = await fetch('/api/pages/save', {
@@ -88,25 +93,35 @@ class EscmsAutosave {
                 if (data.status === 'success') {
                     if (!this.pageId && data.id) this.pageId = data.id;
                     this.updateStatus('topbar.saved');
-                    setTimeout(() => this.updateStatus('topbar.draft'), 3000);
+                    setTimeout(() => {
+                        const st = (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.status === 'published') ? 'topbar.published' : 'topbar.draft';
+                        this.updateStatus(st);
+                    }, 3000);
                 } else {
                     console.error('[ESCMS Autosave Error]', data.msg);
-                    this.updateStatus('topbar.draft');
+                    if (window.escmsToast) window.escmsToast(data.msg || 'Error saving page', 'error');
+                    const st = (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.status === 'published') ? 'topbar.published' : 'topbar.draft';
+                    this.updateStatus(st);
                 }
             }
         } catch (err) {
             console.error('[ESCMS Autosave Request Error]', err);
-            this.updateStatus('topbar.draft');
+            if (window.escmsToast) window.escmsToast('Network error saving page', 'error');
+            const st = (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.status === 'published') ? 'topbar.published' : 'topbar.draft';
+            this.updateStatus(st);
         } finally {
             this.isSaving = false;
         }
     }
 
-    updateStatus(i18nKey) {
-        if (this.statusIndicator) {
-            this.statusIndicator.setAttribute('data-i18n', i18nKey);
-            if (this.i18n) {
-                this.statusIndicator.textContent = this.i18n.dictionary[i18nKey] || i18nKey;
+    updateStatus(i18nKey, isError = false) {
+        if (this.i18n) {
+            const text = this.i18n.dictionary[i18nKey] || i18nKey;
+            
+            if (i18nKey === 'topbar.saved' && window.escmsToast) {
+                window.escmsToast(text, 'success');
+            } else if (isError && window.escmsToast) {
+                window.escmsToast(text, 'error');
             }
         }
     }
