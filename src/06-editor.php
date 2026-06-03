@@ -122,7 +122,8 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
             body:not(.escms-preview-mode) #btn-exit-preview {
                 display: none !important;
             }
-        </style>
+    </style>
+    <link rel="stylesheet" href="/assets/css/editor-ui.css?v=<?= time() ?>">
 </head>
 <body>
     <div id="escms-topbar">
@@ -133,6 +134,8 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
         <div id="escms-canvas-wrapper"><div id="escms-canvas-host"></div></div>
         <div id="escms-inspector"><div style="padding: 1rem; opacity: 0.5; font-size: 0.85rem;">Inspector</div></div>
     </div>
+
+    <script src="/assets/js/escms-dom.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-icons.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-i18n.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-topbar.js?v=<?= time() ?>"></script>

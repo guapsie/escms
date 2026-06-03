@@ -1,0 +1,298 @@
+/* ESCMS UI Controls Stylesheet */
+
+/* Common */
+.escms-ui-label {
+    font-size: 0.75rem;
+    color: rgba(245, 245, 245, 0.6);
+    margin-bottom: 0.35rem;
+}
+
+.escms-ui-mb {
+    margin-bottom: 0.5rem;
+}
+.escms-ui-mb-lg {
+    margin-bottom: 1rem;
+}
+
+/* Toggle */
+.escms-toggle-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+.escms-toggle-label {
+    font-size: 0.85rem;
+    color: var(--text-solid);
+}
+.escms-toggle-pill {
+    width: 36px;
+    height: 20px;
+    border-radius: 12px;
+    position: relative;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: #1f1f1f;
+}
+.escms-toggle-pill.active {
+    background: var(--accent-solid);
+    border-color: var(--accent-solid);
+    box-shadow: 0 0 10px var(--accent-faint);
+}
+.escms-toggle-ball {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    position: absolute;
+    top: 1px;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: translateX(2px);
+}
+.escms-toggle-pill.active .escms-toggle-ball {
+    transform: translateX(16px);
+}
+
+/* Select */
+.escms-select-container {
+    position: relative;
+}
+.escms-select-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #121212;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.escms-select-btn.open {
+    border-color: var(--accent-faint);
+    box-shadow: 0 0 10px var(--accent-faint);
+}
+.escms-select-arrow {
+    font-size: 0.7rem;
+    color: rgba(245, 245, 245, 0.4);
+}
+.escms-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    margin-top: 0.25rem;
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
+}
+.escms-select-dropdown {
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 250px;
+}
+.escms-dropdown.open {
+    display: flex;
+}
+.escms-dropdown.open-block {
+    display: block;
+}
+.escms-select-item {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.escms-select-item:hover {
+    background: var(--accent-faint);
+}
+
+/* Scrollbar para dropdowns */
+.escms-dropdown::-webkit-scrollbar { width: 6px; }
+.escms-dropdown::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+.escms-dropdown::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+.escms-dropdown::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+
+/* Slider */
+.escms-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+.escms-slider-val {
+    font-size: 0.75rem;
+    color: var(--text-solid);
+    font-family: monospace;
+}
+.escms-slider-track-container {
+    position: relative;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+.escms-slider-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    position: relative;
+}
+.escms-slider-fill {
+    height: 100%;
+    background: var(--accent-solid);
+    border-radius: 2px;
+    width: 0%;
+    pointer-events: none;
+}
+.escms-slider-thumb {
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    left: 0%;
+    transition: box-shadow 0.2s ease;
+    pointer-events: none;
+}
+.escms-slider-thumb.dragging {
+    box-shadow: 0 0 0 4px var(--accent-faint);
+}
+
+/* Color Picker */
+.escms-color-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #121212;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 0.4rem 0.5rem;
+    cursor: pointer;
+}
+.escms-color-swatch-container {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8'><rect width='4' height='4' fill='%23333'/><rect x='4' y='4' width='4' height='4' fill='%23333'/><rect x='4' width='4' height='4' fill='%23555'/><rect y='4' width='4' height='4' fill='%23555'/></svg>");
+}
+.escms-color-swatch {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.escms-color-native-input {
+    position: absolute;
+    inset: -5px;
+    width: 40px;
+    height: 40px;
+    opacity: 0;
+    cursor: pointer;
+}
+.escms-color-hex-input {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--text-solid);
+    background: transparent;
+    border: none;
+    outline: none;
+    width: 70px;
+    flex: 1;
+    text-transform: uppercase;
+}
+.escms-color-alpha-display {
+    font-size: 0.75rem;
+    color: rgba(245, 245, 245, 0.4);
+}
+.escms-color-dropdown {
+    padding: 1rem 1rem 0.5rem 1rem;
+}
+
+/* Spacing */
+.escms-spacing-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+.escms-spacing-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #121212;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    padding: 0.25rem;
+    transition: border-color 0.2s;
+}
+.escms-spacing-wrap:focus-within {
+    border-color: var(--accent-faint);
+}
+.escms-spacing-icon {
+    font-size: 0.65rem;
+    color: rgba(245, 245, 245, 0.3);
+    margin-bottom: 0.1rem;
+}
+.escms-spacing-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-solid);
+    font-size: 0.8rem;
+    text-align: center;
+    outline: none;
+    padding: 0;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+.escms-spacing-input::-webkit-inner-spin-button,
+.escms-spacing-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Button Group */
+.escms-btn-group {
+    display: flex;
+    background: #121212;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    overflow: hidden;
+}
+.escms-btn-group-btn {
+    flex: 1;
+    background: transparent;
+    color: rgba(245, 245, 245, 0.5);
+    border: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0.5rem 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s;
+}
+.escms-btn-group-btn:last-child {
+    border-right: none;
+}
+.escms-btn-group-btn.active {
+    background: var(--accent-solid);
+    color: #fff;
+}
+.escms-btn-group-btn svg {
+    width: 16px;
+    height: 16px;
+}
