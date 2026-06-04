@@ -787,6 +787,9 @@ async fetchAtoms() {
                     a.className = 'escms-nav-link';
                     a.href = parseInt(node.is_custom_link) === 1 ? node.custom_link_url : '/' + node.slug;
                     a.textContent = node.title;
+                    if (node.children && node.children.length > 0) {
+                        a.innerHTML += window.escmsIcons ? window.escmsIcons.caretDown : '';
+                    }
                     a.style.textDecoration = 'none';
                     a.style.color = 'inherit';
                     li.appendChild(a);

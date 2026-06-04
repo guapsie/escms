@@ -4,8 +4,11 @@
     "icon": "compass",
     "className": "escms-nav",
     "allowedControls": [
-        "navDirection",
         "navAlign",
+        "navHoverBg",
+        "navSubBg",
+        "navSubGlow",
+        "navSubBorder",
         "bgColor",
         "bgGradient",
         "margin",

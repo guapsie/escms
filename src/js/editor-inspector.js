@@ -106,9 +106,17 @@ class EscmsInspector {
         }
 
         if (value === '' || value === 'none') {
-            this.selectedNode.style.removeProperty(prop);
+            if (prop.startsWith('--')) {
+                this.selectedNode.style.removeProperty(prop);
+            } else {
+                this.selectedNode.style.removeProperty(prop);
+            }
         } else {
-            this.selectedNode.style[prop] = value;
+            if (prop.startsWith('--')) {
+                this.selectedNode.style.setProperty(prop, value);
+            } else {
+                this.selectedNode.style[prop] = value;
+            }
         }
         window.dispatchEvent(new Event('escms-dom-mutated')); // Trigger autosave
     }
@@ -272,7 +280,7 @@ class EscmsInspector {
         this.attrInputs = {
             src: new EscmsUploadControl('inspector.src_url', this.i18n, '', (val) => this.applyAttribute('src', val)),
             alt: this.createTextInput('inspector.alt_text', (val) => this.applyAttribute('alt', val)),
-            href: this.createHrefInput('inspector.href_url', (val) => this.applyAttribute('href', val)),
+            href: this.createTextInput('inspector.href_url', (val) => this.applyAttribute('href', val)),
             ariaLabel: this.createTextInput('inspector.aria_label', (val) => this.applyAttribute('aria-label', val))
         };
 
@@ -355,17 +363,6 @@ class EscmsInspector {
         this.controls.width = this.createTextInput('inspector.width', (val) => this.applyStyle('width', val));
         layoutSection.appendChild(this.controls.width.element);
 
-        this.controls.navDirection = new EscmsButtonGroup('inspector.nav_direction', [
-            { value: 'row', icon: icons.columns || 'H' },
-            { value: 'column', icon: icons.rows || 'V' }
-        ], 'row', (val) => {
-            if (!this.selectedNode || this.isSyncing) return;
-            const ul = this.selectedNode.querySelector('ul');
-            if (ul) ul.style.flexDirection = val;
-            window.dispatchEvent(new Event('escms-dom-mutated'));
-        });
-        layoutSection.appendChild(this.controls.navDirection.element);
-
         this.controls.navAlign = new EscmsButtonGroup('inspector.nav_align', [
             { value: 'flex-start', icon: icons.layoutAlignLeft || 'L' },
             { value: 'center', icon: icons.layoutAlignCenter || 'C' },
@@ -429,6 +426,29 @@ class EscmsInspector {
         visSection.appendChild(this.controls.effects.element);
 
         this.sectionsContainer.appendChild(visSection);
+
+        // --- NAV STYLES ---
+        this.navStylesSection = this.createSection('inspector.nav_styles');
+        this.navStylesSection.style.display = 'none';
+
+        this.controls.navHoverBg = new EscmsColorPicker('inspector.nav_hover_bg', 'rgba(59, 130, 246, 0.3)', 100, (val) => this.applyStyle('--nav-hover-bg', val.rgba));
+        this.navStylesSection.appendChild(this.controls.navHoverBg.element);
+
+        this.controls.navSubBg = new EscmsColorPicker('inspector.nav_sub_bg', '#0a0a0a', 100, (val) => this.applyStyle('--nav-sub-bg', val.rgba));
+        this.navStylesSection.appendChild(this.controls.navSubBg.element);
+
+        this.controls.navSubGlow = new EscmsColorPicker('inspector.nav_sub_glow', 'transparent', 0, (val) => this.applyStyle('--nav-sub-glow', val.rgba));
+        this.navStylesSection.appendChild(this.controls.navSubGlow.element);
+
+        this.controls.navSubBorder = new EscmsBorderControl('inspector.nav_sub_border', this.i18n, undefined, (val) => {
+            this.applyStyle('--nav-sub-border-width', val.width + 'px');
+            this.applyStyle('--nav-sub-border-style', val.style);
+            this.applyStyle('--nav-sub-border-color', val.color);
+            this.applyStyle('--nav-sub-radius', val.radius + 'px');
+        });
+        this.navStylesSection.appendChild(this.controls.navSubBorder.element);
+
+        this.sectionsContainer.appendChild(this.navStylesSection);
     }
 
     createTextInput(i18nKey, onChange) {
@@ -470,144 +490,7 @@ class EscmsInspector {
         };
     }
 
-    createHrefInput(i18nKey, onChange) {
-        const wrapper = document.createElement('div');
-        wrapper.style.marginBottom = '0.75rem';
-        wrapper.style.display = 'none';
 
-        const label = document.createElement('div');
-        label.setAttribute('data-i18n', i18nKey);
-        label.style.fontSize = '0.75rem';
-        label.style.color = 'rgba(245, 245, 245, 0.6)';
-        label.style.marginBottom = '0.35rem';
-
-        const inputContainer = document.createElement('div');
-        inputContainer.style.position = 'relative';
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.style.width = '100%';
-        input.style.background = '#121212';
-        input.style.border = '1px solid rgba(255, 255, 255, 0.05)';
-        input.style.color = 'var(--text-solid)';
-        input.style.padding = '0.5rem';
-        input.style.paddingRight = '2rem';
-        input.style.borderRadius = '4px';
-        input.style.boxSizing = 'border-box';
-        input.style.fontFamily = 'monospace';
-        input.style.fontSize = '0.8rem';
-        input.className = 'escms-inspector-text-input';
-        input.style.transition = 'border-color 0.2s, box-shadow 0.2s';
-        
-        const arrow = document.createElement('span');
-        arrow.innerHTML = '&#9662;';
-        arrow.style.position = 'absolute';
-        arrow.style.right = '0.75rem';
-        arrow.style.top = '50%';
-        arrow.style.transform = 'translateY(-50%)';
-        arrow.style.fontSize = '0.7rem';
-        arrow.style.color = 'rgba(245, 245, 245, 0.4)';
-        arrow.style.cursor = 'pointer';
-
-        const dropdown = document.createElement('div');
-        dropdown.style.position = 'absolute';
-        dropdown.style.top = '100%';
-        dropdown.style.left = '0';
-        dropdown.style.width = '100%';
-        dropdown.style.marginTop = '0.25rem';
-        dropdown.style.background = 'rgba(10, 10, 10, 0.95)';
-        dropdown.style.backdropFilter = 'blur(10px)';
-        dropdown.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-        dropdown.style.borderRadius = '6px';
-        dropdown.style.zIndex = '1000';
-        dropdown.style.display = 'none';
-        dropdown.style.flexDirection = 'column';
-        dropdown.style.overflowY = 'auto';
-        dropdown.style.overflowX = 'hidden';
-        dropdown.style.maxHeight = '200px';
-        dropdown.style.boxSizing = 'border-box';
-        dropdown.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.5)';
-        
-        // Custom scrollbar
-        dropdown.className = 'escms-select-dropdown'; 
-        
-        let isOpen = false;
-        const toggleDropdown = (e) => {
-            if (e) {
-                e.stopPropagation();
-                e.preventDefault();
-            }
-            isOpen = !isOpen;
-            dropdown.style.display = isOpen ? 'flex' : 'none';
-            if (isOpen) {
-                input.style.borderColor = 'var(--accent-faint)';
-                input.style.boxShadow = '0 0 10px var(--accent-faint)';
-            } else {
-                input.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-                input.style.boxShadow = 'none';
-            }
-        };
-
-        const closeDropdown = () => {
-            isOpen = false;
-            dropdown.style.display = 'none';
-            input.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-            input.style.boxShadow = 'none';
-        };
-
-        arrow.addEventListener('mousedown', toggleDropdown);
-        
-        // Let the user type without immediately closing, but close on outside click
-        document.addEventListener('mousedown', (e) => {
-            if (isOpen && !inputContainer.contains(e.target)) {
-                closeDropdown();
-            }
-        });
-
-        // Fetch pages and populate
-        fetch('/api/pages/list').then(res => res.json()).then(data => {
-            if (data.status === 'success' && data.pages) {
-                data.pages.forEach(p => {
-                    const opt = document.createElement('div');
-                    const val = p.is_home ? '/' : '/' + p.slug;
-                    opt.innerHTML = `<strong style="display:block; font-size:0.8rem; color:var(--text-solid);">${p.title}</strong><span style="font-size:0.65rem; color:rgba(255,255,255,0.4); font-family:monospace;">${val}</span>`;
-                    opt.style.padding = '0.5rem 0.75rem';
-                    opt.style.cursor = 'pointer';
-                    opt.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
-                    opt.style.transition = 'background 0.2s';
-                    
-                    opt.addEventListener('mouseenter', () => opt.style.background = 'rgba(255, 255, 255, 0.05)');
-                    opt.addEventListener('mouseleave', () => opt.style.background = 'transparent');
-                    
-                    opt.addEventListener('mousedown', (e) => {
-                        e.preventDefault(); // Prevent input blur
-                        input.value = val;
-                        onChange(val);
-                        closeDropdown();
-                    });
-                    
-                    dropdown.appendChild(opt);
-                });
-            }
-        }).catch(() => {});
-
-        input.addEventListener('input', (e) => onChange(e.target.value));
-
-        inputContainer.appendChild(input);
-        inputContainer.appendChild(arrow);
-        inputContainer.appendChild(dropdown);
-
-        wrapper.appendChild(label);
-        wrapper.appendChild(inputContainer);
-
-        return {
-            element: wrapper,
-            input: input,
-            show: () => wrapper.style.display = 'block',
-            hide: () => wrapper.style.display = 'none',
-            setValue: (val) => input.value = val || ''
-        };
-    }
 
     _rgbaToHexA(rgba) {
         if (!rgba || rgba === 'transparent' || rgba === 'none' || rgba.trim() === '') return { hex: '#000000', alpha: 0 };
@@ -771,7 +654,7 @@ class EscmsInspector {
         });
 
         // Hide Sections if all their controls are hidden
-        [this.structureSection, this.attrSection, this.controls.tagSwap.element.parentElement, this.controls.bgColor.element.parentElement, this.controls.margin.element.parentElement, this.controls.opacity.element.parentElement].forEach(section => {
+        [this.structureSection, this.attrSection, this.controls.tagSwap.element.parentElement, this.controls.bgColor.element.parentElement, this.controls.margin.element.parentElement, this.controls.opacity.element.parentElement, this.navStylesSection].forEach(section => {
             if (!section) return;
             // Typo section is the parent of tagSwap, background is parent of bgColor, layout is parent of margin, visibility is parent of opacity
             let hasVisibleControls = Array.from(section.children).some(child => {
@@ -895,17 +778,37 @@ class EscmsInspector {
             this.controls.width.setValue(comp.width !== 'auto' ? comp.width : '', false);
         }
 
-        if (allowedControls.includes('navDirection')) {
-            const ul = this.selectedNode.querySelector('ul');
-            if (ul) {
-                let dir = window.getComputedStyle(ul).flexDirection;
-                this.controls.navDirection.setValue(dir === 'column' ? 'column' : 'row', false);
-            }
-        }
+
 
         if (allowedControls.includes('navAlign')) {
             let align = comp.justifyContent;
             this.controls.navAlign.setValue(['flex-start', 'center', 'flex-end'].includes(align) ? align : 'flex-start', false);
+        }
+
+        if (allowedControls.includes('navHoverBg')) {
+            let color = this.selectedNode.style.getPropertyValue('--nav-hover-bg') || 'rgba(59, 130, 246, 0.3)';
+            let parsed = this._rgbaToHexA(color);
+            this.controls.navHoverBg.setValue(parsed.hex, parsed.alpha, false);
+        }
+
+        if (allowedControls.includes('navSubBg')) {
+            let color = this.selectedNode.style.getPropertyValue('--nav-sub-bg') || '#0a0a0a';
+            let parsed = this._rgbaToHexA(color);
+            this.controls.navSubBg.setValue(parsed.hex, parsed.alpha, false);
+        }
+
+        if (allowedControls.includes('navSubGlow')) {
+            let color = this.selectedNode.style.getPropertyValue('--nav-sub-glow') || 'transparent';
+            let parsed = this._rgbaToHexA(color);
+            this.controls.navSubGlow.setValue(parsed.hex, parsed.alpha, false);
+        }
+
+        if (allowedControls.includes('navSubBorder')) {
+            let width = parseInt(this.selectedNode.style.getPropertyValue('--nav-sub-border-width')) || 1;
+            let style = this.selectedNode.style.getPropertyValue('--nav-sub-border-style') || 'solid';
+            let color = this.selectedNode.style.getPropertyValue('--nav-sub-border-color') || 'rgba(255, 255, 255, 0.05)';
+            let radius = parseInt(this.selectedNode.style.getPropertyValue('--nav-sub-radius')) || 6;
+            this.controls.navSubBorder.setValue({ width, style, color, radius, cssString: `${width}px ${style} ${color}` }, false);
         }
 
         if (allowedControls.includes('imageAlign')) {

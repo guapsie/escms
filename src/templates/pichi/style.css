@@ -128,26 +128,28 @@ a:hover {
   padding: 8px 12px;
   display: flex;
   align-items: center;
+  gap: 6px;
 }
 .escms-nav-link:hover {
-  background: rgba(59, 130, 246, 0.3);
-  border-radius: 4px;
+  background: var(--nav-hover-bg, rgba(59, 130, 246, 0.3));
+  border-radius: var(--nav-hover-radius, 4px);
 }
 .escms-nav-sublist {
   display: none;
   position: absolute;
   top: 100%;
   left: 0;
-  background: var(--color-background);
-  border: 1px solid rgba(255,255,255,0.05);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  border-radius: 6px;
+  background: var(--nav-sub-bg, var(--color-background));
+  border: var(--nav-sub-border-width, 1px) var(--nav-sub-border-style, solid) var(--nav-sub-border-color, rgba(255,255,255,0.05));
+  box-shadow: 0 0 15px var(--nav-sub-glow, transparent);
+  border-radius: var(--nav-sub-radius, 6px);
   padding: 8px 0;
   min-width: 180px;
   z-index: 100;
   flex-direction: column;
   list-style: none;
   margin: 0;
+  overflow: hidden;
 }
 .escms-nav-item:hover > .escms-nav-sublist {
   display: flex;
@@ -161,6 +163,6 @@ a:hover {
   padding: 8px 16px;
 }
 .escms-nav-sublist .escms-nav-link:hover {
-  background: rgba(59, 130, 246, 0.3);
+  background: var(--nav-hover-bg, rgba(59, 130, 246, 0.3));
   border-radius: 0;
 }
