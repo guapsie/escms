@@ -144,8 +144,12 @@ class EscmsEditor {
             }, 50);
         });
 
-        window.addEventListener('escms-component-edit', (e) => {
+        window.addEventListener('escms-component-edit', async (e) => {
             const comp = e.detail.component;
+
+            if (this.autosave && this.autosave.pageId && !this.autosave.componentId) {
+                await this.autosave.saveToServer();
+            }
 
             const wrapper = document.getElementById('escms-canvas-wrapper');
             let banner = document.getElementById('escms-component-banner');
@@ -192,8 +196,15 @@ class EscmsEditor {
                 backBtn.style.transition = 'all 0.2s';
                 backBtn.addEventListener('mouseenter', () => backBtn.style.background = 'rgba(255,255,255,0.1)');
                 backBtn.addEventListener('mouseleave', () => backBtn.style.background = '#1f1f1f');
-                backBtn.addEventListener('click', () => {
-                    window.dispatchEvent(new CustomEvent('escms-page-selected', { detail: { page: this.currentPageObj } }));
+                backBtn.addEventListener('click', async () => {
+                    if (this.autosave) {
+                        await this.autosave.saveToServer();
+                    }
+                    if (this.leftpanel && this.leftpanel.pageManager) {
+                        this.leftpanel.pageManager.loadPage(this.currentPageObj.id);
+                    } else {
+                        window.dispatchEvent(new CustomEvent('escms-page-selected', { detail: { page: this.currentPageObj } }));
+                    }
                 });
                 banner.appendChild(backBtn);
             }

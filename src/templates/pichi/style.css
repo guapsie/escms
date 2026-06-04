@@ -107,3 +107,60 @@ a:hover {
   filter: brightness(1.1);
   text-decoration: none;
 }
+
+/* Escms Nav Global Styles */
+.escms-nav-list {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.escms-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.escms-nav-link {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s, background 0.2s;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+}
+.escms-nav-link:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 4px;
+}
+.escms-nav-sublist {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--color-background);
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  border-radius: 6px;
+  padding: 8px 0;
+  min-width: 180px;
+  z-index: 100;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+}
+.escms-nav-item:hover > .escms-nav-sublist {
+  display: flex;
+}
+.escms-nav-sublist .escms-nav-item {
+  width: 100%;
+}
+.escms-nav-sublist .escms-nav-link {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+}
+.escms-nav-sublist .escms-nav-link:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 0;
+}

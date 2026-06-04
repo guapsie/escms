@@ -778,24 +778,56 @@ async fetchAtoms() {
             ul.style.padding = '0';
             ul.className = 'escms-nav-list';
             
-            const links = [
-                { text: 'Home', href: '/' },
-                { text: 'About', href: '/about' },
-                { text: 'Contact', href: '/contact' }
-            ];
-            
-            links.forEach(link => {
-                const li = document.createElement('li');
-                li.className = 'escms-nav-item';
-                const a = document.createElement('a');
-                a.className = 'escms-nav-link';
-                a.href = link.href;
-                a.textContent = link.text;
-                a.style.textDecoration = 'none';
-                a.style.color = 'inherit';
-                li.appendChild(a);
-                ul.appendChild(li);
-            });
+            // Try to build tree from PagesManager
+            const buildHtml = (nodes) => {
+                nodes.forEach(node => {
+                    const li = document.createElement('li');
+                    li.className = 'escms-nav-item';
+                    const a = document.createElement('a');
+                    a.className = 'escms-nav-link';
+                    a.href = parseInt(node.is_custom_link) === 1 ? node.custom_link_url : '/' + node.slug;
+                    a.textContent = node.title;
+                    a.style.textDecoration = 'none';
+                    a.style.color = 'inherit';
+                    li.appendChild(a);
+                    
+                    if (node.children && node.children.length > 0) {
+                        const subul = document.createElement('ul');
+                        subul.className = 'escms-nav-sublist';
+                        buildHtml(node.children).childNodes.forEach(c => subul.appendChild(c.cloneNode(true)));
+                        li.appendChild(subul);
+                    }
+                    ul.appendChild(li);
+                });
+                return ul;
+            };
+
+            if (this.pageManager && this.pageManager.pages) {
+                const roots = this.pageManager.buildTree().filter(p => parseInt(p.is_hidden_menu) !== 1);
+                if (roots.length > 0) {
+                    buildHtml(roots);
+                } else {
+                    ul.innerHTML = '<li class="escms-nav-item"><a class="escms-nav-link" href="#" style="text-decoration:none; color:inherit;">Menu Empty</a></li>';
+                }
+            } else {
+                const links = [
+                    { text: 'Home', href: '/' },
+                    { text: 'About', href: '/about' },
+                    { text: 'Contact', href: '/contact' }
+                ];
+                links.forEach(link => {
+                    const li = document.createElement('li');
+                    li.className = 'escms-nav-item';
+                    const a = document.createElement('a');
+                    a.className = 'escms-nav-link';
+                    a.href = link.href;
+                    a.textContent = link.text;
+                    a.style.textDecoration = 'none';
+                    a.style.color = 'inherit';
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+            }
             el.appendChild(ul);
         } else if (atom.children) {
             atom.children.forEach(childAtom => {

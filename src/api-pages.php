@@ -75,11 +75,11 @@ switch ($route) {
             }
             break;
 
-    case 'api/pages/list':
+        case 'api/pages/list':
             if ($method !== 'GET') $send_json(['error' => 'Method not allowed'], 405);
             if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
             try {
-                $pages = $pdo->query("SELECT id, title, slug, views, status, updated_at FROM pages ORDER BY updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+                $pages = $pdo->query("SELECT id, title, slug, views, status, updated_at, parent_id, menu_order, is_hidden_menu, is_custom_link, custom_link_url FROM pages ORDER BY menu_order ASC, updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
                 
                 if (count($pages) === 0) {
                     $defaultData = '{"tag":"div","classes":["escms-container"],"styles":"max-width: var(--max-width); margin: 0px auto; padding: 20px;","children":[{"tag":"h2","children":["Welcome to ESCMS"]},{"tag":"p","children":["This is your brand new lightweight CMS."]}]}';
@@ -104,7 +104,7 @@ switch ($route) {
                     
                     $config['home_page_id'] = $homeId; // Update in memory so the loop below sees it
                     
-                    $pages = $pdo->query("SELECT id, title, slug, views, status, updated_at FROM pages ORDER BY updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+                    $pages = $pdo->query("SELECT id, title, slug, views, status, updated_at, parent_id, menu_order, is_hidden_menu, is_custom_link, custom_link_url FROM pages ORDER BY menu_order ASC, updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
                 }
 
                 $home_id = (int)($config['home_page_id'] ?? 0);
@@ -148,6 +148,70 @@ switch ($route) {
                 $stmt->execute([$title, $slug, $emptyContainer]);
                 
                 $send_json(['status' => 'success', 'id' => $pdo->lastInsertId()]);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+    case 'api/pages/create_link':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $title = 'New Link';
+                $slug = 'link-' . bin2hex(random_bytes(4));
+                $stmt = $pdo->prepare("INSERT INTO pages (title, slug, is_custom_link, custom_link_url, editor_data, public_html) VALUES (?, ?, 1, '', '{}', '')");
+                $stmt->execute([$title, $slug]);
+                
+                $send_json(['status' => 'success', 'id' => $pdo->lastInsertId()]);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+    case 'api/pages/update_order':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $updates = $input['updates'] ?? [];
+                $pdo->beginTransaction();
+                $stmt = $pdo->prepare("UPDATE pages SET parent_id = ?, menu_order = ? WHERE id = ?");
+                foreach ($updates as $u) {
+                    $parentId = !empty($u['parent_id']) ? $u['parent_id'] : null;
+                    $stmt->execute([$parentId, $u['menu_order'], $u['id']]);
+                }
+                $pdo->commit();
+                $send_json(['status' => 'success']);
+            } catch (Throwable $e) {
+                if($pdo->inTransaction()) $pdo->rollBack();
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+    case 'api/pages/update_url':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $id = $input['id'] ?? null;
+                $url = trim($input['url'] ?? '');
+                if (!$id) throw new RuntimeException('ID required');
+                $stmt = $pdo->prepare("UPDATE pages SET custom_link_url = ? WHERE id = ? AND is_custom_link = 1");
+                $stmt->execute([$url, $id]);
+                $send_json(['status' => 'success']);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
+    case 'api/pages/toggle_hidden':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $id = $input['id'] ?? null;
+                if (!$id) throw new RuntimeException('ID required');
+                // SQLite bools are 0/1, so NOT operator flips them correctly in modern SQLite, but we can be explicit
+                $stmt = $pdo->prepare("UPDATE pages SET is_hidden_menu = CASE WHEN is_hidden_menu = 1 THEN 0 ELSE 1 END WHERE id = ?");
+                $stmt->execute([$id]);
+                $send_json(['status' => 'success']);
             } catch (Throwable $e) {
                 $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
             }

@@ -374,13 +374,6 @@ class EscmsInspector {
             if (!this.selectedNode || this.isSyncing) return;
             this.selectedNode.style.display = 'flex';
             this.selectedNode.style.justifyContent = val;
-            
-            // Si la orientación es vertical, justify-content en el nav centrará el bloque entero 
-            // pero para que el texto dentro del ul también se alinee bien, lo ajustamos:
-            const ul = this.selectedNode.querySelector('ul');
-            if (ul) {
-                ul.style.alignItems = val; // Alinea los li en cross-axis si es column, o no afecta si es row y tienen el mismo alto
-            }
             window.dispatchEvent(new Event('escms-dom-mutated'));
         });
         layoutSection.appendChild(this.controls.navAlign.element);

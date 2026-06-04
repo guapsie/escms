@@ -52,6 +52,21 @@ try {
     try {
         $pdo->exec("ALTER TABLE pages ADD COLUMN status VARCHAR(20) DEFAULT 'draft'");
     } catch (PDOException $e) {}
+    try {
+        $pdo->exec("ALTER TABLE pages ADD COLUMN parent_id INTEGER DEFAULT NULL");
+    } catch (PDOException $e) {}
+    try {
+        $pdo->exec("ALTER TABLE pages ADD COLUMN menu_order INTEGER DEFAULT 0");
+    } catch (PDOException $e) {}
+    try {
+        $pdo->exec("ALTER TABLE pages ADD COLUMN is_hidden_menu INTEGER DEFAULT 0");
+    } catch (PDOException $e) {}
+    try {
+        $pdo->exec("ALTER TABLE pages ADD COLUMN is_custom_link INTEGER DEFAULT 0");
+    } catch (PDOException $e) {}
+    try {
+        $pdo->exec("ALTER TABLE pages ADD COLUMN custom_link_url TEXT DEFAULT ''");
+    } catch (PDOException $e) {}
     $config = $pdo->query("SELECT k, v FROM options")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
 } catch (PDOException $e) {
     http_response_code(500);

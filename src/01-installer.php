@@ -51,6 +51,11 @@ if ($needs_install) {
                 status VARCHAR(20) DEFAULT 'draft',
                 seo_title TEXT,
                 seo_desc TEXT,
+                parent_id INTEGER DEFAULT NULL,
+                menu_order INTEGER DEFAULT 0,
+                is_hidden_menu INTEGER DEFAULT 0,
+                is_custom_link INTEGER DEFAULT 0,
+                custom_link_url TEXT DEFAULT '',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
