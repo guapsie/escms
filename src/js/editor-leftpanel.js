@@ -831,6 +831,13 @@ async fetchAtoms() {
                     ul.appendChild(li);
                 });
             }
+            const hamburger = document.createElement('div');
+            hamburger.className = 'escms-hamburger';
+            hamburger.setAttribute('onclick', "this.parentElement.classList.toggle('is-open')");
+            if (window.escmsIcons) {
+                hamburger.innerHTML = (window.escmsIcons.hamburger || '') + (window.escmsIcons.close || '');
+            }
+            el.appendChild(hamburger);
             el.appendChild(ul);
         } else if (atom.children) {
             atom.children.forEach(childAtom => {

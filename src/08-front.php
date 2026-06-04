@@ -98,6 +98,11 @@ $buildHtml = function($nodes, $isSub = false) use (&$buildHtml) {
 $dynamicHtml = $buildHtml($roots);
 
 $offset = 0;
+// Strip any existing hamburger to avoid duplicates
+$content = preg_replace('/<div class="escms-hamburger"[^>]*>.*?<\/div>/s', '', $content);
+
+$hamburgerHtml = '<div class="escms-hamburger" onclick="this.parentElement.classList.toggle(\'is-open\')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-menu-2"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6l16 0" /><path d="M4 12l16 0" /><path d="M4 18l16 0" /></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></div>';
+
 while (($start = strpos($content, 'escms-nav-list', $offset)) !== false) {
     $ulStart = strrpos(substr($content, 0, $start), '<ul');
     if ($ulStart === false) { $offset = $start + 1; continue; }
@@ -125,8 +130,8 @@ while (($start = strpos($content, 'escms-nav-list', $offset)) !== false) {
     
     if ($depth == 0) {
         $tagContentEnd = $pos - 4; 
-        $content = substr($content, 0, $tagContentStart) . $dynamicHtml . substr($content, $tagContentEnd);
-        $offset = $tagContentStart + strlen($dynamicHtml);
+        $content = substr($content, 0, $ulStart) . $hamburgerHtml . substr($content, $ulStart, $tagContentStart - $ulStart) . $dynamicHtml . substr($content, $tagContentEnd);
+        $offset = $ulStart + strlen($hamburgerHtml) + ($tagContentStart - $ulStart) + strlen($dynamicHtml);
     } else {
         $offset = $start + 1;
     }
