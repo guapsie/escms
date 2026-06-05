@@ -15,29 +15,56 @@ class EscmsUploadControl {
         this.element = document.createElement('div');
         this.element.className = 'inspector-control';
 
+        const labelRow = document.createElement('div');
+        labelRow.style.display = 'flex';
+        labelRow.style.justifyContent = 'space-between';
+        labelRow.style.alignItems = 'center';
+        labelRow.style.marginBottom = '0.35rem';
+
         const label = document.createElement('div');
         label.className = 'inspector-label';
         label.setAttribute('data-i18n', this.labelKey);
 
+        labelRow.appendChild(label);
+
+        this.preview = document.createElement('div');
+        this.preview.style.height = '60px';
+        this.preview.style.background = '#121212';
+        this.preview.style.border = '1px solid rgba(255,255,255,0.05)';
+        this.preview.style.borderRadius = '4px';
+        this.preview.style.marginBottom = '0.5rem';
+        this.preview.style.backgroundSize = 'contain';
+        this.preview.style.backgroundRepeat = 'no-repeat';
+        this.preview.style.backgroundPosition = 'center';
+        this.preview.style.display = 'none';
+
         const row = document.createElement('div');
         row.style.display = 'flex';
         row.style.gap = '0.5rem';
-        row.style.alignItems = 'center';
+        row.style.alignItems = 'flex-start';
 
-        this.input = document.createElement('input');
-        this.input.type = 'text';
+        this.input = document.createElement('textarea');
         this.input.value = this.value;
         this.input.style.flex = '1';
         this.input.style.background = '#121212';
         this.input.style.border = '1px solid rgba(255,255,255,0.05)';
         this.input.style.color = 'var(--text-solid)';
-        this.input.style.padding = '4px 8px';
+        this.input.style.padding = '6px 8px';
         this.input.style.borderRadius = '4px';
         this.input.style.fontSize = '0.75rem';
         this.input.style.boxSizing = 'border-box';
+        this.input.style.resize = 'vertical';
+        this.input.style.minHeight = '32px';
+        this.input.style.fontFamily = 'monospace';
 
         this.input.addEventListener('input', (e) => {
-            this.value = e.target.value;
+            let val = e.target.value.trim();
+            if (val.startsWith('<svg') && val.endsWith('</svg>')) {
+                val = 'data:image/svg+xml;utf8,' + encodeURIComponent(val);
+                this.input.value = val;
+            }
+            this.value = val;
+            this.updatePreview();
             if (this.onChange) this.onChange(this.value);
         });
 
@@ -48,8 +75,8 @@ class EscmsUploadControl {
         this.uploadBtn.style.border = 'none';
         this.uploadBtn.style.color = 'var(--text-solid)';
         this.uploadBtn.style.padding = '0';
-        this.uploadBtn.style.width = '28px';
-        this.uploadBtn.style.height = '28px';
+        this.uploadBtn.style.width = '32px';
+        this.uploadBtn.style.height = '32px';
         this.uploadBtn.style.borderRadius = '4px';
         this.uploadBtn.style.cursor = 'pointer';
         this.uploadBtn.style.display = 'flex';
@@ -75,13 +102,28 @@ class EscmsUploadControl {
         row.appendChild(this.uploadBtn);
         row.appendChild(this.fileInput);
 
-        this.element.appendChild(label);
+        this.element.appendChild(labelRow);
+        this.element.appendChild(this.preview);
         this.element.appendChild(row);
+        
+        this.updatePreview();
+    }
+
+    updatePreview() {
+        if (this.value) {
+            this.preview.style.display = 'block';
+            this.preview.style.backgroundImage = `url("${this.value}")`;
+        } else {
+            this.preview.style.display = 'none';
+        }
     }
 
     setValue(val, triggerChange = true) {
         this.value = val;
-        if (this.input) this.input.value = val;
+        if (this.input) {
+            this.input.value = val;
+            this.updatePreview();
+        }
         if (triggerChange && this.onChange) {
             this.onChange(val);
         }

@@ -178,6 +178,11 @@ foreach ($css_keys as $ck) {
 }
 $custom_css_vars .= "}";
 
+$favicon_html = "";
+if (!empty($options['site_favicon'])) {
+    $favicon_html = '<link rel="icon" href="' . htmlspecialchars($options['site_favicon']) . '">';
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="<?= $html_lang ?>">
@@ -191,6 +196,7 @@ $custom_css_vars .= "}";
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <?= $google_fonts_html ?>
+    <?= $favicon_html ?>
 
     <style>
         /* Estilos del Tema */

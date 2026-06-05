@@ -1,0 +1,28 @@
+{
+    "name": "SiteLogo",
+    "tag": "img",
+    "icon": "userScan",
+    "className": "escms-sitelogo",
+    "allowedControls": [
+        "src",
+        "alt",
+        "href",
+        "width",
+        "imageAlign",
+        "margin",
+        "padding",
+        "border",
+        "opacity",
+        "effects",
+        "ariaLabel"
+    ],
+    "attributes": {
+        "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2RkZCIvPjwvc3ZnPg==",
+        "alt": "Site Logo",
+        "style": "max-width: 100%; height: auto; object-fit: contain; aspect-ratio: auto;"
+    },
+    "category": "content",
+    "version": "1.0.0",
+    "authorized_domain": "localhost",
+    "signature": "default_signature"
+}

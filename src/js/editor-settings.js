@@ -8,7 +8,9 @@ class EscmsGlobalSettings {
         this.googleFonts = [];
         this.config = {
             webp_enabled: true,
-            escms_p2p_enabled: false
+            escms_p2p_enabled: false,
+            site_logo: '',
+            site_favicon: ''
         };
     }
 
@@ -34,12 +36,15 @@ class EscmsGlobalSettings {
                 if (data.status === 'success' && data.data) {
                     this.config.webp_enabled = data.data.webp_enabled !== '0';
                     this.config.escms_p2p_enabled = data.data.escms_p2p_enabled === '1';
+                    this.config.site_logo = data.data.site_logo || '';
+                    this.config.site_favicon = data.data.site_favicon || '';
                     if (data.data.google_fonts) {
                         try {
                             this.googleFonts = JSON.parse(data.data.google_fonts);
                             this.applyGoogleFonts();
                         } catch(e) {}
                     }
+                    this.updateFavicon();
                 }
             }
         } catch (e) { console.error('Failed to load settings', e); }
@@ -56,6 +61,40 @@ class EscmsGlobalSettings {
                 body: JSON.stringify({ key: key, value: value })
             });
         } catch (e) { console.error('Failed to save settings', e); }
+    }
+
+    applyGoogleFonts() {
+        let link = document.getElementById('escms-google-fonts');
+        if (!link) {
+            link = document.createElement('link');
+            link.id = 'escms-google-fonts';
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+        }
+        
+        if (this.googleFonts.length > 0) {
+            link.href = this.googleFonts.join('&family='); // No exact, but valid enough for editor preview
+            // Actually the correct way is:
+            const urls = this.googleFonts.map(u => '@import url("' + u + '");').join('\n');
+            let style = document.getElementById('escms-google-fonts-style');
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'escms-google-fonts-style';
+                document.head.appendChild(style);
+            }
+            style.textContent = urls;
+        }
+    }
+
+    updateFavicon() {
+        if (!this.config.site_favicon) return;
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.getElementsByTagName('head')[0].appendChild(link);
+        }
+        link.href = this.config.site_favicon;
     }
 
     renderOverlay() {
@@ -114,6 +153,7 @@ class EscmsGlobalSettings {
         sidebar.style.gap = '0.5rem';
         const tabs = [
             { id: 'general', labelKey: 'settings.tab_ide' },
+            { id: 'identity', labelKey: 'settings.tab_identity' },
             { id: 'layout', labelKey: 'settings.tab_layout' },
             { id: 'typography', labelKey: 'settings.tab_typography' },
             { id: 'network', labelKey: 'topbar.network_btn' },
@@ -165,6 +205,7 @@ class EscmsGlobalSettings {
 
         this.tabContents = {
             general: this.createGeneralTab(),
+            identity: this.createIdentityTab(),
             layout: this.createLayoutTab(),
             typography: this.createTypographyTab(),
             network: this.createNetworkTab(),
@@ -345,6 +386,44 @@ class EscmsGlobalSettings {
             this.config.webp_enabled, 
             (val) => { this.saveConfig('webp_enabled', val); }
         ));
+
+        return tab;
+    }
+
+    createIdentityTab() {
+        const tab = this.createTabContent('settings.tab_identity');
+
+        const desc = document.createElement('div');
+        desc.setAttribute('data-i18n', 'settings.identity_desc');
+        desc.style.fontSize = '0.85rem';
+        desc.style.color = 'rgba(245, 245, 245, 0.7)';
+        desc.style.marginBottom = '2rem';
+        desc.style.lineHeight = '1.5';
+        desc.style.padding = '1rem';
+        desc.style.background = 'rgba(59, 130, 246, 0.05)';
+        desc.style.borderLeft = '3px solid rgba(59, 130, 246, 0.5)';
+        desc.style.borderRadius = '0 4px 4px 0';
+        tab.appendChild(desc);
+
+        const logoControl = new EscmsUploadControl('settings.logo_title', this.i18n, this.config.site_logo, (val) => {
+            this.saveConfig('site_logo', val);
+            if (window.escmsEditor && window.escmsEditor.documentRoot) {
+                const siteLogos = window.escmsEditor.documentRoot.querySelectorAll('.escms-sitelogo');
+                siteLogos.forEach(logo => {
+                    logo.src = val;
+                });
+                if (window.escmsEditor.autosave) window.escmsEditor.autosave.saveToServer();
+            }
+        });
+        logoControl.element.style.marginBottom = '1.5rem';
+        tab.appendChild(logoControl.element);
+
+        const faviconControl = new EscmsUploadControl('settings.favicon_title', this.i18n, this.config.site_favicon, (val) => {
+            this.saveConfig('site_favicon', val);
+            this.updateFavicon();
+        });
+        faviconControl.element.style.marginBottom = '1.5rem';
+        tab.appendChild(faviconControl.element);
 
         return tab;
     }

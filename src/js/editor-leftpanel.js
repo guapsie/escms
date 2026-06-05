@@ -839,6 +839,10 @@ async fetchAtoms() {
             }
             el.appendChild(hamburger);
             el.appendChild(ul);
+        } else if (atom.name === 'SiteLogo') {
+            if (window.escmsEditor && window.escmsEditor.settings && window.escmsEditor.settings.config.site_logo) {
+                el.setAttribute('src', window.escmsEditor.settings.config.site_logo);
+            }
         } else if (atom.children) {
             atom.children.forEach(childAtom => {
                 const childEl = document.createElement(childAtom.tag);
