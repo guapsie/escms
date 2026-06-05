@@ -46,29 +46,6 @@
                 "children": [
                   "ESCMS"
                 ]
-              },
-              {
-                "tag": "nav",
-                "children": [
-                  {
-                    "tag": "a",
-                    "classes": [
-                      "pichi-nav-link"
-                    ],
-                    "children": [
-                      "Home"
-                    ]
-                  },
-                  {
-                    "tag": "a",
-                    "classes": [
-                      "pichi-nav-link"
-                    ],
-                    "children": [
-                      "Blog"
-                    ]
-                  }
-                ]
               }
             ]
           }
@@ -133,16 +110,22 @@
     "page": [
       {
         "tag": "div",
-        "classes": ["pichi-container"],
+        "classes": [
+          "pichi-container"
+        ],
         "styles": "max-width: var(--max-width); margin: 0 auto; padding: 40px 20px;",
         "children": [
           {
             "tag": "h1",
-            "children": ["Standard Page"]
+            "children": [
+              "Standard Page"
+            ]
           },
           {
             "tag": "p",
-            "children": ["Start adding your content here."]
+            "children": [
+              "Start adding your content here."
+            ]
           }
         ]
       }
@@ -150,16 +133,22 @@
     "blog": [
       {
         "tag": "div",
-        "classes": ["pichi-container"],
+        "classes": [
+          "pichi-container"
+        ],
         "styles": "max-width: var(--max-width); margin: 0 auto; padding: 40px 20px;",
         "children": [
           {
             "tag": "h1",
-            "children": ["Our Blog"]
+            "children": [
+              "Our Blog"
+            ]
           },
           {
             "tag": "p",
-            "children": ["Latest updates and articles."]
+            "children": [
+              "Latest updates and articles."
+            ]
           }
         ]
       }
@@ -167,23 +156,35 @@
     "404": [
       {
         "tag": "div",
-        "classes": ["pichi-container"],
+        "classes": [
+          "pichi-container"
+        ],
         "styles": "max-width: var(--max-width); margin: 100px auto; padding: 40px 20px; text-align: center;",
         "children": [
           {
             "tag": "h1",
             "styles": "font-size: 4rem; margin-bottom: 20px;",
-            "children": ["404"]
+            "children": [
+              "404"
+            ]
           },
           {
             "tag": "p",
-            "children": ["Oops! The page you're looking for doesn't exist."]
+            "children": [
+              "Oops! The page you're looking for doesn't exist."
+            ]
           },
           {
             "tag": "a",
-            "classes": ["pichi-btn"],
-            "attributes": {"href": "/"},
-            "children": ["Go Home"]
+            "classes": [
+              "pichi-btn"
+            ],
+            "attributes": {
+              "href": "/"
+            },
+            "children": [
+              "Go Home"
+            ]
           }
         ]
       }
