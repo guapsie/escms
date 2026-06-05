@@ -155,7 +155,8 @@ if ($needs_install) {
                 $default404Html = $jsonToHtml($nodeTree404);
             }
         }
-        $stmt->execute(['404', '404', $default404Data, $default404Html]);
+        $stmt404 = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html, status) VALUES (?, ?, ?, ?, 'published')");
+        $stmt404->execute(['404', '404', $default404Data, $default404Html]);
 
         if (isset($tpl['theme_config'])) {
             $tc = $tpl['theme_config'];
