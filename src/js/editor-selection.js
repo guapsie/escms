@@ -81,6 +81,7 @@ class EscmsSelection {
             .escms-selected {
                 outline: 2px solid var(--accent-faint) !important;
                 outline-offset: -2px;
+                background-color: rgba(59, 130, 246, 0.05) !important;
             }
             .escms-drag-target {
                 outline: 2px dashed var(--accent-faint) !important;
@@ -130,7 +131,9 @@ class EscmsSelection {
             }
 
             this.selectedNode = target;
-            this.selectedNode.classList.add('escms-selected');
+            if (this.selectedNode.id !== 'document-root') {
+                this.selectedNode.classList.add('escms-selected');
+            }
 
             const editableTags = [...textBlockTags, 'SPAN', 'A']; // SPAN y A como fallback
             if (editableTags.includes(this.selectedNode.tagName)) {
