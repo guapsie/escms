@@ -369,11 +369,29 @@ class EscmsInspector {
             { value: 'flex-end', icon: icons.layoutAlignRight || 'R' }
         ], 'flex-start', (val) => {
             if (!this.selectedNode || this.isSyncing) return;
-            this.selectedNode.style.display = 'flex';
+            const computedDisplay = window.getComputedStyle(this.selectedNode).display;
+            if (computedDisplay !== 'grid' && computedDisplay !== 'flex') {
+                this.selectedNode.style.display = 'flex';
+            }
             this.selectedNode.style.justifyContent = val;
             window.dispatchEvent(new Event('escms-dom-mutated'));
         });
         layoutSection.appendChild(this.controls.navAlign.element);
+
+        this.controls.contentValign = new EscmsButtonGroup('inspector.content_valign', [
+            { value: 'flex-start', icon: icons.layoutAlignTop || 'T' },
+            { value: 'center', icon: icons.layoutAlignMiddle || 'M' },
+            { value: 'flex-end', icon: icons.layoutAlignBottom || 'B' }
+        ], 'stretch', (val) => {
+            if (!this.selectedNode || this.isSyncing) return;
+            const computedDisplay = window.getComputedStyle(this.selectedNode).display;
+            if (computedDisplay !== 'grid' && computedDisplay !== 'flex') {
+                this.selectedNode.style.display = 'flex';
+            }
+            this.selectedNode.style.alignItems = val;
+            window.dispatchEvent(new Event('escms-dom-mutated'));
+        });
+        layoutSection.appendChild(this.controls.contentValign.element);
 
         this.controls.imageAlign = new EscmsButtonGroup('inspector.image_align', [
             { value: 'left', icon: icons.textAlignLeft },
@@ -395,6 +413,28 @@ class EscmsInspector {
             window.dispatchEvent(new Event('escms-dom-mutated'));
         });
         layoutSection.appendChild(this.controls.imageAlign.element);
+
+        this.controls.itemAlign = new EscmsButtonGroup('inspector.item_align', [
+            { value: 'left', icon: icons.layoutAlignLeft || 'L' },
+            { value: 'center', icon: icons.layoutAlignCenter || 'C' },
+            { value: 'right', icon: icons.layoutAlignRight || 'R' }
+        ], 'left', (val) => {
+            if (!this.selectedNode || this.isSyncing) return;
+            this.selectedNode.style.display = 'block';
+            this.selectedNode.style.width = 'max-content';
+            if (val === 'left') {
+                this.selectedNode.style.marginLeft = '0';
+                this.selectedNode.style.marginRight = 'auto';
+            } else if (val === 'center') {
+                this.selectedNode.style.marginLeft = 'auto';
+                this.selectedNode.style.marginRight = 'auto';
+            } else if (val === 'right') {
+                this.selectedNode.style.marginLeft = 'auto';
+                this.selectedNode.style.marginRight = '0';
+            }
+            window.dispatchEvent(new Event('escms-dom-mutated'));
+        });
+        layoutSection.appendChild(this.controls.itemAlign.element);
 
         this.controls.spacerHeight = new EscmsSlider('inspector.spacer_height', 0, 200, 1, 50, (val) => this.applyStyle('height', val + 'px'), 'px');
         layoutSection.appendChild(this.controls.spacerHeight.element);
@@ -783,6 +823,18 @@ class EscmsInspector {
         if (allowedControls.includes('navAlign')) {
             let align = comp.justifyContent;
             this.controls.navAlign.setValue(['flex-start', 'center', 'flex-end'].includes(align) ? align : 'flex-start', false);
+        }
+
+        if (allowedControls.includes('itemAlign')) {
+            let align = 'left';
+            if (comp.marginRight === 'auto' && comp.marginLeft === 'auto') align = 'center';
+            else if (comp.marginLeft === 'auto' && comp.marginRight === '0px') align = 'right';
+            this.controls.itemAlign.setValue(align, false);
+        }
+
+        if (allowedControls.includes('contentValign')) {
+            let align = comp.alignItems;
+            this.controls.contentValign.setValue(['flex-start', 'center', 'flex-end'].includes(align) ? align : 'stretch', false);
         }
 
         if (allowedControls.includes('navHoverBg')) {

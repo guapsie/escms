@@ -4,9 +4,12 @@
     "icon": "heading",
     "className": "escms-heading",
     "allowedControls": [
+        "tagSwap",
         "color",
-        "typography",
+        "fontFamily",
+        "fontSize",
         "textAlign",
+        "textStyle",
         "margin",
         "padding",
         "opacity",

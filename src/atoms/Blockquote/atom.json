@@ -5,8 +5,10 @@
     "className": "escms-blockquote",
     "allowedControls": [
         "color",
-        "typography",
+        "fontFamily",
+        "fontSize",
         "textAlign",
+        "textStyle",
         "bgColor",
         "bgGradient",
         "margin",

@@ -6,7 +6,11 @@
     "textKey": "leftpanel.default_button",
     "allowedControls": [
         "href",
-        "typography",
+        "fontFamily",
+        "fontSize",
+        "textAlign",
+        "textStyle",
+        "itemAlign",
         "color",
         "bgColor",
         "bgGradient",

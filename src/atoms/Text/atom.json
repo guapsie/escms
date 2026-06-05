@@ -5,8 +5,10 @@
     "className": "escms-text",
     "allowedControls": [
         "color",
-        "typography",
+        "fontFamily",
+        "fontSize",
         "textAlign",
+        "textStyle",
         "margin",
         "padding",
         "opacity",

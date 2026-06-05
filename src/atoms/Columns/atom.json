@@ -5,6 +5,7 @@
     "className": "escms-columns",
     "allowedControls": [
         "columnsCount",
+        "contentValign",
         "bgColor",
         "bgGradient",
         "margin",
