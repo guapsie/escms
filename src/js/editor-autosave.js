@@ -15,7 +15,7 @@ class EscmsAutosave {
 
         const observer = new MutationObserver(() => {
             clearTimeout(this.saveTimeout);
-            this.saveTimeout = setTimeout(() => this.saveToServer(), 3000);
+            this.saveTimeout = setTimeout(() => this.saveToServer(), 1000);
         });
 
         observer.observe(this.documentRoot, {
