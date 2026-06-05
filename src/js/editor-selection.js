@@ -88,28 +88,7 @@ class EscmsSelection {
                 background-color: rgba(59, 130, 246, 0.05) !important;
             }
 
-            /* Preview Mode Overrides */
-            #document-root.escms-preview-mode div,
-            #document-root.escms-preview-mode section,
-            #document-root.escms-preview-mode article,
-            #document-root.escms-preview-mode main,
-            #document-root.escms-preview-mode aside,
-            #document-root.escms-preview-mode header,
-            #document-root.escms-preview-mode footer,
-            #document-root.escms-preview-mode .escms-column,
-            #document-root.escms-preview-mode .escms-grid-item {
-                outline: none !important;
-                background-color: transparent;
-            }
-            #document-root.escms-preview-mode .escms-selected {
-                outline: none !important;
-            }
-            #document-root.escms-preview-mode .escms-column:empty::after, 
-            #document-root.escms-preview-mode .escms-grid-item:empty::after, 
-            #document-root.escms-preview-mode .escms-container:empty::after, 
-            #document-root.escms-preview-mode .escms-section:empty::after {
-                display: none !important;
-            }
+
         `;
         shadowRoot.appendChild(style);
 

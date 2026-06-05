@@ -548,6 +548,12 @@ class EscmsPageManager {
                         const data = await res.json();
                         if (data.status === 'success') {
                             page.title = newTitle;
+                            const originalPage = this.pages.find(p => parseInt(p.id) === parseInt(page.id));
+                            if (originalPage) originalPage.title = newTitle;
+                            
+                            if (window.escmsEditor && window.escmsEditor.currentPageObj && parseInt(window.escmsEditor.currentPageObj.id) === parseInt(page.id)) {
+                                window.escmsEditor.currentPageObj.title = newTitle;
+                            }
                         } else {
                             titleSpan.textContent = page.title;
                         }
@@ -606,6 +612,8 @@ class EscmsPageManager {
                             body: JSON.stringify({ id: page.id, url: newUrl })
                         });
                         page.custom_link_url = newUrl;
+                        const originalPage = this.pages.find(p => parseInt(p.id) === parseInt(page.id));
+                        if (originalPage) originalPage.custom_link_url = newUrl;
                     } catch (err) {}
                     urlInput.remove();
                     titleSpan.style.display = '';
