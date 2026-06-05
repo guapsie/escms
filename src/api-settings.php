@@ -244,10 +244,22 @@ switch ($route) {
             if (is_dir($atoms_dir)) {
                 $dirs = array_filter(glob($atoms_dir . '/*'), 'is_dir');
                 foreach ($dirs as $dir) {
-                    $available_atoms[] = basename($dir);
+                    $json_path = $dir . '/atom.json';
+                    if (file_exists($json_path)) {
+                        $parsed = json_decode(file_get_contents($json_path), true);
+                        if ($parsed) {
+                            $available_atoms[] = [
+                                'type' => $parsed['name'] ?? basename($dir),
+                                'html_tag' => $parsed['tag'] ?? 'div',
+                                'category' => $parsed['category'] ?? 'unknown'
+                            ];
+                        }
+                    } else {
+                        $available_atoms[] = ['type' => basename($dir)];
+                    }
                 }
             }
-            $atoms_list = implode(', ', $available_atoms);
+            $atoms_list = json_encode($available_atoms, JSON_UNESCAPED_UNICODE);
 
             $media_dir = dirname(__DIR__) . '/data/media';
             $available_media = [];
@@ -270,7 +282,7 @@ switch ($route) {
             "1) Eres consciente de la página que el usuario está editando. Puedes conversar libremente, dar tu opinión sobre el diseño o el SEO, y responder a preguntas generales de forma coloquial, cruda y directa (acorde a tu personalidad configurada).\n" .
             "2) Tienes la capacidad de mutar el DOM. Si el usuario te pide modificaciones estructurales o de diseño, DEBES emitir el bloque JSON de comandos.\n" .
             "Si el usuario solo está charlando o pidiendo opinión, responde SOLO con texto. Si te pide crear o modificar elementos, incluye SIEMPRE tu bloque JSON.\n\n" .
-            "ÁTOMOS DISPONIBLES EN EL SISTEMA (Usa EXACTAMENTE estos nombres en 'type'):\n" .
+            "ÁTOMOS DISPONIBLES EN EL SISTEMA (Definiciones JSON. Usa EXACTAMENTE la propiedad 'type'):\n" .
             $atoms_list . "\n\n" .
             "BIBLIOTECA DE MEDIOS DEL USUARIO (Imágenes reales que puedes usar en atributos 'src'):\n" .
             $media_list . "\n\n" .
