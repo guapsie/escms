@@ -134,7 +134,12 @@ const enFallback = Object.freeze({
     "settings.ai_endpoint": "Endpoint URL (Custom only)",
     "settings.ai_endpoint_placeholder": "https://your-api.com/v1",
     "settings.ai_instructions": "System Instructions",
-    "settings.ai_instructions_placeholder": "You are an expert web designer..."
+    "settings.ai_instructions_placeholder": "You are an expert web designer...",
+    "select_parent": "Select Parent",
+    "clone": "Clone",
+    "delete": "Delete",
+    "save_atom": "Save as Atom",
+    "ask_ai": "Ask Copilot"
 });
 class I18nEngine {
     constructor() {

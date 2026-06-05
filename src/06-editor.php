@@ -199,6 +199,7 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
     <script src="/assets/js/editor-htmlview.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-cssview.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-pagemanager.js?v=<?= time() ?>"></script>
+    <script src="/assets/js/editor-contextmenu.js?v=<?= time() ?>"></script>
 
     <script src="/assets/js/editor-ai.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-leftpanel.js?v=<?= time() ?>"></script>

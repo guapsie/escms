@@ -14,6 +14,7 @@ class EscmsEditor {
         this.seoView = null;
         this.htmlView = null;
         this.cssView = null;
+        this.contextMenu = null;
     }
 
     async init() {
@@ -47,6 +48,9 @@ class EscmsEditor {
 
         this.cssView = new EscmsCssView();
         this.cssView.init(this.canvas.area);
+
+        this.contextMenu = new EscmsContextMenu(this.i18n);
+        this.contextMenu.init();
 
         // Fetch global components
         window.escmsComponents = {};

@@ -158,6 +158,45 @@ class EscmsSelection {
             window.dispatchEvent(event);
         });
 
+        documentRoot.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // First select the node exactly like left click
+            let target = e.target;
+            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
+            const closestBlock = target.closest(textBlockTags.join(','));
+            
+            if (closestBlock && closestBlock.id !== 'document-root') {
+                target = closestBlock;
+            }
+
+            if (this.selectedNode !== target) {
+                if (this.selectedNode) {
+                    this.selectedNode.classList.remove('escms-selected');
+                    if (this.selectedNode.hasAttribute('contenteditable')) {
+                        this.selectedNode.removeAttribute('contenteditable');
+                    }
+                }
+                this.selectedNode = target;
+                if (this.selectedNode && this.selectedNode.id !== 'document-root') {
+                    this.selectedNode.classList.add('escms-selected');
+                }
+                window.dispatchEvent(new CustomEvent('escms-element-selected', {
+                    detail: { node: this.selectedNode }
+                }));
+            }
+
+            // Then dispatch context menu event to the window so EscmsContextMenu can show up
+            window.dispatchEvent(new CustomEvent('escms-context-menu', {
+                detail: {
+                    node: this.selectedNode,
+                    clientX: e.clientX,
+                    clientY: e.clientY
+                }
+            }));
+        });
+
         documentRoot.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.stopPropagation();

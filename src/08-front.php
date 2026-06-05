@@ -14,14 +14,14 @@ try {
     if ($slug === null) {
         $home_id = $config['home_page_id'] ?? null;
         if ($home_id) {
-            $stmt = $pdo->prepare("SELECT title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE id = ?");
             $stmt->execute([$home_id]);
         } else {
-            $stmt = $pdo->prepare("SELECT title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages ORDER BY id ASC LIMIT 1");
+            $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages ORDER BY id ASC LIMIT 1");
             $stmt->execute();
         }
     } else {
-        $stmt = $pdo->prepare("SELECT title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE slug = ?");
+        $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE slug = ?");
         $stmt->execute([$slug]);
     }
     $page = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -31,7 +31,7 @@ try {
     }
 
     if (!$page) {
-        $stmt = $pdo->prepare("SELECT title, public_html, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE slug = '404'");
+        $stmt = $pdo->prepare("SELECT id, title, public_html, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE slug = '404'");
         $stmt->execute();
         $page = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -45,6 +45,12 @@ try {
         } else {
             http_response_code(404);
         }
+    }
+
+    // Increment views only for public visitors
+    if ($page && !empty($page['id']) && !EscmsAuth::isLoggedIn()) {
+        $stmtViews = $pdo->prepare("UPDATE pages SET views = views + 1 WHERE id = ?");
+        $stmtViews->execute([$page['id']]);
     }
 } catch (Throwable $e) {
     http_response_code(500);
