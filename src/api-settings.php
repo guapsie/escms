@@ -34,9 +34,63 @@ switch ($route) {
                     }
                 }
 
+                if ($action === 'zip_check') {
+                    $send_json(['status' => 'success', 'has_zip' => class_exists('ZipArchive')]);
+                }
+                if ($action === 'export') {
+                    if (!class_exists('ZipArchive')) $send_json(['error' => 'ZipArchive not available'], 500);
+                    $dataDir = realpath(__DIR__ . '/../data');
+                    $zipFile = sys_get_temp_dir() . '/escms-backup-' . time() . '.zip';
+                    $zip = new ZipArchive();
+                    if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+                        $files = new RecursiveIteratorIterator(
+                            new RecursiveDirectoryIterator($dataDir),
+                            RecursiveIteratorIterator::LEAVES_ONLY
+                        );
+                        foreach ($files as $name => $file) {
+                            if (!$file->isDir()) {
+                                $filePath = $file->getRealPath();
+                                $relativePath = substr($filePath, strlen($dataDir) + 1);
+                                $zip->addFile($filePath, $relativePath);
+                            }
+                        }
+                        $zip->close();
+                        header('Content-Type: application/zip');
+                        header('Content-Disposition: attachment; filename="escms-backup.zip"');
+                        header('Content-Length: ' . filesize($zipFile));
+                        readfile($zipFile);
+                        unlink($zipFile);
+                        exit;
+                    }
+                    $send_json(['error' => 'Failed to create zip'], 500);
+                }
+
                 $options = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE 'ai_%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
                 $send_json(['status' => 'success', 'data' => $options]);
             } elseif ($method === 'POST') {
+                $action = $_GET['action'] ?? '';
+                if ($action === 'import') {
+                    if (!class_exists('ZipArchive')) $send_json(['error' => 'ZipArchive not available'], 500);
+                    if (!isset($_FILES['backup']) || $_FILES['backup']['error'] !== UPLOAD_ERR_OK) {
+                        $send_json(['error' => 'Upload failed. File might be too large.'], 400);
+                    }
+                    $zipFile = $_FILES['backup']['tmp_name'];
+                    $zip = new ZipArchive();
+                    if ($zip->open($zipFile) === true) {
+                        if ($zip->locateName('escms.sqlite') === false) {
+                            $zip->close();
+                            $send_json(['error' => 'Invalid backup file. escms.sqlite missing.'], 400);
+                        }
+                        // Close DB to release lock on Windows
+                        $pdo = null;
+                        $dataDir = realpath(__DIR__ . '/../data');
+                        $zip->extractTo($dataDir);
+                        $zip->close();
+                        $send_json(['status' => 'success']);
+                    }
+                    $send_json(['error' => 'Failed to open zip'], 500);
+                }
+
                 $key = $input['key'] ?? null;
                 $value = $input['value'] ?? null;
                 if (!$key || str_starts_with($key, 'ai_')) $send_json(['status' => 'error', 'msg' => 'Invalid key'], 400);
