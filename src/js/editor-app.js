@@ -123,8 +123,8 @@ class EscmsEditor {
                 this.autosave.updateStatus('topbar.saved');
             }
             
-            if (this.topBar) {
-                this.topBar.setStatus(page.status || 'draft');
+            if (this.topbar) {
+                this.topbar.setStatus(page.status || 'draft');
             }
             
             if (this.seoView) {
