@@ -77,6 +77,8 @@ const enFallback = Object.freeze({
     "inspector.href_url": "Link URL",
     "inspector.effects": "CSS Effects (Filters)",
     "inspector.aria_label": "Aria Label",
+    "settings.sounds_title": "Play Sounds",
+    "settings.sounds_desc": "Play feedback sounds when performing actions in the editor.",
     "settings.webp_title": "Optimize Images (WebP)",
     "settings.webp_desc": "Convert all uploaded images to WebP format automatically to save bandwidth and improve SEO.",
     "settings.language_title": "Editor Language",

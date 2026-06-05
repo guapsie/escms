@@ -8,6 +8,7 @@ class EscmsGlobalSettings {
         this.googleFonts = [];
         this.config = {
             webp_enabled: true,
+            ide_play_sounds: true,
             escms_p2p_enabled: false,
             site_logo: '',
             site_favicon: '',
@@ -36,6 +37,7 @@ class EscmsGlobalSettings {
                 const data = await res.json();
                 if (data.status === 'success' && data.data) {
                     this.config.webp_enabled = data.data.webp_enabled !== '0';
+                    this.config.ide_play_sounds = data.data.ide_play_sounds !== '0';
                     this.config.escms_p2p_enabled = data.data.escms_p2p_enabled === '1';
                     this.config.site_logo = data.data.site_logo || '';
                     this.config.site_favicon = data.data.site_favicon || '';
@@ -386,6 +388,15 @@ class EscmsGlobalSettings {
 
             return group;
         };
+
+        // Play Sounds
+        tab.appendChild(createToggleSetting(
+            'settings.sounds_title', 
+            'settings.sounds_desc', 
+            'ide_play_sounds', 
+            this.config.ide_play_sounds, 
+            (val) => { this.saveConfig('ide_play_sounds', val); }
+        ));
 
         // WebP
         tab.appendChild(createToggleSetting(

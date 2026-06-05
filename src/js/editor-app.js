@@ -370,9 +370,11 @@ window.escmsToast = function(msg, type = 'info') {
     
     // Play sound
     try {
+        const wantsSound = !(window.escmsEditor && window.escmsEditor.settings && window.escmsEditor.settings.config.ide_play_sounds === false);
+        
         // Only attempt to play sound if the user has interacted with the page.
         // This prevents the "AudioContext was not allowed to start" warning.
-        const canPlayAudio = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+        const canPlayAudio = wantsSound && (!navigator.userActivation || navigator.userActivation.hasBeenActive);
         
         if (canPlayAudio) {
             if (!window.escmsAudioCtx) {

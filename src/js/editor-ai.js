@@ -93,8 +93,8 @@ class EscmsCopilot {
         btn.addEventListener('click', () => {
             const gearBtn = document.getElementById('btn-settings');
             if (gearBtn) gearBtn.click();
-            if (window.escmsEditor && window.escmsEditor.globalSettings) {
-                window.escmsEditor.globalSettings.switchTab('general');
+            if (window.escmsEditor && window.escmsEditor.settings) {
+                window.escmsEditor.settings.switchTab('general');
             }
         });
 
@@ -146,8 +146,8 @@ class EscmsCopilot {
         btnSettings.addEventListener('click', () => {
             const gearBtn = document.getElementById('btn-settings');
             if (gearBtn) gearBtn.click();
-            if (window.escmsEditor && window.escmsEditor.globalSettings) {
-                window.escmsEditor.globalSettings.switchTab('general');
+            if (window.escmsEditor && window.escmsEditor.settings) {
+                window.escmsEditor.settings.switchTab('general');
             }
         });
 
