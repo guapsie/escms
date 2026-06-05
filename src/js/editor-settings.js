@@ -40,6 +40,11 @@ class EscmsGlobalSettings {
                     this.config.site_logo = data.data.site_logo || '';
                     this.config.site_favicon = data.data.site_favicon || '';
                     this.config.editor_language = data.data.editor_language || 'en';
+                    if (this.config.editor_language !== 'en' && window.escmsEditor && window.escmsEditor.i18n) {
+                        window.escmsEditor.i18n.loadLanguage(this.config.editor_language).then(() => {
+                            window.escmsEditor.i18n.translateDOM();
+                        });
+                    }
                     if (data.data.google_fonts) {
                         try {
                             this.googleFonts = JSON.parse(data.data.google_fonts);
@@ -395,7 +400,20 @@ class EscmsGlobalSettings {
             { value: 'en', label: 'English' }
         ], this.config.editor_language, (val) => {
             this.saveConfig('editor_language', val);
-            // Future: Load es.json and re-translate DOM
+            if (window.escmsEditor && window.escmsEditor.i18n) {
+                window.escmsEditor.i18n.loadLanguage(val).then(() => {
+                    window.escmsEditor.i18n.translateDOM();
+                    // Re-render settings to show new language
+                    const currentTab = Object.keys(this.tabContents).find(k => this.tabContents[k].style.display === 'block');
+                    if (this.overlay && this.overlay.parentNode) {
+                        this.overlay.parentNode.removeChild(this.overlay);
+                    }
+                    this.renderOverlay();
+                    document.body.appendChild(this.overlay);
+                    this.overlay.style.display = 'block';
+                    if (currentTab) this.switchTab(currentTab);
+                });
+            }
         });
         tab.appendChild(langSelect.element);
 

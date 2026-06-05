@@ -1,0 +1,11 @@
+{
+    "settings.language_title": "Idioma del Editor",
+    "settings.logo_title": "Logo del Sitio",
+    "settings.favicon_title": "Favicon del Sitio",
+    "settings.identity_desc": "Configura el logo y el favicon para SEO y etiquetas globales. Para mostrar el logo visualmente en la web, arrastra el bloque 'SiteLogo' al lienzo.",
+    "settings.tab_ide": "General",
+    "settings.tab_identity": "Identidad",
+    "settings.tab_layout": "Diseño y Colores",
+    "settings.webp_title": "Optimizar Imágenes (WebP)",
+    "settings.webp_desc": "Convierte las imágenes a formato WebP automáticamente para ahorrar ancho de banda y mejorar el SEO."
+}

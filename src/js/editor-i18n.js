@@ -130,6 +130,27 @@ class I18nEngine {
         this.dictionary = { ...enFallback };
     }
 
+    async loadLanguage(lang) {
+        if (lang === 'en') {
+            this.dictionary = { ...enFallback };
+            return;
+        }
+        try {
+            // Bypass cache to always get latest translations while we are developing
+            const res = await fetch(`https://raw.githubusercontent.com/guapsie/escms/main/locales/${lang}.json?t=${Date.now()}`);
+            if (res.ok) {
+                const data = await res.json();
+                this.dictionary = { ...enFallback, ...data };
+            } else {
+                console.warn(`Failed to load ${lang} locale from github, using fallback`);
+                this.dictionary = { ...enFallback };
+            }
+        } catch(e) {
+            console.warn(`Error loading ${lang} locale from github, using fallback`, e);
+            this.dictionary = { ...enFallback };
+        }
+    }
+
     translateDOM(rootElement = document) {
         rootElement.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
