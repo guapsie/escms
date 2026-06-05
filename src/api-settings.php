@@ -13,6 +13,27 @@ switch ($route) {
     case 'api/settings':
             if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
             if ($method === 'GET') {
+                $action = $_GET['action'] ?? '';
+                if ($action === 'download_locale') {
+                    $lang = $_GET['lang'] ?? '';
+                    if (!$lang || !preg_match('/^[a-z]{2}$/', $lang)) $send_json(['error' => 'Invalid lang'], 400);
+                    $path = __DIR__ . '/../data/locales/' . $lang . '.json';
+                    if (!file_exists($path)) {
+                        $url = "https://raw.githubusercontent.com/guapsie/escms/main/locales/{$lang}.json";
+                        $ctx = stream_context_create(['http' => ['timeout' => 3]]);
+                        $content = @file_get_contents($url, false, $ctx);
+                        if ($content) {
+                            if (!is_dir(dirname($path))) mkdir(dirname($path), 0755, true);
+                            file_put_contents($path, $content);
+                            $send_json(['status' => 'success', 'data' => json_decode($content, true)]);
+                        } else {
+                            $send_json(['error' => 'Not found on github'], 404);
+                        }
+                    } else {
+                        $send_json(['status' => 'success', 'data' => json_decode(file_get_contents($path), true)]);
+                    }
+                }
+
                 $options = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE 'ai_%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
                 $send_json(['status' => 'success', 'data' => $options]);
             } elseif ($method === 'POST') {

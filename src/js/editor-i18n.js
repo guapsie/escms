@@ -136,13 +136,17 @@ class I18nEngine {
             return;
         }
         try {
-            // Bypass cache to always get latest translations while we are developing
-            const res = await fetch(`https://raw.githubusercontent.com/guapsie/escms/main/locales/${lang}.json?t=${Date.now()}`);
+            const res = await fetch(`/api/settings?action=download_locale&lang=${lang}`);
             if (res.ok) {
                 const data = await res.json();
-                this.dictionary = { ...enFallback, ...data };
+                if (data.status === 'success' && data.data) {
+                    this.dictionary = { ...enFallback, ...data.data };
+                } else {
+                    console.warn(`Failed to parse ${lang} locale from server, using fallback`);
+                    this.dictionary = { ...enFallback };
+                }
             } else {
-                console.warn(`Failed to load ${lang} locale from github, using fallback`);
+                console.warn(`Failed to load ${lang} locale, using fallback`);
                 this.dictionary = { ...enFallback };
             }
         } catch(e) {
