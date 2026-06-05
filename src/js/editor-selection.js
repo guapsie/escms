@@ -116,13 +116,16 @@ class EscmsSelection {
         documentRoot.addEventListener('click', (e) => {
             e.stopPropagation();
 
-            // Si el usuario ha arrastrado para seleccionar texto (subrayar), 
-            // ignoramos el clic para no perder el foco ni seleccionar al padre por accidente.
             const sel = shadowRoot.getSelection ? shadowRoot.getSelection() : window.getSelection();
-            if (sel && !sel.isCollapsed) return;
+            
+            // Guardamos el rango de selección actual por si el usuario ha arrastrado para seleccionar texto
+            // en un nodo que aún no era editable. Así podremos restaurar su selección tras hacerlo editable.
+            let savedRange = null;
+            if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+                savedRange = sel.getRangeAt(0).cloneRange();
+            }
 
             // Encontrar el bloque de texto padre si hacemos clic en una etiqueta inline (strong, span, a, etc.)
-            // para hacer editable todo el bloque y no solo un trozo.
             let target = e.target;
             const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
             const closestBlock = target.closest(textBlockTags.join(','));
@@ -145,11 +148,19 @@ class EscmsSelection {
             this.selectedNode = target;
             this.selectedNode.classList.add('escms-selected');
 
-            const editableTags = [...textBlockTags, 'SPAN', 'A']; // SPAN y A como fallback si no tienen padre bloque
+            const editableTags = [...textBlockTags, 'SPAN', 'A']; // SPAN y A como fallback
             if (editableTags.includes(this.selectedNode.tagName)) {
                 this.selectedNode.setAttribute('contenteditable', 'true');
                 setTimeout(() => {
                     this.selectedNode.focus();
+                    
+                    // Si el usuario había seleccionado texto dentro de este nodo antes de que fuera editable,
+                    // restauramos su selección para que pueda escribir directamente y reemplazar el texto.
+                    if (savedRange && this.selectedNode.contains(savedRange.commonAncestorContainer)) {
+                        const newSel = shadowRoot.getSelection ? shadowRoot.getSelection() : window.getSelection();
+                        newSel.removeAllRanges();
+                        newSel.addRange(savedRange);
+                    }
                 }, 10);
             }
 
