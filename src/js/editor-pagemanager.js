@@ -34,11 +34,17 @@ class EscmsPageManager {
 
     async createPage() {
         try {
-            const res = await fetch('/api/pages/create', { method: 'POST' });
+            const res = await fetch('/api/pages/create', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
             const data = await res.json();
             if (data.status === 'success') {
                 await this.loadPages();
                 this.loadPage(data.id);
+            } else {
+                alert(data.msg || 'Error creating page');
             }
         } catch (e) {
             console.error('[ESCMS] Error creating page', e);
@@ -107,6 +113,12 @@ class EscmsPageManager {
     }
 
     async setSpecialPage(id, type) {
+        const msg = type === 'home' 
+            ? 'Are you sure? This will replace your current design with the template\'s Home layout. All existing content on this page will be lost.' 
+            : 'Are you sure? This will replace your current design with the template\'s Blog layout. All existing content on this page will be lost.';
+            
+        if (!confirm(msg)) return;
+        
         try {
             const endpoint = type === 'home' ? '/api/pages/set_home' : '/api/pages/set_blog';
             const res = await fetch(endpoint, {
@@ -117,6 +129,7 @@ class EscmsPageManager {
             const data = await res.json();
             if (data.status === 'success') {
                 await this.loadPages();
+                this.loadPage(id); // Reload the page to show the new template
             }
         } catch (e) {
             console.error('[ESCMS] Error setting special page', e);

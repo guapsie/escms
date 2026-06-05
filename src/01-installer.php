@@ -145,6 +145,18 @@ if ($needs_install) {
         $stmtOpt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('home_page_id', ?)");
         $stmtOpt->execute([$homeId]);
 
+        // Seed 404 page
+        $default404Data = '{"tag":"div","classes":["escms-template-404"],"children":[{"tag":"h1","children":["404"]},{"tag":"p","children":["Page not found"]}]}';
+        $default404Html = '<div class="escms-template-404"><h1>404</h1><p>Page not found</p></div>';
+        if (isset($tpl) && isset($tpl['views']['404'])) {
+            $nodeTree404 = ['tag' => 'div', 'classes' => ['escms-template-404'], 'children' => $tpl['views']['404']];
+            $default404Data = json_encode($nodeTree404);
+            if (isset($jsonToHtml)) {
+                $default404Html = $jsonToHtml($nodeTree404);
+            }
+        }
+        $stmt->execute(['404', '404', $default404Data, $default404Html]);
+
         if (isset($tpl['theme_config'])) {
             $tc = $tpl['theme_config'];
             $stmtTheme = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?)");

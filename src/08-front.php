@@ -8,11 +8,22 @@ if (!isset($pdo)) {
 }
 
 // $route is defined in 04-router.php
-$slug = $route === '' ? 'home' : $route;
+$slug = $route === '' ? null : $route;
 
 try {
-    $stmt = $pdo->prepare("SELECT title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE slug = ?");
-    $stmt->execute([$slug]);
+    if ($slug === null) {
+        $home_id = $config['home_page_id'] ?? null;
+        if ($home_id) {
+            $stmt = $pdo->prepare("SELECT title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE id = ?");
+            $stmt->execute([$home_id]);
+        } else {
+            $stmt = $pdo->prepare("SELECT title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages ORDER BY id ASC LIMIT 1");
+            $stmt->execute();
+        }
+    } else {
+        $stmt = $pdo->prepare("SELECT title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE slug = ?");
+        $stmt->execute([$slug]);
+    }
     $page = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($page && $page['status'] !== 'published' && !EscmsAuth::isLoggedIn()) {

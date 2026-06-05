@@ -141,11 +141,33 @@ switch ($route) {
             if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
             if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
             try {
-                $title = 'Draft ' . date('Y-m-d H:i:s');
-                $slug = 'draft-' . bin2hex(random_bytes(4));
-                $emptyContainer = '{"tag":"div","classes":["escms-container"],"styles":"max-width: var(--max-width); margin: 0px auto; padding: 20px;","children":[]}';
+                $title = trim($input['title'] ?? '');
+                if (!$title) {
+                    $title = 'Draft ' . date('Y-m-d H:i:s');
+                }
+                $slug = strtolower(preg_replace('/[^a-zA-Z0-9\-]/', '-', preg_replace('/\s+/', '-', $title)));
+                if (!$slug) $slug = 'page-' . time();
+                
+                $uniqueSlug = $slug;
+                $counter = 1;
+                while (true) {
+                    $stmt = $pdo->prepare("SELECT id FROM pages WHERE slug = ?");
+                    $stmt->execute([$uniqueSlug]);
+                    if (!$stmt->fetch()) break;
+                    $uniqueSlug = $slug . '-' . $counter++;
+                }
+
+                $editor_data = '{"tag":"div","classes":["escms-container"],"styles":"max-width: var(--max-width); margin: 0px auto; padding: 20px;","children":[]}';
+                $tpl_path = __DIR__ . '/../data/templates/pichi/pichi.json';
+                if (file_exists($tpl_path)) {
+                    $tpl = json_decode(file_get_contents($tpl_path), true);
+                    if (isset($tpl['views']['page'])) {
+                        $editor_data = json_encode(['tag' => 'div', 'classes' => ['escms-template-page'], 'children' => $tpl['views']['page']]);
+                    }
+                }
+
                 $stmt = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html) VALUES (?, ?, ?, '')");
-                $stmt->execute([$title, $slug, $emptyContainer]);
+                $stmt->execute([$title, $uniqueSlug, $editor_data]);
                 
                 $send_json(['status' => 'success', 'id' => $pdo->lastInsertId()]);
             } catch (Throwable $e) {
@@ -292,6 +314,24 @@ switch ($route) {
                 
                 $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('home_page_id', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
                 $stmt->execute([$id]);
+
+                // Apply template blueprint
+                $editor_data = null;
+                $tpl_path = __DIR__ . '/../data/templates/pichi/pichi.json';
+                if (file_exists($tpl_path)) {
+                    $tpl = json_decode(file_get_contents($tpl_path), true);
+                    if (isset($tpl['views']['home'])) {
+                        $editor_data = json_encode(['tag' => 'div', 'classes' => ['escms-template-home'], 'children' => $tpl['views']['home']]);
+                    } elseif (isset($tpl['views']['page'])) {
+                        $editor_data = json_encode(['tag' => 'div', 'classes' => ['escms-template-page'], 'children' => $tpl['views']['page']]);
+                    }
+                }
+                if ($editor_data === null) {
+                    $editor_data = '{"tag":"div","classes":["escms-container"],"styles":"max-width: var(--max-width); margin: 0px auto; padding: 20px;","children":[{"tag":"h1","children":["Home"]}]}';
+                }
+                
+                $stmt = $pdo->prepare("UPDATE pages SET editor_data = ? WHERE id = ?");
+                $stmt->execute([$editor_data, $id]);
                 
                 $send_json(['status' => 'success']);
             } catch (Throwable $e) {
@@ -308,6 +348,24 @@ switch ($route) {
                 
                 $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('blog_page_id', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
                 $stmt->execute([$id]);
+
+                // Apply template blueprint
+                $editor_data = null;
+                $tpl_path = __DIR__ . '/../data/templates/pichi/pichi.json';
+                if (file_exists($tpl_path)) {
+                    $tpl = json_decode(file_get_contents($tpl_path), true);
+                    if (isset($tpl['views']['blog'])) {
+                        $editor_data = json_encode(['tag' => 'div', 'classes' => ['escms-template-blog'], 'children' => $tpl['views']['blog']]);
+                    } elseif (isset($tpl['views']['page'])) {
+                        $editor_data = json_encode(['tag' => 'div', 'classes' => ['escms-template-page'], 'children' => $tpl['views']['page']]);
+                    }
+                }
+                if ($editor_data === null) {
+                    $editor_data = '{"tag":"div","classes":["escms-container"],"styles":"max-width: var(--max-width); margin: 0px auto; padding: 20px;","children":[{"tag":"h1","children":["Blog"]}]}';
+                }
+                
+                $stmt = $pdo->prepare("UPDATE pages SET editor_data = ? WHERE id = ?");
+                $stmt->execute([$editor_data, $id]);
                 
                 $send_json(['status' => 'success']);
             } catch (Throwable $e) {
@@ -346,6 +404,8 @@ switch ($route) {
                 $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
             }
             break;
+
+
 
     default:
         $send_json(['error' => 'Endpoint no encontrado en ' . basename(__FILE__)], 404);
