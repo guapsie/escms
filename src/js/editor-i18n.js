@@ -79,6 +79,7 @@ const enFallback = Object.freeze({
     "inspector.aria_label": "Aria Label",
     "settings.webp_title": "Optimize Images (WebP)",
     "settings.webp_desc": "Convert all uploaded images to WebP format automatically to save bandwidth and improve SEO.",
+    "settings.language_title": "Editor Language",
     "settings.logo_title": "Site Logo",
     "settings.favicon_title": "Site Favicon",
     "settings.identity_desc": "Set the logo and favicon for SEO and global meta tags. To display the logo visually on the page header, drag and drop the 'SiteLogo' Atom into the Canvas.",

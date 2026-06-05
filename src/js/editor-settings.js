@@ -10,7 +10,8 @@ class EscmsGlobalSettings {
             webp_enabled: true,
             escms_p2p_enabled: false,
             site_logo: '',
-            site_favicon: ''
+            site_favicon: '',
+            editor_language: 'en'
         };
     }
 
@@ -38,6 +39,7 @@ class EscmsGlobalSettings {
                     this.config.escms_p2p_enabled = data.data.escms_p2p_enabled === '1';
                     this.config.site_logo = data.data.site_logo || '';
                     this.config.site_favicon = data.data.site_favicon || '';
+                    this.config.editor_language = data.data.editor_language || 'en';
                     if (data.data.google_fonts) {
                         try {
                             this.googleFonts = JSON.parse(data.data.google_fonts);
@@ -386,6 +388,16 @@ class EscmsGlobalSettings {
             this.config.webp_enabled, 
             (val) => { this.saveConfig('webp_enabled', val); }
         ));
+
+        // Language
+        const langSelect = new EscmsSelect('settings.language_title', [
+            { value: 'es', label: 'Español' },
+            { value: 'en', label: 'English' }
+        ], this.config.editor_language, (val) => {
+            this.saveConfig('editor_language', val);
+            // Future: Load es.json and re-translate DOM
+        });
+        tab.appendChild(langSelect.element);
 
         return tab;
     }
