@@ -10,8 +10,20 @@ class EscmsCopilot {
 
     init(container) {
         this.container = container;
-        this.container.innerHTML = '<div style="padding: 1rem; color: rgba(245,245,245,0.4); text-align: center; font-size: 0.8rem;">Loading Copilot...</div>';
-        this.checkSettings();
+        
+        if (this.hasCheckedSettings) {
+            if (this.hasKey) {
+                this.renderChat();
+                if (this.promptInput) {
+                    setTimeout(() => this.promptInput.focus(), 50);
+                }
+            } else {
+                this.renderSettings();
+            }
+        } else {
+            this.container.innerHTML = '<div style="padding: 1rem; color: rgba(245,245,245,0.4); text-align: center; font-size: 0.8rem;">Loading Copilot...</div>';
+            this.checkSettings();
+        }
     }
 
     async checkSettings() {
@@ -22,10 +34,14 @@ class EscmsCopilot {
                 this.hasKey = data.has_key;
                 this.provider = data.provider || 'gemini';
                 this.model = data.model || '';
+                this.hasCheckedSettings = true;
                 
                 if (this.container) {
                     if (this.hasKey) {
                         this.renderChat();
+                        if (this.promptInput) {
+                            setTimeout(() => this.promptInput.focus(), 50);
+                        }
                     } else {
                         this.renderSettings();
                     }
@@ -258,42 +274,47 @@ class EscmsCopilot {
                 let aiText = data.text;
                 let parsedCommands = null;
 
-                // Extraer el JSON de la respuesta
-                const cmdIndex = aiText.indexOf('"commands"');
+                // Extraer el JSON de la respuesta de forma robusta
+                const jsonMatch = aiText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                let jsonStr = '';
                 
-                if (cmdIndex !== -1) {
-                    // Buscar la llave de apertura anterior a "commands"
-                    let startIdx = aiText.lastIndexOf('{', cmdIndex);
-                    if (startIdx !== -1) {
-                        let braceCount = 0;
-                        let endIdx = -1;
-                        for (let i = startIdx; i < aiText.length; i++) {
-                            if (aiText[i] === '{') braceCount++;
-                            else if (aiText[i] === '}') braceCount--;
-                            
-                            if (braceCount === 0) {
-                                endIdx = i;
-                                break;
-                            }
-                        }
-                        
-                        if (endIdx !== -1) {
-                            let jsonStr = aiText.substring(startIdx, endIdx + 1);
-                            try {
-                                // Limpiar comentarios // del JSON (groq suele meterlos)
-                                const cleanJsonStr = jsonStr.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
-                                const jsonObj = JSON.parse(cleanJsonStr);
-                                console.log('[ESCMS AI] JSON detectado:', jsonObj);
-                                if (jsonObj.commands && Array.isArray(jsonObj.commands)) {
-                                    parsedCommands = jsonObj.commands;
+                if (jsonMatch) {
+                    jsonStr = jsonMatch[1];
+                } else {
+                    const cmdIndex = aiText.indexOf('"commands"');
+                    if (cmdIndex !== -1) {
+                        let startIdx = aiText.lastIndexOf('{', cmdIndex);
+                        if (startIdx !== -1) {
+                            let braceCount = 0;
+                            let endIdx = -1;
+                            for (let i = startIdx; i < aiText.length; i++) {
+                                if (aiText[i] === '{') braceCount++;
+                                else if (aiText[i] === '}') braceCount--;
+                                
+                                if (braceCount === 0) {
+                                    endIdx = i;
+                                    break;
                                 }
-                                // Limpiar el JSON de la respuesta para que el usuario solo vea el texto
-                                aiText = aiText.replace(/```json[\s\S]*?```/gi, '').replace(jsonStr, '').trim();
-                            } catch (e) {
-                                aiText += `\n<br><span style="color:#ef4444;font-size:0.7rem;">(Error parsing JSON from AI: ${e.message})</span>`;
-                                console.error("Error parsing AI JSON", e);
+                            }
+                            if (endIdx !== -1) {
+                                jsonStr = aiText.substring(startIdx, endIdx + 1);
                             }
                         }
+                    }
+                }
+
+                if (jsonStr) {
+                    try {
+                        const cleanJsonStr = jsonStr.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
+                        const jsonObj = JSON.parse(cleanJsonStr);
+                        console.log('[ESCMS AI] JSON detectado:', jsonObj);
+                        if (jsonObj.commands && Array.isArray(jsonObj.commands)) {
+                            parsedCommands = jsonObj.commands;
+                        }
+                        aiText = aiText.replace(/```(?:json)?[\s\S]*?```/gi, '').replace(jsonStr, '').trim();
+                    } catch (e) {
+                        aiText += `\n<br><span style="color:#ef4444;font-size:0.7rem;">(Error parsing JSON from AI: ${e.message})</span>`;
+                        console.error("Error parsing AI JSON", e);
                     }
                 }
 
