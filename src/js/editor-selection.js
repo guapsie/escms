@@ -87,6 +87,11 @@ class EscmsSelection {
                 outline-offset: -2px;
                 background-color: rgba(59, 130, 246, 0.05) !important;
             }
+            .escms-hover {
+                outline: 1px solid rgba(59, 130, 246, 0.4) !important;
+                outline-offset: -1px;
+                background-color: rgba(59, 130, 246, 0.05) !important;
+            }
 
 
         `;
@@ -209,6 +214,39 @@ class EscmsSelection {
                         }
                     }));
                 } catch (err) {}
+            }
+        });
+
+        let currentHoverNode = null;
+        documentRoot.addEventListener('mouseover', (e) => {
+            if (window.escmsEditor && window.escmsEditor.leftpanel && window.escmsEditor.leftpanel.draggedDomNode) return;
+            
+            let target = e.target;
+            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
+            const closestBlock = target.closest(textBlockTags.join(','));
+            if (closestBlock && closestBlock.id !== 'document-root') target = closestBlock;
+            
+            if (target === documentRoot) {
+                if (currentHoverNode) {
+                    currentHoverNode.classList.remove('escms-hover');
+                    currentHoverNode = null;
+                }
+                return;
+            }
+            
+            if (currentHoverNode !== target) {
+                if (currentHoverNode) currentHoverNode.classList.remove('escms-hover');
+                currentHoverNode = target;
+                currentHoverNode.classList.add('escms-hover');
+            }
+        });
+
+        documentRoot.addEventListener('mouseout', (e) => {
+            if (!e.relatedTarget || (currentHoverNode && !currentHoverNode.contains(e.relatedTarget))) {
+                if (currentHoverNode) {
+                    currentHoverNode.classList.remove('escms-hover');
+                    currentHoverNode = null;
+                }
             }
         });
 
