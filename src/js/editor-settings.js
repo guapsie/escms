@@ -7,8 +7,7 @@ class EscmsGlobalSettings {
         this.tabContents = {};
         this.googleFonts = [];
         this.config = {
-            webp_enabled: true,
-            auto_zoom: true
+            webp_enabled: true
         };
     }
 
@@ -33,8 +32,6 @@ class EscmsGlobalSettings {
                 const data = await res.json();
                 if (data.status === 'success' && data.data) {
                     this.config.webp_enabled = data.data.webp_enabled !== '0';
-                    this.config.auto_zoom = data.data.auto_zoom !== '0';
-                    window.escmsAutoZoom = this.config.auto_zoom;
                     if (data.data.google_fonts) {
                         try {
                             this.googleFonts = JSON.parse(data.data.google_fonts);
@@ -343,18 +340,6 @@ class EscmsGlobalSettings {
             'webp_enabled', 
             this.config.webp_enabled, 
             (val) => { this.saveConfig('webp_enabled', val); }
-        ));
-
-        // Auto Zoom
-        tab.appendChild(createToggleSetting(
-            'settings.auto_zoom_title', 
-            'settings.auto_zoom_desc', 
-            'auto_zoom', 
-            this.config.auto_zoom, 
-            (val) => {
-                this.saveConfig('auto_zoom', val);
-                window.escmsAutoZoom = val;
-            }
         ));
 
         return tab;

@@ -15,7 +15,7 @@ try {
     $stmt->execute([$slug]);
     $page = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($page && $page['status'] !== 'published') {
+    if ($page && $page['status'] !== 'published' && !EscmsAuth::isLoggedIn()) {
         $page = false;
     }
 

@@ -68,12 +68,7 @@ class EscmsCanvas {
 
         this.setView('desktop', '100%');
 
-        window.addEventListener('escms-element-selected', (e) => {
-            const node = e.detail.node;
-            if (node && window.escmsAutoZoom !== false) {
-                this.focusNode(node, e.detail.clientX, e.detail.clientY);
-            }
-        });
+
 
         const ro = new ResizeObserver(() => {
             if (this.currentZoom > 0) this.updateScaler();
@@ -217,34 +212,21 @@ class EscmsCanvas {
         zoomGroup.appendChild(btnPlus);
         zoomGroup.appendChild(btnPreview);
 
-        const btnExitPreview = document.createElement('button');
-        btnExitPreview.id = 'btn-exit-preview';
-        btnExitPreview.innerHTML = `${icons.eye} Exit Preview`;
-        const svgExit = btnExitPreview.querySelector('svg');
-        if (svgExit) { svgExit.style.width = '18px'; svgExit.style.height = '18px'; }
-        document.body.appendChild(btnExitPreview);
+        btnPreview.addEventListener('click', () => {
+            const slug = (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.slug) 
+                         ? window.escmsEditor.currentPageObj.slug 
+                         : 'home';
+                         
+            const openPreview = () => {
+                const url = slug === 'home' ? '/' : '/' + slug;
+                window.open(url, '_blank');
+            };
 
-        const togglePreview = () => {
-            document.body.classList.toggle('escms-preview-mode');
-            if (this.host && this.host.shadowRoot) {
-                const docRoot = this.host.shadowRoot.getElementById('document-root');
-                if (docRoot) docRoot.classList.toggle('escms-preview-mode');
-            }
-        };
-
-        btnPreview.addEventListener('click', togglePreview);
-
-        btnExitPreview.addEventListener('click', () => {
-            document.body.classList.remove('escms-preview-mode');
-            if (this.host && this.host.shadowRoot) {
-                const docRoot = this.host.shadowRoot.getElementById('document-root');
-                if (docRoot) docRoot.classList.remove('escms-preview-mode');
-            }
-        });
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && document.body.classList.contains('escms-preview-mode')) {
-                btnExitPreview.click();
+            if (window.escmsEditor && window.escmsEditor.autosave) {
+                // Forzamos un guardado para previsualizar los últimos cambios
+                window.escmsEditor.autosave.saveToServer().then(openPreview).catch(openPreview);
+            } else {
+                openPreview();
             }
         });
 
@@ -345,78 +327,6 @@ class EscmsCanvas {
         }
     }
 
-    focusNode(node, clientX, clientY) {
-        let clickX_in_unscaled_host;
-        let clickY_in_unscaled_host;
-
-        if (clientX !== undefined && clientY !== undefined) {
-            // Get coordinates relative to current scaled host BEFORE zoom animation
-            const hostRect = this.host.getBoundingClientRect();
-            const screenX = clientX - hostRect.left;
-            const screenY = clientY - hostRect.top;
-            
-            clickX_in_unscaled_host = screenX / this.currentZoom;
-            clickY_in_unscaled_host = screenY / this.currentZoom;
-        }
-
-        const targetZoom = 1.5;
-        this.setZoom(targetZoom);
-        
-        setTimeout(() => {
-            let targetScrollLeft;
-            let targetScrollTop;
-            
-            if (clientX !== undefined && clientY !== undefined) {
-                const scaledX = clickX_in_unscaled_host * targetZoom;
-                const scaledY = clickY_in_unscaled_host * targetZoom;
-
-                const padX = Math.round(this.viewport.clientWidth / 2);
-                const padY = Math.round(this.viewport.clientHeight / 2);
-                
-                targetScrollLeft = (padX + scaledX) - (this.viewport.clientWidth * 0.25);
-                targetScrollTop = (padY + scaledY) - (this.viewport.clientHeight * 0.25);
-            } else {
-                let offsetLeft = 0;
-                let offsetTop = 0;
-                let curr = node;
-                
-                while (curr && curr.tagName !== 'BODY' && curr !== this.host && !curr.id?.includes('escms-canvas-host')) {
-                    offsetLeft += curr.offsetLeft || 0;
-                    offsetTop += curr.offsetTop || 0;
-                    curr = curr.offsetParent;
-                }
-
-                const clientWidth = node.clientWidth || node.offsetWidth || 0;
-                const clientHeight = node.clientHeight || node.offsetHeight || 0;
-
-                const scaledLeft = offsetLeft * targetZoom;
-                const scaledTop = offsetTop * targetZoom;
-                const scaledWidth = clientWidth * targetZoom;
-                const scaledHeight = clientHeight * targetZoom;
-
-                const padX = targetZoom > 1 ? Math.round(this.viewport.clientWidth / 2) : 0;
-                const padY = targetZoom > 1 ? Math.round(this.viewport.clientHeight / 2) : 0;
-
-                if (scaledWidth > this.viewport.clientWidth * 0.8) {
-                    targetScrollLeft = (padX + scaledLeft) - 40;
-                } else {
-                    targetScrollLeft = (padX + scaledLeft + (scaledWidth / 2)) - (this.viewport.clientWidth / 2);
-                }
-
-                if (scaledHeight > this.viewport.clientHeight * 0.8) {
-                    targetScrollTop = (padY + scaledTop) - 40;
-                } else {
-                    targetScrollTop = (padY + scaledTop + (scaledHeight / 2)) - (this.viewport.clientHeight / 2);
-                }
-            }
-            
-            this.viewport.scrollTo({
-                left: Math.max(0, targetScrollLeft),
-                top: Math.max(0, targetScrollTop),
-                behavior: 'smooth'
-            });
-        }, 50);
-    }
 
     createViewTabs() {
         const tabsContainer = document.createElement('div');

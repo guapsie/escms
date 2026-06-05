@@ -79,8 +79,7 @@ const enFallback = Object.freeze({
     "inspector.aria_label": "Aria Label",
     "settings.webp_title": "Optimize Images (WebP)",
     "settings.webp_desc": "WebP format improves performance and SEO. Disabling this will conserve original images.",
-    "settings.auto_zoom_title": "Auto-Zoom Canvas",
-    "settings.auto_zoom_desc": "Automatically zooms into the element you click on.",
+
     "inspector.alt_text": "ALT Text",
     "inspector.width": "Width",
     "inspector.image_align": "Alignment",
