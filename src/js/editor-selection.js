@@ -93,10 +93,127 @@ class EscmsSelection {
                 outline-offset: -1px;
                 background-color: rgba(59, 130, 246, 0.05) !important;
             }
+            .escms-drag-top {
+                box-shadow: inset 0 4px 0 0 var(--accent-solid, #3b82f6) !important;
+            }
+            .escms-drag-bottom {
+                box-shadow: inset 0 -4px 0 0 var(--accent-solid, #3b82f6) !important;
+            }
+            .escms-drag-inside {
+                background-color: rgba(59, 130, 246, 0.15) !important;
+                outline: 2px solid var(--accent-solid, #3b82f6) !important;
+                outline-offset: -2px;
+            }
+            @keyframes escmsDropIn {
+                0% { transform: scale(0.98); opacity: 0.5; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            .escms-dropped {
+                animation: escmsDropIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
 
 
         `;
         shadowRoot.appendChild(style);
+
+        let currentHoverNode = null;
+
+        const handle = document.createElement('div');
+        handle.className = 'escms-global-drag-handle';
+        handle.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>';
+        handle.style.cssText = `
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-solid, #3b82f6);
+            color: white;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            z-index: 10000;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: opacity 0.2s, background 0.2s;
+        `;
+        const svg = handle.querySelector('svg');
+        svg.style.width = '14px';
+        svg.style.height = '14px';
+        svg.style.pointerEvents = 'none';
+        
+        handle.draggable = true;
+        
+        handle.addEventListener('mouseenter', () => handle.style.background = 'var(--accent-hover, #2563eb)');
+        handle.addEventListener('mouseleave', (e) => {
+            handle.style.background = 'var(--accent-solid, #3b82f6)';
+            if (e.relatedTarget !== currentHoverNode && (!currentHoverNode || !currentHoverNode.contains(e.relatedTarget))) {
+                if (currentHoverNode) {
+                    currentHoverNode.classList.remove('escms-hover');
+                    currentHoverNode = null;
+                    updateHandlePosition(this.selectedNode);
+                }
+            }
+        });
+
+        shadowRoot.appendChild(handle);
+
+        const updateHandlePosition = (targetNode) => {
+            if (!targetNode || targetNode.id === 'document-root') {
+                handle.style.display = 'none';
+                return;
+            }
+            const host = document.getElementById('escms-canvas-host');
+            if (!host) return;
+            const hostRect = host.getBoundingClientRect();
+            const targetRect = targetNode.getBoundingClientRect();
+            const zoom = (window.escmsEditor && window.escmsEditor.canvas) ? window.escmsEditor.canvas.currentZoom : 1;
+            
+            let handleTop = ((targetRect.top - hostRect.top) / zoom - 10);
+            let handleLeft = ((targetRect.left - hostRect.left) / zoom - 10);
+            
+            if (handleTop < 0) handleTop = 4;
+            if (handleLeft < 0) handleLeft = 4;
+            
+            handle.style.top = handleTop + 'px';
+            handle.style.left = handleLeft + 'px';
+            handle.style.display = 'flex';
+        };
+
+        window.addEventListener('scroll', () => {
+            const active = currentHoverNode || this.selectedNode;
+            if (active) updateHandlePosition(active);
+        }, true);
+
+        window.addEventListener('escms-element-selected', (e) => {
+            if (!currentHoverNode || e.detail.node === currentHoverNode) {
+                 updateHandlePosition(e.detail.node);
+            }
+        });
+
+        handle.addEventListener('dragstart', (e) => {
+            window.escmsDraggedNode = currentHoverNode || this.selectedNode;
+            if (!window.escmsDraggedNode) {
+                e.preventDefault();
+                return;
+            }
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('application/json', JSON.stringify({ type: 'move', action: 'canvas-move' }));
+            
+            setTimeout(() => {
+                if (window.escmsDraggedNode) {
+                    window.escmsDraggedNode.style.opacity = '0.5';
+                }
+            }, 0);
+        });
+
+        handle.addEventListener('dragend', (e) => {
+            if (window.escmsDraggedNode) {
+                window.escmsDraggedNode.style.opacity = '';
+                window.escmsDraggedNode = null;
+            }
+            documentRoot.querySelectorAll('.escms-drag-target').forEach(el => el.classList.remove('escms-drag-target'));
+            updateHandlePosition(currentHoverNode || this.selectedNode);
+        });
 
         documentRoot.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -207,9 +324,18 @@ class EscmsSelection {
             const isAllowed = e.dataTransfer.types.includes('application/json');
             if (!isAllowed) return;
 
-            e.dataTransfer.dropEffect = 'copy';
+            if (window.escmsDraggedNode) {
+                e.dataTransfer.dropEffect = 'move';
+                let currentTarget = e.target;
+                if (currentTarget === window.escmsDraggedNode || window.escmsDraggedNode.contains(currentTarget)) {
+                    e.dataTransfer.dropEffect = 'none';
+                    return;
+                }
+            } else {
+                e.dataTransfer.dropEffect = 'copy';
+            }
 
-            documentRoot.querySelectorAll('.escms-drag-target').forEach(el => el.classList.remove('escms-drag-target'));
+            documentRoot.querySelectorAll('.escms-drag-target, .escms-drag-top, .escms-drag-bottom, .escms-drag-inside').forEach(el => el.classList.remove('escms-drag-target', 'escms-drag-top', 'escms-drag-bottom', 'escms-drag-inside'));
             
             let target = e.target;
             const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
@@ -219,15 +345,35 @@ class EscmsSelection {
                 target = closestBlock;
             }
 
-            if (target && target.id !== 'document-root') {
-                target.classList.add('escms-drag-target');
+            if (target) {
+                const rect = target.getBoundingClientRect();
+                const relY = e.clientY - rect.top;
+                const isContainer = ['DIV', 'SECTION', 'ARTICLE', 'MAIN', 'HEADER', 'FOOTER'].includes(target.tagName);
+                
+                if (target.id === 'document-root') {
+                    if (relY < rect.height * 0.5 && target.firstChild) {
+                        target.classList.add('escms-drag-top');
+                    } else {
+                        target.classList.add('escms-drag-bottom');
+                    }
+                } else {
+                    if (relY < rect.height * 0.25) {
+                        target.classList.add('escms-drag-top');
+                    } else if (relY > rect.height * 0.75) {
+                        target.classList.add('escms-drag-bottom');
+                    } else if (isContainer) {
+                        target.classList.add('escms-drag-inside');
+                    } else {
+                        target.classList.add('escms-drag-bottom');
+                    }
+                }
             }
         });
 
         documentRoot.addEventListener('dragleave', (e) => {
             e.stopPropagation();
             if (e.target && e.target.classList) {
-                e.target.classList.remove('escms-drag-target');
+                e.target.classList.remove('escms-drag-target', 'escms-drag-top', 'escms-drag-bottom', 'escms-drag-inside');
             }
         });
 
@@ -235,7 +381,7 @@ class EscmsSelection {
             e.preventDefault();
             e.stopPropagation();
 
-            documentRoot.querySelectorAll('.escms-drag-target').forEach(el => el.classList.remove('escms-drag-target'));
+            documentRoot.querySelectorAll('.escms-drag-target, .escms-drag-top, .escms-drag-bottom, .escms-drag-inside').forEach(el => el.classList.remove('escms-drag-target', 'escms-drag-top', 'escms-drag-bottom', 'escms-drag-inside'));
 
             const dataString = e.dataTransfer.getData('application/json');
             if (dataString) {
@@ -249,19 +395,56 @@ class EscmsSelection {
                         target = closestBlock;
                     }
                     
-                    window.dispatchEvent(new CustomEvent('escms-canvas-drop', {
-                        detail: { 
-                            payload: payload, 
-                            targetNode: target 
+                    if (payload.action === 'canvas-move' && window.escmsDraggedNode) {
+                        if (target && target !== window.escmsDraggedNode && !window.escmsDraggedNode.contains(target)) {
+                            const isContainer = ['DIV', 'SECTION', 'ARTICLE', 'MAIN', 'HEADER', 'FOOTER'].includes(target.tagName);
+                            const rect = target.getBoundingClientRect();
+                            const relY = e.clientY - rect.top;
+                            
+                            if (target.id === 'document-root') {
+                                if (relY < rect.height * 0.5 && target.firstChild) {
+                                    target.insertBefore(window.escmsDraggedNode, target.firstChild);
+                                } else {
+                                    target.appendChild(window.escmsDraggedNode);
+                                }
+                            } else {
+                                if (relY < rect.height * 0.25) {
+                                    target.parentNode.insertBefore(window.escmsDraggedNode, target);
+                                } else if (relY > rect.height * 0.75) {
+                                    target.parentNode.insertBefore(window.escmsDraggedNode, target.nextSibling);
+                                } else if (isContainer) {
+                                    target.appendChild(window.escmsDraggedNode);
+                                } else {
+                                    target.parentNode.insertBefore(window.escmsDraggedNode, target.nextSibling);
+                                }
+                            }
+
+                            const droppedNode = window.escmsDraggedNode;
+                            droppedNode.classList.add('escms-dropped');
+                            setTimeout(() => {
+                                droppedNode.classList.remove('escms-dropped');
+                            }, 300);
+
+                            setTimeout(() => {
+                                droppedNode.click();
+                                window.dispatchEvent(new Event('escms-dom-mutated'));
+                            }, 10);
                         }
-                    }));
+                    } else {
+                        window.dispatchEvent(new CustomEvent('escms-canvas-drop', {
+                            detail: { 
+                                payload: payload, 
+                                targetNode: target 
+                            }
+                        }));
+                    }
                 } catch (err) {}
             }
         });
 
-        let currentHoverNode = null;
         documentRoot.addEventListener('mouseover', (e) => {
             if (window.escmsEditor && window.escmsEditor.leftpanel && window.escmsEditor.leftpanel.draggedDomNode) return;
+            if (window.escmsDraggedNode) return;
             
             let target = e.target;
             const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
@@ -272,6 +455,7 @@ class EscmsSelection {
                 if (currentHoverNode) {
                     currentHoverNode.classList.remove('escms-hover');
                     currentHoverNode = null;
+                    updateHandlePosition(this.selectedNode);
                 }
                 return;
             }
@@ -280,14 +464,19 @@ class EscmsSelection {
                 if (currentHoverNode) currentHoverNode.classList.remove('escms-hover');
                 currentHoverNode = target;
                 currentHoverNode.classList.add('escms-hover');
+                updateHandlePosition(currentHoverNode);
             }
         });
 
         documentRoot.addEventListener('mouseout', (e) => {
+            if (e.relatedTarget === handle || handle.contains(e.relatedTarget)) {
+                return;
+            }
             if (!e.relatedTarget || (currentHoverNode && !currentHoverNode.contains(e.relatedTarget))) {
                 if (currentHoverNode) {
                     currentHoverNode.classList.remove('escms-hover');
                     currentHoverNode = null;
+                    updateHandlePosition(this.selectedNode);
                 }
             }
         });

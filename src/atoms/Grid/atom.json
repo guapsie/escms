@@ -1,8 +1,8 @@
 {
-    "name": "Portfolio",
+    "name": "Grid",
     "tag": "div",
     "icon": "grid",
-    "className": "escms-portfolio",
+    "className": "escms-grid",
     "allowedControls": [
         "imageCollection",
         "gridItemWidth",
@@ -14,8 +14,8 @@
     ],
     "attributes": {
         "role": "region",
-        "aria-label": "Portfolio",
-        "data-item-width": "250"
+        "aria-label": "Grid",
+        "data-item-width": "20"
     },
     "styles": {
         "display": "grid",
@@ -25,7 +25,7 @@
         "minHeight": "50px"
     },
     "children": [],
-    "category": "content",
+    "category": "layout",
     "version": "1.0.0",
     "authorized_domain": "localhost",
     "signature": "default_signature"

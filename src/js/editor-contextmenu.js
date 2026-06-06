@@ -28,14 +28,18 @@ class EscmsContextMenu {
             this.showMenu(e.detail.clientX, e.detail.clientY);
         });
 
-        document.addEventListener('click', () => {
-            this.hideMenu();
-        });
+        const handleOutsideClick = (e) => {
+            if (this.menu && !this.menu.contains(e.target)) {
+                this.hideMenu();
+            }
+        };
+
+        document.addEventListener('click', handleOutsideClick, true);
         
         // Clicks inside the shadow DOM also hide the menu
         const host = document.getElementById('escms-canvas-host');
         if (host && host.shadowRoot) {
-            host.shadowRoot.addEventListener('click', () => this.hideMenu());
+            host.shadowRoot.addEventListener('click', handleOutsideClick, true);
         }
     }
 
