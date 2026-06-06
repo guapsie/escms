@@ -31,7 +31,7 @@ ESCMS was born from a real frustration: the modern web is bloated. We are tired 
 - [x] Independent Admin/Front router.
 - [x] Dynamic hierarchical navigation menu.
 - [x] OTA Update system.
-- [ ] **ESCMS Network:** Native P2P infrastructure.
+- [x] ESCMS Network: Native P2P infrastructure.
 - [ ] **Atom Market:** Centralized repository to expand visual components.
 
 ## 🤝 Contributing
