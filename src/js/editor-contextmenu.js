@@ -69,6 +69,34 @@ class EscmsContextMenu {
                 }
             },
             {
+                id: 'copy_styles',
+                label: this.i18n.dictionary['copy_styles'] || 'Copy Styles',
+                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"></path><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"></path></svg>',
+                action: () => {
+                    window.escmsCopiedStyles = this.targetNode.getAttribute('style') || '';
+                }
+            }
+        ];
+
+        if (typeof window.escmsCopiedStyles !== 'undefined') {
+            items.push({
+                id: 'paste_styles',
+                label: this.i18n.dictionary['paste_styles'] || 'Paste Styles',
+                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>',
+                action: () => {
+                    if (window.escmsCopiedStyles) {
+                        this.targetNode.setAttribute('style', window.escmsCopiedStyles);
+                    } else {
+                        this.targetNode.removeAttribute('style');
+                    }
+                    window.dispatchEvent(new Event('escms-dom-mutated'));
+                    window.dispatchEvent(new CustomEvent('escms-element-selected', { detail: { node: this.targetNode } }));
+                }
+            });
+        }
+
+        items.push(
+            {
                 id: 'save_atom',
                 label: this.i18n.dictionary['save_atom'] || 'Save as Atom',
                 icon: icons.box || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>',
@@ -104,7 +132,7 @@ class EscmsContextMenu {
                     }
                 }
             }
-        ];
+        );
 
         items.forEach(item => {
             const btn = document.createElement('div');
