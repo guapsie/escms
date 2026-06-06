@@ -92,10 +92,11 @@ switch ($route) {
                 }
 
                 if ($action === 'check_update') {
+                    $force = isset($_GET['force']) && $_GET['force'] == '1';
                     $last_check = $pdo->query("SELECT v FROM options WHERE k='update_last_checked'")->fetchColumn();
                     $update_data = $pdo->query("SELECT v FROM options WHERE k='update_available_data'")->fetchColumn();
                     
-                    if (!$last_check || (time() - (int)$last_check) > 86400) { // 1 dia
+                    if ($force || !$last_check || (time() - (int)$last_check) > 86400) { // 1 dia
                         $ch = curl_init();
                         curl_setopt($ch, CURLOPT_URL, "https://api.github.com/repos/guapsie/escms/releases");
                         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
