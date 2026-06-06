@@ -180,6 +180,12 @@ switch ($route) {
                     unlink($update_file);
                     if (function_exists('opcache_invalidate')) opcache_invalidate(__DIR__ . '/../index.php', true);
                     
+                    // Purgar caché de idiomas para forzar su recarga
+                    $locales = glob(__DIR__ . '/../data/locales/*.json');
+                    if ($locales) {
+                        foreach ($locales as $l) @unlink($l);
+                    }
+
                     $pdo->exec("UPDATE options SET v = '{\"has_update\":false}' WHERE k = 'update_available_data'");
                     
                     $send_json(['status' => 'success']);
