@@ -91,6 +91,99 @@ switch ($route) {
                     $send_json(['error' => 'Failed to open zip'], 500);
                 }
 
+                if ($action === 'check_update') {
+                    $last_check = $pdo->query("SELECT v FROM options WHERE k='update_last_checked'")->fetchColumn();
+                    $update_data = $pdo->query("SELECT v FROM options WHERE k='update_available_data'")->fetchColumn();
+                    
+                    if (!$last_check || (time() - (int)$last_check) > 86400) { // 1 dia
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, "https://api.github.com/repos/guapsie/escms/releases");
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                        curl_setopt($ch, CURLOPT_USERAGENT, 'ESCMS-Updater');
+                        $response = curl_exec($ch);
+                        curl_close($ch);
+                        
+                        $releases = json_decode($response, true);
+                        if (is_array($releases) && count($releases) > 0) {
+                            $latest = $releases[0];
+                            $latest_version = $latest['tag_name'] ?? '';
+                            $current_version = defined('ESCMS_VERSION') ? ESCMS_VERSION : '0.0.0';
+                            
+                            $has_update = version_compare(ltrim($latest_version, 'v'), ltrim($current_version, 'v'), '>');
+                            
+                            $data_to_save = ['has_update' => $has_update, 'version' => $latest_version];
+                            if ($has_update && !empty($latest['assets'])) {
+                                foreach ($latest['assets'] as $asset) {
+                                    if ($asset['name'] === 'update.php') {
+                                        $data_to_save['download_url'] = $asset['browser_download_url'];
+                                        break;
+                                    }
+                                }
+                            }
+                            $update_data = json_encode($data_to_save);
+                        } else {
+                            $update_data = json_encode(['has_update' => false]);
+                        }
+                        
+                        $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+                        $stmt->execute(['update_last_checked', (string)time()]);
+                        $stmt->execute(['update_available_data', $update_data]);
+                    }
+                    
+                    $data = json_decode((string)$update_data, true) ?: ['has_update' => false];
+                    $send_json(['status' => 'success', 'has_update' => $data['has_update']]);
+                }
+
+                if ($action === 'update_core') {
+                    $update_data_raw = $pdo->query("SELECT v FROM options WHERE k='update_available_data'")->fetchColumn();
+                    $update_data = json_decode((string)$update_data_raw, true);
+                    
+                    if (!$update_data || empty($update_data['download_url'])) {
+                        $send_json(['error' => 'No hay URL de actualización disponible'], 400);
+                    }
+                    
+                    $download_url = $update_data['download_url'];
+                    $latest_version = $update_data['version'];
+                    
+                    // 1. PING TELEMETRÍA a tu servidor
+                    $domain = $_SERVER['HTTP_HOST'] ?? 'unknown';
+                    $ping_data = json_encode(['domain' => $domain, 'version' => $latest_version]);
+                    $ctx = stream_context_create([
+                        'http' => [
+                            'method' => 'POST',
+                            'header' => "Content-Type: application/json\r\n",
+                            'content' => $ping_data,
+                            'timeout' => 3
+                        ]
+                    ]);
+                    @file_get_contents('https://escms.dev/tracker.php?action=ping_update', false, $ctx);
+                    
+                    // 2. Descargar el update.php desde GitHub
+                    $ch = curl_init($download_url);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                    curl_setopt($ch, CURLOPT_USERAGENT, 'ESCMS-Updater');
+                    $installer_code = curl_exec($ch);
+                    if (curl_getinfo($ch, CURLINFO_HTTP_CODE) !== 200 || !$installer_code) {
+                        $send_json(['error' => 'Fallo al descargar la actualización desde GitHub'], 500);
+                    }
+                    curl_close($ch);
+                    
+                    // 3. Escribir y sobrescribir el núcleo
+                    $update_file = __DIR__ . '/../update.php';
+                    file_put_contents($update_file, $installer_code);
+                    
+                    if (!copy($update_file, __DIR__ . '/../index.php')) {
+                        $send_json(['error' => 'Fallo al sobrescribir index.php. Verifica permisos.'], 500);
+                    }
+                    unlink($update_file);
+                    if (function_exists('opcache_invalidate')) opcache_invalidate(__DIR__ . '/../index.php', true);
+                    
+                    $pdo->exec("UPDATE options SET v = '{\"has_update\":false}' WHERE k = 'update_available_data'");
+                    
+                    $send_json(['status' => 'success']);
+                }
+
                 $key = $input['key'] ?? null;
                 $value = $input['value'] ?? null;
                 if (!$key || str_starts_with($key, 'ai_')) $send_json(['status' => 'error', 'msg' => 'Invalid key'], 400);

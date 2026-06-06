@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+if (!defined('ESCMS_VERSION')) {
+    define('ESCMS_VERSION', '1.0.0-alpha');
+}
+
 // 1. El Escudo HTTPS y Cabeceras
 $is_localhost = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true) || ($_SERVER['SERVER_NAME'] ?? '') === 'localhost';
 $is_https = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');

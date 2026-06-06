@@ -232,6 +232,11 @@ if ($__is_kamikaze_trigger) {
     // 6. EL SUICIDIO: Sobrescribir este mismo archivo con el router
     $__router_b64 = '${routerBase64}';
     file_put_contents(__FILE__, base64_decode($__router_b64));
+    
+    // Matar la caché de PHP para evitar bucles infinitos
+    if (function_exists('opcache_invalidate')) {
+        opcache_invalidate(__FILE__, true);
+    }
 
     // Refrescar para que el servidor ejecute el nuevo index.php (el router)
     header('Location: ' . $_SERVER['REQUEST_URI']);
@@ -244,5 +249,7 @@ ${baseInstaller}
 `;
 
 fs.writeFileSync(outputFile, kamikazeLogic);
-console.log(`[ESCMS] Build Kamikaze completado en ${outputFile}`);
+const updateFile = path.join(outDir, 'update.php');
+fs.writeFileSync(updateFile, kamikazeLogic);
+console.log(`[ESCMS] Build Kamikaze completado en dist/index.php y dist/update.php`);
 console.log(`[ESCMS] ${payload.php.length} PHP, ${payload.js.length} JS, ${payload.css.length} CSS empaquetados.`);
