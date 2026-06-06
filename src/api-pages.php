@@ -69,6 +69,69 @@ switch ($route) {
                     $id = $pdo->lastInsertId();
                 }
 
+                if ($status === 'published') {
+                    $network_status = $pdo->query("SELECT v FROM options WHERE k='escms_p2p_enabled'")->fetchColumn();
+                    if ($network_status === '1') {
+                        $stmt = $pdo->prepare("SELECT title, slug FROM pages WHERE id = ?");
+                        $stmt->execute([$id]);
+                        $page_data = $stmt->fetch(PDO::FETCH_ASSOC);
+                        
+                        $thumbnail = '';
+                        if (preg_match('/<img[^>]+src=[\'"]([^\'"]+)[\'"][^>]*>/i', $public_html, $matches)) {
+                            $thumbnail = $matches[1];
+                            if (str_starts_with($thumbnail, '/')) {
+                                $thumbnail = 'https://' . ($_SERVER['HTTP_HOST'] ?? '') . $thumbnail;
+                            }
+                        }
+
+                        $ping_payload = json_encode([
+                            'domain' => $_SERVER['HTTP_HOST'] ?? 'unknown',
+                            'title' => $page_data['title'],
+                            'url' => 'https://' . ($_SERVER['HTTP_HOST'] ?? '') . '/' . $page_data['slug'],
+                            'thumbnail' => $thumbnail
+                        ]);
+
+                        $ctx = stream_context_create([
+                            'http' => [
+                                'method' => 'POST',
+                                'header' => "Content-Type: application/json\r\n",
+                                'content' => $ping_payload,
+                                'timeout' => 2
+                            ]
+                        ]);
+                        @file_get_contents('https://escms.dev/api/network.php?action=publish', false, $ctx);
+                        
+                        $feed_json = @file_get_contents('https://escms.dev/api/network.php?action=get_feed&domain=' . urlencode($_SERVER['HTTP_HOST'] ?? ''), false, stream_context_create(['http' => ['timeout' => 3]]));
+                        if ($feed_json) {
+                            $feed_data = json_decode($feed_json, true);
+                            if (isset($feed_data['status']) && $feed_data['status'] === 'success' && !empty($feed_data['posts'])) {
+                                $html = '<div class="escms-network-wrapper" style="padding: 40px 20px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05); margin-top: 40px;">';
+                                $html .= '<div style="max-width: var(--max-width, 1200px); margin: 0 auto;">';
+                                $html .= '<h3 style="margin-top:0; margin-bottom: 20px; font-size: 1.2rem; color: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 8px;">';
+                                $html .= '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent, #3b82f6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M8.7 10.7l6.6 -3.4"/><path d="M8.7 13.3l6.6 3.4"/></svg>';
+                                $html .= 'From the ESCMS Network</h3>';
+                                $html .= '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">';
+                                foreach ($feed_data['posts'] as $post) {
+                                    $html .= '<a href="' . htmlspecialchars($post['url']) . '" target="_blank" style="display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'; this.style.transform=\'translateY(-2px)\';" onmouseout="this.style.background=\'rgba(255,255,255,0.02)\'; this.style.transform=\'none\';">';
+                                    if (!empty($post['thumbnail'])) {
+                                        $html .= '<div style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; background-image: url(\'' . htmlspecialchars($post['thumbnail']) . '\'); background-size: cover; background-position: center;"></div>';
+                                    } else {
+                                        $html .= '<div style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></div>';
+                                    }
+                                    $html .= '<div style="flex-grow: 1; min-width: 0;">';
+                                    $html .= '<h4 style="margin: 0 0 6px 0; font-size: 0.95rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;">' . htmlspecialchars($post['title']) . '</h4>';
+                                    $html .= '<div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">' . htmlspecialchars(parse_url($post['url'], PHP_URL_HOST)) . '</div>';
+                                    $html .= '</div></a>';
+                                }
+                                $html .= '</div></div></div>';
+                                
+                                $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('network_feed_html', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+                                $stmt->execute([$html]);
+                            }
+                        }
+                    }
+                }
+
                 $send_json(['status' => 'success', 'id' => $id]);
             } catch (Throwable $e) {
                 $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);

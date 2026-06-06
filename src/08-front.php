@@ -200,6 +200,24 @@ if (!empty($options['site_favicon'])) {
     $favicon_html = '<link rel="icon" href="' . htmlspecialchars($options['site_favicon']) . '">';
 }
 
+// Inyectar ESCMS Network Feed si está activo
+if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '1' && !empty($options['network_feed_html'])) {
+    $feed = $options['network_feed_html'];
+    
+    // Attempt to inject Above Footer
+    if (($p = strripos($content, '<footer')) !== false) {
+        $content = substr_replace($content, $feed, $p, 0);
+    } 
+    // Fallback if no footer element exists: inject before the last closing div of the main container
+    elseif (($p = strripos($content, '</div>')) !== false) {
+        $content = substr_replace($content, $feed, $p, 0);
+    } 
+    // Absolute fallback: append to the end
+    else {
+        $content .= $feed;
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="<?= $html_lang ?>">

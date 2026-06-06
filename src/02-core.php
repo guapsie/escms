@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 if (!defined('ESCMS_VERSION')) {
-    define('ESCMS_VERSION', '1.0.0-alpha');
+    define('ESCMS_VERSION', '1.0.2-alpha');
 }
 
 // 1. El Escudo HTTPS y Cabeceras
