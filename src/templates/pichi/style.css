@@ -39,6 +39,14 @@ a:hover {
   text-decoration: underline;
 }
 
+blockquote {
+  border-left: 4px solid var(--color-accent);
+  padding-left: 1rem;
+  margin-left: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+}
+
 .pichi-container {
   max-width: var(--max-width);
   margin: 0 auto;
