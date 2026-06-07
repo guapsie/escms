@@ -277,5 +277,36 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
 </head>
 <body>
     <?= $content ?>
+    <?php if (EscmsAuth::isLoggedIn() && !empty($page['id'])): ?>
+    <script>
+        (function() {
+            const pageId = <?= json_encode($page['id']) ?>;
+            const storageKey = 'escms_draft_' + pageId;
+            
+            const applyDraft = (jsonStr) => {
+                if (!jsonStr) return;
+                try {
+                    const data = JSON.parse(jsonStr);
+                    if (data && data.html) {
+                        document.body.innerHTML = data.html;
+                    }
+                } catch(e) { console.error('Live preview error:', e); }
+            };
+
+            // Aplica el draft inicial si existe en LocalStorage (antes de que el server lo tenga)
+            const initialDraft = localStorage.getItem(storageKey);
+            if (initialDraft) {
+                applyDraft(initialDraft);
+            }
+
+            // Escucha cambios en tiempo real desde la pestaña del editor
+            window.addEventListener('storage', (e) => {
+                if (e.key === storageKey) {
+                    applyDraft(e.newValue);
+                }
+            });
+        })();
+    </script>
+    <?php endif; ?>
 </body>
 </html>

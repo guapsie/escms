@@ -238,12 +238,7 @@ class EscmsCanvas {
                 window.open(url, '_blank');
             };
 
-            if (window.escmsEditor && window.escmsEditor.autosave) {
-                // Forzamos un guardado para previsualizar los últimos cambios
-                window.escmsEditor.autosave.saveToServer().then(openPreview).catch(openPreview);
-            } else {
-                openPreview();
-            }
+            openPreview();
         });
 
         toolbar.appendChild(pillGroup);
@@ -349,6 +344,7 @@ class EscmsCanvas {
         tabsContainer.id = 'escms-view-tabs';
         tabsContainer.style.display = 'flex';
         tabsContainer.style.justifyContent = 'center';
+        tabsContainer.style.alignItems = 'center';
         tabsContainer.style.padding = '0.75rem 0';
         tabsContainer.style.backgroundColor = '#0a0a0a';
         tabsContainer.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
@@ -361,6 +357,7 @@ class EscmsCanvas {
         pillGroup.style.borderRadius = '9999px';
         pillGroup.style.padding = '2px';
         pillGroup.style.gap = '2px';
+        pillGroup.style.position = 'relative';
 
         const tabs = [
             { id: 'editor', label: 'EDITOR' },
@@ -391,7 +388,25 @@ class EscmsCanvas {
             pillGroup.appendChild(btn);
         });
 
+        const dirtyIndicator = document.createElement('div');
+        dirtyIndicator.id = 'escms-dirty-indicator';
+        dirtyIndicator.style.cssText = `
+            position: absolute;
+            right: -16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #f5f5f5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        `;
+
+        pillGroup.appendChild(dirtyIndicator);
         tabsContainer.appendChild(pillGroup);
+        
         return tabsContainer;
     }
 

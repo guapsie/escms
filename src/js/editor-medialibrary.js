@@ -175,6 +175,27 @@ class EscmsMediaLibrary {
         this.executeDeleteBtn.style.whiteSpace = 'nowrap';
         this.executeDeleteBtn.addEventListener('click', () => this.deleteSelected());
 
+        this.uploadingIndicatorBtn = document.createElement('div');
+        this.uploadingIndicatorBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="escms-spin"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg><span style="font-size:0.75rem; font-weight:bold; margin-left:6px;">Uploading...</span>';
+        this.uploadingIndicatorBtn.style.padding = '0 1rem';
+        this.uploadingIndicatorBtn.style.height = '32px';
+        this.uploadingIndicatorBtn.style.borderRadius = '16px';
+        this.uploadingIndicatorBtn.style.background = 'var(--accent-solid)';
+        this.uploadingIndicatorBtn.style.color = '#fff';
+        this.uploadingIndicatorBtn.style.display = 'none';
+        this.uploadingIndicatorBtn.style.alignItems = 'center';
+        this.uploadingIndicatorBtn.style.position = 'absolute';
+        this.uploadingIndicatorBtn.style.left = 'calc(100% + 8px)';
+        this.uploadingIndicatorBtn.style.whiteSpace = 'nowrap';
+        
+        // Add spin animation dynamically if it doesn't exist
+        if (!document.getElementById('escms-spin-style')) {
+            const style = document.createElement('style');
+            style.id = 'escms-spin-style';
+            style.innerHTML = '@keyframes escms-spin { 100% { transform: rotate(360deg); } } .escms-spin { animation: escms-spin 1s linear infinite; }';
+            document.head.appendChild(style);
+        }
+
         this.searchInput = document.createElement('input');
         this.searchInput.type = 'search';
         this.searchInput.placeholder = this.i18n ? (this.i18n.dictionary['medialibrary.search'] || 'Search media...') : 'Search media...';
@@ -202,6 +223,7 @@ class EscmsMediaLibrary {
         middleControls.appendChild(this.uploadBtn);
         middleControls.appendChild(this.deleteToggleBtn);
         middleControls.appendChild(this.executeDeleteBtn);
+        middleControls.appendChild(this.uploadingIndicatorBtn);
 
         const rightControls = document.createElement('div');
         rightControls.style.display = 'flex';
@@ -350,7 +372,8 @@ class EscmsMediaLibrary {
             wrapper.appendChild(check);
 
             const img = document.createElement('img');
-            img.src = item.url;
+            img.src = '/data/media/thumbs/' + item.name;
+            img.onerror = () => { img.src = item.url; };
             img.loading = 'lazy';
             img.style.width = '100%';
             img.style.height = '100%';
@@ -526,6 +549,13 @@ class EscmsMediaLibrary {
     }
 
     async uploadFiles(files) {
+        if (!files || files.length === 0) return;
+
+        this.uploadingIndicatorBtn.style.display = 'flex';
+        const span = this.uploadingIndicatorBtn.querySelector('span');
+        const uploadText = this.i18n ? (this.i18n.dictionary['medialibrary.uploading'] || 'Uploading') : 'Uploading';
+        span.textContent = `${uploadText} ${files.length} files...`;
+
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const formData = new FormData();
@@ -547,6 +577,9 @@ class EscmsMediaLibrary {
                 console.error('Upload error', err);
             }
         }
+
+        this.uploadingIndicatorBtn.style.display = 'none';
+
         // Force refresh
         this.filterMedia(this.searchInput.value);
     }

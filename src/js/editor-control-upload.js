@@ -102,9 +102,59 @@ class EscmsUploadControl {
         row.appendChild(this.uploadBtn);
         row.appendChild(this.fileInput);
 
+        // Size Toggle Row
+        this.sizeToggleRow = document.createElement('div');
+        this.sizeToggleRow.style.display = 'none';
+        this.sizeToggleRow.style.gap = '0.25rem';
+        this.sizeToggleRow.style.marginTop = '0.5rem';
+        this.sizeToggleRow.style.alignItems = 'center';
+
+        const sizeLabel = document.createElement('span');
+        sizeLabel.textContent = 'Size:';
+        sizeLabel.style.fontSize = '0.7rem';
+        sizeLabel.style.color = 'rgba(255,255,255,0.5)';
+        sizeLabel.style.marginRight = '0.25rem';
+
+        const styleSizeBtn = (btn) => {
+            btn.style.padding = '2px 8px';
+            btn.style.fontSize = '0.7rem';
+            btn.style.background = 'transparent';
+            btn.style.border = '1px solid rgba(255,255,255,0.2)';
+            btn.style.color = 'rgba(255,255,255,0.6)';
+            btn.style.borderRadius = '12px';
+            btn.style.cursor = 'pointer';
+        };
+
+        this.thumbBtn = document.createElement('button');
+        this.thumbBtn.textContent = 'Thumb';
+        styleSizeBtn(this.thumbBtn);
+
+        this.fullBtn = document.createElement('button');
+        this.fullBtn.textContent = 'Full';
+        styleSizeBtn(this.fullBtn);
+
+        this.thumbBtn.addEventListener('click', () => {
+            if (this.value && this.value.includes('/data/media/') && !this.value.includes('/thumbs/')) {
+                const newVal = this.value.replace('/data/media/', '/data/media/thumbs/');
+                this.setValue(newVal, true);
+            }
+        });
+
+        this.fullBtn.addEventListener('click', () => {
+            if (this.value && this.value.includes('/thumbs/')) {
+                const newVal = this.value.replace('/data/media/thumbs/', '/data/media/');
+                this.setValue(newVal, true);
+            }
+        });
+
+        this.sizeToggleRow.appendChild(sizeLabel);
+        this.sizeToggleRow.appendChild(this.thumbBtn);
+        this.sizeToggleRow.appendChild(this.fullBtn);
+
         this.element.appendChild(labelRow);
         this.element.appendChild(this.preview);
         this.element.appendChild(row);
+        this.element.appendChild(this.sizeToggleRow);
         
         this.updatePreview();
     }
@@ -113,8 +163,35 @@ class EscmsUploadControl {
         if (this.value) {
             this.preview.style.display = 'block';
             this.preview.style.backgroundImage = `url("${this.value}")`;
+            
+            // Show size toggle if it's a media image
+            const isMedia = this.value.includes('/data/media/');
+            const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(this.value);
+            if (isMedia && isImage) {
+                this.sizeToggleRow.style.display = 'flex';
+                if (this.value.includes('/thumbs/')) {
+                    this.thumbBtn.style.background = 'var(--accent-solid)';
+                    this.thumbBtn.style.color = '#fff';
+                    this.thumbBtn.style.border = '1px solid var(--accent-solid)';
+                    
+                    this.fullBtn.style.background = 'transparent';
+                    this.fullBtn.style.color = 'rgba(255,255,255,0.6)';
+                    this.fullBtn.style.border = '1px solid rgba(255,255,255,0.2)';
+                } else {
+                    this.fullBtn.style.background = 'var(--accent-solid)';
+                    this.fullBtn.style.color = '#fff';
+                    this.fullBtn.style.border = '1px solid var(--accent-solid)';
+                    
+                    this.thumbBtn.style.background = 'transparent';
+                    this.thumbBtn.style.color = 'rgba(255,255,255,0.6)';
+                    this.thumbBtn.style.border = '1px solid rgba(255,255,255,0.2)';
+                }
+            } else {
+                this.sizeToggleRow.style.display = 'none';
+            }
         } else {
             this.preview.style.display = 'none';
+            this.sizeToggleRow.style.display = 'none';
         }
     }
 
@@ -228,8 +305,58 @@ class EscmsBgImageControl {
         row.appendChild(this.uploadBtn);
         row.appendChild(this.clearBtn);
 
+        // Size Toggle Row
+        this.sizeToggleRow = document.createElement('div');
+        this.sizeToggleRow.style.display = 'none';
+        this.sizeToggleRow.style.gap = '0.25rem';
+        this.sizeToggleRow.style.marginTop = '0.5rem';
+        this.sizeToggleRow.style.alignItems = 'center';
+
+        const sizeLabel = document.createElement('span');
+        sizeLabel.textContent = 'Size:';
+        sizeLabel.style.fontSize = '0.7rem';
+        sizeLabel.style.color = 'rgba(255,255,255,0.5)';
+        sizeLabel.style.marginRight = '0.25rem';
+
+        const styleSizeBtn = (btn) => {
+            btn.style.padding = '2px 8px';
+            btn.style.fontSize = '0.7rem';
+            btn.style.background = 'transparent';
+            btn.style.border = '1px solid rgba(255,255,255,0.2)';
+            btn.style.color = 'rgba(255,255,255,0.6)';
+            btn.style.borderRadius = '12px';
+            btn.style.cursor = 'pointer';
+        };
+
+        this.thumbBtn = document.createElement('button');
+        this.thumbBtn.textContent = 'Thumb';
+        styleSizeBtn(this.thumbBtn);
+
+        this.fullBtn = document.createElement('button');
+        this.fullBtn.textContent = 'Full';
+        styleSizeBtn(this.fullBtn);
+
+        this.thumbBtn.addEventListener('click', () => {
+            if (this.imageUrl && this.imageUrl.includes('/data/media/') && !this.imageUrl.includes('/thumbs/')) {
+                const newVal = this.imageUrl.replace('/data/media/', '/data/media/thumbs/');
+                this.setValue({ image: newVal, size: this.bgSize, repeat: this.bgRepeat, position: this.bgPosition }, true);
+            }
+        });
+
+        this.fullBtn.addEventListener('click', () => {
+            if (this.imageUrl && this.imageUrl.includes('/thumbs/')) {
+                const newVal = this.imageUrl.replace('/data/media/thumbs/', '/data/media/');
+                this.setValue({ image: newVal, size: this.bgSize, repeat: this.bgRepeat, position: this.bgPosition }, true);
+            }
+        });
+
+        this.sizeToggleRow.appendChild(sizeLabel);
+        this.sizeToggleRow.appendChild(this.thumbBtn);
+        this.sizeToggleRow.appendChild(this.fullBtn);
+
         this.element.appendChild(label);
         this.element.appendChild(row);
+        this.element.appendChild(this.sizeToggleRow);
 
         // Dropdown Mode
         const modeOptions = [
@@ -308,10 +435,37 @@ class EscmsBgImageControl {
             this.preview.style.backgroundImage = `url("${this.imageUrl}")`;
             this.preview.textContent = '';
             this.modeSelect.element.style.display = 'block';
+
+            // Show size toggle if it's a media image
+            const isMedia = this.imageUrl.includes('/data/media/');
+            const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(this.imageUrl);
+            if (isMedia && isImage) {
+                this.sizeToggleRow.style.display = 'flex';
+                if (this.imageUrl.includes('/thumbs/')) {
+                    this.thumbBtn.style.background = 'var(--accent-solid)';
+                    this.thumbBtn.style.color = '#fff';
+                    this.thumbBtn.style.border = '1px solid var(--accent-solid)';
+                    
+                    this.fullBtn.style.background = 'transparent';
+                    this.fullBtn.style.color = 'rgba(255,255,255,0.6)';
+                    this.fullBtn.style.border = '1px solid rgba(255,255,255,0.2)';
+                } else {
+                    this.fullBtn.style.background = 'var(--accent-solid)';
+                    this.fullBtn.style.color = '#fff';
+                    this.fullBtn.style.border = '1px solid var(--accent-solid)';
+                    
+                    this.thumbBtn.style.background = 'transparent';
+                    this.thumbBtn.style.color = 'rgba(255,255,255,0.6)';
+                    this.thumbBtn.style.border = '1px solid rgba(255,255,255,0.2)';
+                }
+            } else {
+                this.sizeToggleRow.style.display = 'none';
+            }
         } else {
             this.preview.style.backgroundImage = 'none';
             this.preview.textContent = 'No Image';
-            this.modeSelect.element.style.display = 'none'; // Ocultar dropdown si no hay imagen
+            this.modeSelect.element.style.display = 'none';
+            this.sizeToggleRow.style.display = 'none';
         }
     }
 }

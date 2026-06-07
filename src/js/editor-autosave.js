@@ -4,8 +4,20 @@ class EscmsAutosave {
         this.documentRoot = null;
         this.pageId = null;
         this.statusIndicator = null;
-        this.saveTimeout = null;
+        this.localSaveTimeout = null;
+        this.syncInterval = null;
         this.isSaving = false;
+        this.needsSync = false;
+        this.isReady = true;
+    }
+
+    pause() {
+        this.isReady = false;
+        clearTimeout(this.localSaveTimeout);
+    }
+
+    resume() {
+        setTimeout(() => { this.isReady = true; }, 100);
     }
 
     init(documentRoot, initialPageId, statusIndicator) {
@@ -14,8 +26,9 @@ class EscmsAutosave {
         this.statusIndicator = statusIndicator;
 
         const observer = new MutationObserver(() => {
-            clearTimeout(this.saveTimeout);
-            this.saveTimeout = setTimeout(() => this.saveToServer(), 1000);
+            if (!this.isReady) return;
+            clearTimeout(this.localSaveTimeout);
+            this.localSaveTimeout = setTimeout(() => this.saveToLocal(), 500);
         });
 
         observer.observe(this.documentRoot, {
@@ -24,41 +37,90 @@ class EscmsAutosave {
             characterData: true,
             subtree: true
         });
+
+        // Background server sync every 10 seconds
+        this.syncInterval = setInterval(() => {
+            if (this.needsSync && !this.isSaving) {
+                this.saveToServer();
+            }
+        }, 10000);
+
+        // Ensure data is sent on tab close
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && this.needsSync) {
+                this.saveToServer(true); // true = use keepalive
+            }
+        });
     }
 
-    async saveToServer() {
-        if (this.isSaving || !this.documentRoot) return;
+    saveToLocal() {
+        if (!this.documentRoot) return;
+        
+        try {
+            const editorData = this.getCleanData();
+            const key = this.componentId ? `escms_comp_${this.componentId}` : `escms_page_${this.pageId}`;
+            
+            const previousDataRaw = localStorage.getItem(key);
+            if (previousDataRaw) {
+                try {
+                    const previousData = JSON.parse(previousDataRaw);
+                    // Comparamos el AST (json) en lugar de todo el string, porque el HTML 
+                    // en crudo puede cambiar por extensiones del navegador o atributos temporales
+                    if (JSON.stringify(previousData.json) === JSON.stringify(editorData.json)) {
+                        return; 
+                    }
+                } catch(e) {}
+            }
+            
+            const currentJson = JSON.stringify(editorData);
+            localStorage.setItem(key, currentJson);
+            
+            this.needsSync = true;
+            this.updateStatus('Saved (Local)');
+        } catch(e) {
+            console.error('LocalStorage limit reached or error', e);
+        }
+    }
+
+    getCleanData() {
+        const clone = this.documentRoot.cloneNode(true);
+        clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+        clone.querySelectorAll('.escms-selected').forEach(el => el.classList.remove('escms-selected'));
+        clone.querySelectorAll('[class=""]').forEach(el => el.removeAttribute('class'));
+        
+        clone.removeAttribute('id');
+        clone.removeAttribute('style');
+
+        return {
+            json: EscmsParser.domToJson(clone),
+            html: clone.innerHTML
+        };
+    }
+
+    async saveToServer(useKeepAlive = false) {
+        if (this.isSaving || !this.documentRoot || !this.needsSync) return;
         
         this.isSaving = true;
         this.updateStatus('topbar.saving');
 
         try {
-            const clone = this.documentRoot.cloneNode(true);
-            clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
-            clone.querySelectorAll('.escms-selected').forEach(el => el.classList.remove('escms-selected'));
-            clone.querySelectorAll('[class=""]').forEach(el => el.removeAttribute('class'));
-            
-            // Strip the id and transition styles from the root clone so they don't leak into component/page data
-            clone.removeAttribute('id');
-            clone.removeAttribute('style');
-
-            const editorData = EscmsParser.domToJson(clone);
+            const dataCache = this.getCleanData();
             
             // Si estamos guardando un componente en lugar de una página
             if (this.componentId) {
-                const publicHtml = clone.innerHTML;
                 const payload = {
                     id: this.componentId,
                     name: this.componentName || 'Component',
                     ref_id: this.componentRefId || 'comp',
-                    editor_data: JSON.stringify(editorData),
-                    public_html: publicHtml
+                    editor_data: JSON.stringify(dataCache.json),
+                    public_html: dataCache.html
                 };
 
                 const res = await fetch('/api/components/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    keepalive: useKeepAlive
                 });
                 
                 const data = await res.json();
@@ -67,6 +129,7 @@ class EscmsAutosave {
                     if (window.escmsComponents && this.componentRefId) {
                         window.escmsComponents[this.componentRefId].editor_data = payload.editor_data;
                     }
+                    this.needsSync = false;
                     this.updateStatus('topbar.saved');
                     setTimeout(() => {
                         const st = (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.status === 'published') ? 'topbar.published' : 'topbar.draft';
@@ -80,24 +143,25 @@ class EscmsAutosave {
                 }
             } else {
                 // Guardado normal de página
-                const publicHtml = clone.innerHTML;
                 const payload = {
                     id: this.pageId,
-                    editor_data: JSON.stringify(editorData),
-                    public_html: publicHtml, // Dejamos que PHP compile el HTML en el backend
+                    editor_data: JSON.stringify(dataCache.json),
+                    public_html: dataCache.html, // Dejamos que PHP compile el HTML en el backend
                     status: (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.status) ? window.escmsEditor.currentPageObj.status : 'draft'
                 };
 
                 const res = await fetch('/api/pages/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    keepalive: useKeepAlive
                 });
 
                 const data = await res.json();
 
                 if (data.status === 'success') {
                     if (!this.pageId && data.id) this.pageId = data.id;
+                    this.needsSync = false;
                     this.updateStatus('topbar.saved');
                     setTimeout(() => {
                         const st = (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.status === 'published') ? 'topbar.published' : 'topbar.draft';
@@ -123,9 +187,12 @@ class EscmsAutosave {
     updateStatus(i18nKey, isError = false) {
         if (this.i18n) {
             const text = this.i18n.dictionary[i18nKey] || i18nKey;
+            const indicator = document.getElementById('escms-dirty-indicator');
             
-            if (i18nKey === 'topbar.saved' && window.escmsToast) {
-                window.escmsToast(text, 'success');
+            if (i18nKey === 'Saved (Local)') {
+                if (indicator) indicator.style.opacity = '0.8';
+            } else if (i18nKey === 'topbar.saved') {
+                if (indicator) indicator.style.opacity = '0';
             } else if (isError && window.escmsToast) {
                 window.escmsToast(text, 'error');
             }

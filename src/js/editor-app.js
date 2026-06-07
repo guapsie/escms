@@ -127,6 +127,7 @@ class EscmsEditor {
                 const existingBanner = document.getElementById('escms-component-banner');
                 if (existingBanner) existingBanner.remove();
 
+                if (this.autosave) this.autosave.pause();
                 docRoot.innerHTML = '';
                 
                 if (page.editor_data) {
@@ -146,6 +147,7 @@ class EscmsEditor {
                 docRoot.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
                 docRoot.style.opacity = '1';
                 docRoot.style.transform = 'scale(1)';
+                if (this.autosave) this.autosave.resume();
             
             if (this.autosave) {
                 this.autosave.pageId = page.id;
@@ -245,6 +247,7 @@ class EscmsEditor {
             docRoot.style.transform = 'scale(0.98)';
             
             setTimeout(() => {
+                if (this.autosave) this.autosave.pause();
                 docRoot.innerHTML = '';
                 
                 if (comp.editor_data) {
@@ -264,6 +267,7 @@ class EscmsEditor {
                 docRoot.style.transition = 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
                 docRoot.style.opacity = '1';
                 docRoot.style.transform = 'scale(1)';
+                if (this.autosave) this.autosave.resume();
             
             if (this.autosave) {
                 this.autosave.pageId = null;

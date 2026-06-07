@@ -91,6 +91,26 @@ switch ($route) {
                     imagecopyresampled($dst, $src, 0, 0, 0, 0, $new_w, $new_h, $w, $h);
                     imagewebp($dst, $media_dir . $final_name, 85);
                     imagedestroy($dst);
+
+                    // Thumbnail generation
+                    $thumb_dir = $media_dir . 'thumbs/';
+                    if (!is_dir($thumb_dir)) @mkdir($thumb_dir, 0755, true);
+                    
+                    $thumb_w = min($w, 400);
+                    $thumb_h = (int)($h * ($thumb_w / $w));
+                    $thumb_dst = imagecreatetruecolor($thumb_w, $thumb_h);
+                    
+                    if ($ext === 'png' || $ext === 'webp') {
+                        imagealphablending($thumb_dst, false);
+                        imagesavealpha($thumb_dst, true);
+                        $transparent = imagecolorallocatealpha($thumb_dst, 255, 255, 255, 127);
+                        imagefilledrectangle($thumb_dst, 0, 0, $thumb_w, $thumb_h, $transparent);
+                    }
+                    
+                    imagecopyresampled($thumb_dst, $src, 0, 0, 0, 0, $thumb_w, $thumb_h, $w, $h);
+                    imagewebp($thumb_dst, $thumb_dir . $final_name, 80);
+                    imagedestroy($thumb_dst);
+
                     imagedestroy($src);
                 } else {
                     $generate_webp = false; // fallback if imagecreate fails
@@ -132,8 +152,13 @@ switch ($route) {
                 // Prevent directory traversal
                 $safe_filename = basename($filename);
                 $path = $media_dir . '/' . $safe_filename;
+                $thumb_path = $media_dir . '/thumbs/' . $safe_filename;
+                
                 if (file_exists($path) && is_file($path)) {
                     unlink($path);
+                    if (file_exists($thumb_path) && is_file($thumb_path)) {
+                        unlink($thumb_path);
+                    }
                     $deleted++;
                 }
             }

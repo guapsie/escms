@@ -12,6 +12,7 @@ if ($needs_install || $needs_assets) {
     $dirs = [
         $data_dir,
         $data_dir . '/media',
+        $data_dir . '/media/thumbs',
         $data_dir . '/templates',
         $data_dir . '/atoms',
         $data_dir . '/locales',

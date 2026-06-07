@@ -173,9 +173,79 @@ class EscmsSelection {
 
         shadowRoot.appendChild(handle);
 
+        // Setup Resize Handles
+        const resizeHandles = {};
+        const corners = ['nw', 'ne', 'sw', 'se'];
+        let activeResizeCorner = null;
+        let initialResizeWidth = 0;
+        let initialMouseX = 0;
+        let isResizing = false;
+
+        corners.forEach(corner => {
+            const el = document.createElement('div');
+            el.style.cssText = `
+                position: absolute;
+                width: 8px;
+                height: 8px;
+                background: #ffffff;
+                border: 2px solid var(--accent-solid, #3b82f6);
+                z-index: 10001;
+                display: none;
+                cursor: ${corner}-resize;
+                box-sizing: border-box;
+            `;
+            
+            el.addEventListener('mousedown', (e) => {
+                if (!this.selectedNode || this.selectedNode.tagName !== 'IMG') return;
+                e.preventDefault();
+                e.stopPropagation();
+                
+                isResizing = true;
+                activeResizeCorner = corner;
+                initialMouseX = e.clientX;
+                const rect = this.selectedNode.getBoundingClientRect();
+                initialResizeWidth = rect.width;
+                
+                const zoom = (window.escmsEditor && window.escmsEditor.canvas) ? window.escmsEditor.canvas.currentZoom : 1;
+                
+                const onMouseMove = (moveEvent) => {
+                    if (!isResizing) return;
+                    const deltaX = (moveEvent.clientX - initialMouseX) / zoom;
+                    let newWidth = initialResizeWidth;
+                    
+                    if (activeResizeCorner === 'se' || activeResizeCorner === 'ne') {
+                        newWidth = initialResizeWidth + deltaX;
+                    } else if (activeResizeCorner === 'sw' || activeResizeCorner === 'nw') {
+                        newWidth = initialResizeWidth - deltaX;
+                    }
+                    
+                    if (newWidth > 10) {
+                        this.selectedNode.style.width = newWidth + 'px';
+                        this.selectedNode.style.height = 'auto';
+                        updateHandlePosition(this.selectedNode);
+                    }
+                };
+                
+                const onMouseUp = () => {
+                    isResizing = false;
+                    activeResizeCorner = null;
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    window.dispatchEvent(new Event('escms-dom-mutated'));
+                };
+                
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+            
+            shadowRoot.appendChild(el);
+            resizeHandles[corner] = el;
+        });
+
         const updateHandlePosition = (targetNode) => {
             if (!targetNode || targetNode.id === 'document-root') {
                 handle.style.display = 'none';
+                corners.forEach(c => resizeHandles[c].style.display = 'none');
                 return;
             }
             const host = document.getElementById('escms-canvas-host');
@@ -193,6 +263,30 @@ class EscmsSelection {
             handle.style.top = handleTop + 'px';
             handle.style.left = handleLeft + 'px';
             handle.style.display = 'flex';
+            
+            // Image Resizers
+            if (targetNode.tagName === 'IMG') {
+                const top = (targetRect.top - hostRect.top) / zoom;
+                const bottom = (targetRect.bottom - hostRect.top) / zoom;
+                const left = (targetRect.left - hostRect.left) / zoom;
+                const right = (targetRect.right - hostRect.left) / zoom;
+                
+                resizeHandles['nw'].style.top = (top - 4) + 'px';
+                resizeHandles['nw'].style.left = (left - 4) + 'px';
+                
+                resizeHandles['ne'].style.top = (top - 4) + 'px';
+                resizeHandles['ne'].style.left = (right - 4) + 'px';
+                
+                resizeHandles['sw'].style.top = (bottom - 4) + 'px';
+                resizeHandles['sw'].style.left = (left - 4) + 'px';
+                
+                resizeHandles['se'].style.top = (bottom - 4) + 'px';
+                resizeHandles['se'].style.left = (right - 4) + 'px';
+                
+                corners.forEach(c => resizeHandles[c].style.display = 'block');
+            } else {
+                corners.forEach(c => resizeHandles[c].style.display = 'none');
+            }
         };
 
         window.addEventListener('scroll', () => {
