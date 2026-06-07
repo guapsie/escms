@@ -33,20 +33,26 @@ class EscmsAutosave {
         this.updateStatus('topbar.saving');
 
         try {
-            const editorData = EscmsParser.domToJson(this.documentRoot);
-            
             const clone = this.documentRoot.cloneNode(true);
             clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
             clone.querySelectorAll('.escms-selected').forEach(el => el.classList.remove('escms-selected'));
             clone.querySelectorAll('[class=""]').forEach(el => el.removeAttribute('class'));
             
+            // Strip the id and transition styles from the root clone so they don't leak into component/page data
+            clone.removeAttribute('id');
+            clone.removeAttribute('style');
+
+            const editorData = EscmsParser.domToJson(clone);
+            
             // Si estamos guardando un componente en lugar de una página
             if (this.componentId) {
+                const publicHtml = clone.innerHTML;
                 const payload = {
                     id: this.componentId,
                     name: this.componentName || 'Component',
                     ref_id: this.componentRefId || 'comp',
-                    editor_data: JSON.stringify(editorData)
+                    editor_data: JSON.stringify(editorData),
+                    public_html: publicHtml
                 };
 
                 const res = await fetch('/api/components/save', {

@@ -46,6 +46,12 @@
                 "children": [
                   "ESCMS"
                 ]
+              },
+              {
+                "atom": "Nav",
+                "props": {
+                  "class-name": "pichi-nav"
+                }
               }
             ]
           }

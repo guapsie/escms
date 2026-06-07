@@ -93,6 +93,22 @@ class EscmsSelection {
                 outline-offset: -1px;
                 background-color: rgba(59, 130, 246, 0.05) !important;
             }
+            
+            /* Component Highlight Styles (Malva) */
+            escms-component {
+                outline: 2px dashed #9333ea !important;
+                outline-offset: -2px;
+                display: block;
+            }
+            escms-component.escms-hover {
+                outline: 2px solid rgba(147, 51, 234, 0.6) !important;
+                background-color: rgba(147, 51, 234, 0.05) !important;
+            }
+            escms-component.escms-selected {
+                outline: 3px solid #9333ea !important;
+                background-color: rgba(147, 51, 234, 0.1) !important;
+            }
+
             .escms-drag-top {
                 box-shadow: inset 0 4px 0 0 var(--accent-solid, #3b82f6) !important;
             }
@@ -215,6 +231,15 @@ class EscmsSelection {
             updateHandlePosition(currentHoverNode || this.selectedNode);
         });
 
+        const resolveTarget = (target) => {
+            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
+            const closestBlock = target.closest(textBlockTags.join(','));
+            if (closestBlock && closestBlock.id !== 'document-root') target = closestBlock;
+            const compParent = target.closest('escms-component');
+            if (compParent) target = compParent;
+            return target;
+        };
+
         documentRoot.addEventListener('click', (e) => {
             e.stopPropagation();
 
@@ -228,13 +253,7 @@ class EscmsSelection {
             }
 
             // Encontrar el bloque de texto padre si hacemos clic en una etiqueta inline (strong, span, a, etc.)
-            let target = e.target;
-            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
-            const closestBlock = target.closest(textBlockTags.join(','));
-            
-            if (closestBlock && closestBlock.id !== 'document-root') {
-                target = closestBlock;
-            }
+            let target = resolveTarget(e.target);
 
             // Si hacemos clic en el nodo que ya está seleccionado, 
             // abortamos para no destruir el cursor ni la selección de texto.
@@ -283,13 +302,7 @@ class EscmsSelection {
             e.stopPropagation();
             
             // First select the node exactly like left click
-            let target = e.target;
-            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
-            const closestBlock = target.closest(textBlockTags.join(','));
-            
-            if (closestBlock && closestBlock.id !== 'document-root') {
-                target = closestBlock;
-            }
+            let target = resolveTarget(e.target);
 
             if (this.selectedNode !== target) {
                 if (this.selectedNode) {
@@ -337,13 +350,7 @@ class EscmsSelection {
 
             documentRoot.querySelectorAll('.escms-drag-target, .escms-drag-top, .escms-drag-bottom, .escms-drag-inside').forEach(el => el.classList.remove('escms-drag-target', 'escms-drag-top', 'escms-drag-bottom', 'escms-drag-inside'));
             
-            let target = e.target;
-            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
-            const closestBlock = target.closest(textBlockTags.join(','));
-            
-            if (closestBlock && closestBlock.id !== 'document-root') {
-                target = closestBlock;
-            }
+            let target = resolveTarget(e.target);
 
             if (target) {
                 const rect = target.getBoundingClientRect();
@@ -387,19 +394,15 @@ class EscmsSelection {
             if (dataString) {
                 try {
                     const payload = JSON.parse(dataString);
-                    let target = e.target;
-                    const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
-                    const closestBlock = target.closest(textBlockTags.join(','));
-                    
-                    if (closestBlock && closestBlock.id !== 'document-root') {
-                        target = closestBlock;
-                    }
+                    let target = resolveTarget(e.target);
                     
                     if (payload.action === 'canvas-move' && window.escmsDraggedNode) {
                         if (target && target !== window.escmsDraggedNode && !window.escmsDraggedNode.contains(target)) {
                             const isContainer = ['DIV', 'SECTION', 'ARTICLE', 'MAIN', 'HEADER', 'FOOTER'].includes(target.tagName);
                             const rect = target.getBoundingClientRect();
                             const relY = e.clientY - rect.top;
+                            
+                            window.escmsDraggedNode.remove();
                             
                             if (target.id === 'document-root') {
                                 if (relY < rect.height * 0.5 && target.firstChild) {
@@ -431,10 +434,27 @@ class EscmsSelection {
                             }, 10);
                         }
                     } else {
+                        // Calculate dropAction for new atoms/components
+                        let dropAction = 'inside';
+                        if (target && target.id !== 'document-root') {
+                            const rect = target.getBoundingClientRect();
+                            const relY = e.clientY - rect.top;
+                            const isContainer = ['DIV', 'SECTION', 'ARTICLE', 'MAIN', 'HEADER', 'FOOTER'].includes(target.tagName);
+                            
+                            if (relY < rect.height * 0.25) dropAction = 'before';
+                            else if (relY > rect.height * 0.75) dropAction = 'after';
+                            else if (!isContainer) dropAction = 'after';
+                        } else if (target && target.id === 'document-root') {
+                            const rect = target.getBoundingClientRect();
+                            const relY = e.clientY - rect.top;
+                            if (relY < rect.height * 0.5 && target.firstChild) dropAction = 'first';
+                        }
+                        
                         window.dispatchEvent(new CustomEvent('escms-canvas-drop', {
                             detail: { 
                                 payload: payload, 
-                                targetNode: target 
+                                targetNode: target,
+                                dropAction: dropAction
                             }
                         }));
                     }
@@ -446,10 +466,7 @@ class EscmsSelection {
             if (window.escmsEditor && window.escmsEditor.leftpanel && window.escmsEditor.leftpanel.draggedDomNode) return;
             if (window.escmsDraggedNode) return;
             
-            let target = e.target;
-            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
-            const closestBlock = target.closest(textBlockTags.join(','));
-            if (closestBlock && closestBlock.id !== 'document-root') target = closestBlock;
+            let target = resolveTarget(e.target);
             
             if (target === documentRoot) {
                 if (currentHoverNode) {

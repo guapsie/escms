@@ -21,41 +21,9 @@ switch ($route) {
                 $ref_id = $input['ref_id'] ?? '';
                 $template_id = $input['template_id'] ?? 'custom';
                 $editor_data = $input['editor_data'] ?? '{}';
+                $public_html = $input['public_html'] ?? '';
 
                 if (!$name || !$ref_id) throw new RuntimeException('Name and Ref ID required');
-
-                // Compilador PHP para Componentes (sin reemplazar otros componentes porque no soportamos anidación de componentes por ahora)
-                $jsonToHtmlComp = function($node) use (&$jsonToHtmlComp) {
-                    if (is_string($node)) return htmlspecialchars($node);
-                    if (!is_array($node)) return '';
-                    $tag = $node['tag'] ?? 'div';
-                    $html = "<$tag";
-                    if (!empty($node['id'])) {
-                        $html .= ' id="' . htmlspecialchars($node['id']) . '"';
-                    }
-                    if (!empty($node['classes'])) {
-                        $html .= ' class="' . htmlspecialchars(implode(' ', $node['classes'])) . '"';
-                    }
-                    if (!empty($node['attributes'])) {
-                        foreach ($node['attributes'] as $attrKey => $attrVal) {
-                            $html .= ' ' . htmlspecialchars($attrKey) . '="' . htmlspecialchars($attrVal) . '"';
-                        }
-                    }
-                    if (!empty($node['styles'])) {
-                        $html .= ' style="' . htmlspecialchars($node['styles']) . '"';
-                    }
-                    $html .= '>';
-                    if (!empty($node['children'])) {
-                        foreach ($node['children'] as $child) {
-                            $html .= $jsonToHtmlComp($child);
-                        }
-                    }
-                    $html .= "</$tag>";
-                    return $html;
-                };
-
-                $nodeTree = json_decode($editor_data, true) ?: [];
-                $public_html = $jsonToHtmlComp($nodeTree);
 
                 if ($id) {
                     $stmt = $pdo->prepare("UPDATE components SET name = ?, ref_id = ?, template_id = ?, editor_data = ?, public_html = ? WHERE id = ?");

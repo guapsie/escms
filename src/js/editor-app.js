@@ -66,6 +66,32 @@ class EscmsEditor {
             console.error('[ESCMS] Error loading components', err);
         }
         
+        // Fetch global atoms
+        window.escmsAtoms = {};
+        window.escmsAtomCategories = [];
+        try {
+            const atomRes = await fetch('/api/atoms');
+            const atomData = await atomRes.json();
+            if (atomData.status === 'success' && atomData.atoms) {
+                const categoriesMap = {};
+                atomData.atoms.forEach(atom => {
+                    window.escmsAtoms[atom.name] = atom;
+                    const catId = atom.category || 'downloaded';
+                    if (!categoriesMap[catId]) {
+                        categoriesMap[catId] = {
+                            id: catId,
+                            name: `leftpanel.cat_${catId}`,
+                            atoms: []
+                        };
+                    }
+                    categoriesMap[catId].atoms.push(atom);
+                });
+                window.escmsAtomCategories = Object.values(categoriesMap);
+            }
+        } catch (err) {
+            console.error('[ESCMS] Error loading atoms', err);
+        }
+        
         const emptyText = this.i18n.dictionary['editor.drop_atoms'] || 'Drop atoms here';
 
         this.selection = new EscmsSelection();

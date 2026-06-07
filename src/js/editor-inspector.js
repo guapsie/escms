@@ -655,8 +655,8 @@ class EscmsInspector {
             isAtom = true;
         }
 
-        if (!isAtom && window.escmsEditor && window.escmsEditor.leftpanel) {
-            const categories = window.escmsEditor.leftpanel.atomCategories;
+        if (!isAtom) {
+            const categories = window.escmsAtomCategories || [];
             for (let cat of categories) {
                 for (let atom of cat.atoms) {
                     let match = false;
@@ -858,9 +858,10 @@ class EscmsInspector {
         if (allowedControls.includes('navSubBorder')) {
             let width = parseInt(this.selectedNode.style.getPropertyValue('--nav-sub-border-width')) || 1;
             let style = this.selectedNode.style.getPropertyValue('--nav-sub-border-style') || 'solid';
-            let color = this.selectedNode.style.getPropertyValue('--nav-sub-border-color') || 'rgba(255, 255, 255, 0.05)';
+            let colorStr = this.selectedNode.style.getPropertyValue('--nav-sub-border-color') || 'rgba(255, 255, 255, 0.05)';
+            let parsedColor = this._rgbaToHexA(colorStr);
             let radius = parseInt(this.selectedNode.style.getPropertyValue('--nav-sub-radius')) || 6;
-            this.controls.navSubBorder.setValue({ width, style, color, radius, cssString: `${width}px ${style} ${color}` }, false);
+            this.controls.navSubBorder.setValue({ width, style, color: parsedColor.hex, alpha: parsedColor.alpha, radius, cssString: `${width}px ${style} ${colorStr}` }, false);
         }
 
         if (allowedControls.includes('imageAlign')) {

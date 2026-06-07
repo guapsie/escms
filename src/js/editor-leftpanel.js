@@ -54,16 +54,16 @@ class EscmsLeftPanel {
         window.addEventListener('escms-canvas-drop', (e) => {
             const payload = e.detail.payload;
             const targetNode = e.detail.targetNode;
+            const dropAction = e.detail.dropAction || 'inside';
+            
             if (payload && payload.type === 'atom') {
-                this.injectAtom(payload.data, targetNode);
+                this.injectAtom(payload.data, targetNode, dropAction);
             } else if (payload && payload.type === 'component') {
-                this.injectComponent(payload.data, targetNode);
+                this.injectComponent(payload.data, targetNode, dropAction);
             }
         });
 
-        this.fetchAtoms().then(() => {
-            this.render();
-        });
+        this.render();
         this.pageManager.loadPages(true);
     }
 
@@ -196,8 +196,8 @@ class EscmsLeftPanel {
     }
 
     renderElements() {
-
-        this.atomCategories.forEach(cat => {
+        const categories = window.escmsAtomCategories || [];
+        categories.forEach(cat => {
             const header = document.createElement('div');
             header.setAttribute('data-i18n', cat.name);
             header.textContent = this.i18n.dictionary[cat.name] || cat.name;
@@ -439,32 +439,7 @@ class EscmsLeftPanel {
         }
     }
 
-async fetchAtoms() {
-    try {
-        const res = await fetch('/api/atoms');
-        const data = await res.json();
-        
-        if (data.status === 'success' && data.atoms) {
-            const categoriesMap = {};
-            data.atoms.forEach(atom => {
-                const catId = atom.category || 'downloaded';
-                if (!categoriesMap[catId]) {
-                    categoriesMap[catId] = {
-                        id: catId,
-                        name: `leftpanel.cat_${catId}`,
-                        atoms: []
-                    };
-                }
-                categoriesMap[catId].atoms.push(atom);
-            });
-            
-            this.atomCategories = Object.values(categoriesMap);
-        }
-    } catch (err) {
-        console.error('Failed to load atoms', err);
-        this.atomCategories = [];
-    }
-}
+
 
     renderLayers() {
         this.contentArea.innerHTML = '';
@@ -490,7 +465,8 @@ async fetchAtoms() {
 
             // Check if it's a known Atom
             let isAtom = false;
-            for (let cat of this.atomCategories) {
+            const categories = window.escmsAtomCategories || [];
+            for (let cat of categories) {
                 for (let atom of cat.atoms) {
                     if (atom.className && domNode.classList.contains(atom.className)) {
                         displayName = atom.name;
@@ -755,118 +731,64 @@ async fetchAtoms() {
         });
     }
 
-    injectAtom(atom, targetNode = null) {
-        const el = document.createElement(atom.tag);
-        if (atom.textKey) el.textContent = this.i18n.dictionary[atom.textKey] || 'New Text';
-        if (atom.styles) {
-            Object.assign(el.style, atom.styles);
-        }
-        if (atom.className) {
-            el.className = atom.className;
-        }
-        if (atom.attributes) {
-            Object.entries(atom.attributes).forEach(([k, v]) => el.setAttribute(k, v));
-        }
-        if (atom.name === 'Nav') {
-            el.style.display = 'flex';
-            el.style.width = '100%';
-            const ul = document.createElement('ul');
-            ul.style.listStyle = 'none';
-            ul.style.display = 'flex';
-            ul.style.gap = '20px';
-            ul.style.margin = '0';
-            ul.style.padding = '0';
-            ul.className = 'escms-nav-list';
-            
-            // Try to build tree from PagesManager
-            const buildHtml = (nodes) => {
-                nodes.forEach(node => {
-                    const li = document.createElement('li');
-                    li.className = 'escms-nav-item';
-                    const a = document.createElement('a');
-                    a.className = 'escms-nav-link';
-                    a.href = parseInt(node.is_custom_link) === 1 ? node.custom_link_url : '/' + node.slug;
-                    a.textContent = node.title;
-                    if (node.children && node.children.length > 0) {
-                        a.innerHTML += window.escmsIcons ? window.escmsIcons.caretDown : '';
-                    }
-                    a.style.textDecoration = 'none';
-                    a.style.color = 'inherit';
-                    li.appendChild(a);
-                    
-                    if (node.children && node.children.length > 0) {
-                        const subul = document.createElement('ul');
-                        subul.className = 'escms-nav-sublist';
-                        buildHtml(node.children).childNodes.forEach(c => subul.appendChild(c.cloneNode(true)));
-                        li.appendChild(subul);
-                    }
-                    ul.appendChild(li);
-                });
-                return ul;
-            };
+    injectAtom(atom, targetNode = null, dropAction = 'inside') {
+        const atomJson = { atom: atom.name };
+        const el = EscmsParser.jsonToDom(atomJson);
+        if (!el) return;
 
-            if (this.pageManager && this.pageManager.pages) {
-                const roots = this.pageManager.buildTree().filter(p => parseInt(p.is_hidden_menu) !== 1);
-                if (roots.length > 0) {
-                    buildHtml(roots);
-                } else {
-                    ul.innerHTML = '<li class="escms-nav-item"><a class="escms-nav-link" href="#" style="text-decoration:none; color:inherit;">Menu Empty</a></li>';
-                }
-            } else {
-                const links = [
-                    { text: 'Home', href: '/' },
-                    { text: 'About', href: '/about' },
-                    { text: 'Contact', href: '/contact' }
-                ];
-                links.forEach(link => {
-                    const li = document.createElement('li');
-                    li.className = 'escms-nav-item';
-                    const a = document.createElement('a');
-                    a.className = 'escms-nav-link';
-                    a.href = link.href;
-                    a.textContent = link.text;
-                    a.style.textDecoration = 'none';
-                    a.style.color = 'inherit';
-                    li.appendChild(a);
-                    ul.appendChild(li);
-                });
-            }
-            const hamburger = document.createElement('div');
-            hamburger.className = 'escms-hamburger';
-            hamburger.setAttribute('onclick', "this.parentElement.classList.toggle('is-open')");
-            if (window.escmsIcons) {
-                hamburger.innerHTML = (window.escmsIcons.hamburger || '') + (window.escmsIcons.close || '');
-            }
-            el.appendChild(hamburger);
-            el.appendChild(ul);
-        } else if (atom.name === 'SiteLogo') {
-            if (window.escmsEditor && window.escmsEditor.settings && window.escmsEditor.settings.config.site_logo) {
-                el.setAttribute('src', window.escmsEditor.settings.config.site_logo);
-            }
-        } else if (atom.children) {
-            atom.children.forEach(childAtom => {
-                const childEl = document.createElement(childAtom.tag);
-                if (childAtom.textKey) childEl.textContent = this.i18n.dictionary[childAtom.textKey] || 'Item';
-                if (childAtom.className) childEl.className = childAtom.className;
-                if (childAtom.attributes) {
-                    Object.entries(childAtom.attributes).forEach(([k, v]) => childEl.setAttribute(k, v));
-                }
-                el.appendChild(childEl);
-            });
-        }
-
-        let target = targetNode || this.selectedNode;
         const docRoot = this.shadowRoot.getElementById('document-root');
-
-        if (!target || !['DIV', 'SECTION', 'HEADER', 'FOOTER', 'MAIN', 'ARTICLE'].includes(target.tagName) && target !== docRoot) {
+        let target = targetNode || this.selectedNode;
+        
+        // Prevent nesting atoms that shouldn't be nested (basic heuristic)
+        if (!target || (!['DIV', 'SECTION', 'HEADER', 'FOOTER', 'MAIN', 'ARTICLE'].includes(target.tagName) && target !== docRoot)) {
             target = docRoot;
         }
 
         if (target) {
-            target.appendChild(el);
+            if (dropAction === 'before') {
+                target.parentNode.insertBefore(el, target);
+            } else if (dropAction === 'after') {
+                target.parentNode.insertBefore(el, target.nextSibling);
+            } else if (dropAction === 'first' && target.firstChild) {
+                target.insertBefore(el, target.firstChild);
+            } else {
+                target.appendChild(el);
+            }
             setTimeout(() => el.click(), 10);
             if (window.escmsEditor && window.escmsEditor.autosave) {
-                window.escmsEditor.autosave.saveToServer(); // Trigger autosave
+                window.escmsEditor.autosave.saveToServer();
+            }
+        }
+    }
+
+    injectComponent(compData, targetNode = null, dropAction = 'inside') {
+        const comp = window.escmsComponents && window.escmsComponents[compData.ref_id];
+        if (!comp) return;
+
+        // Instead of hard-copying HTML, inject a linked component reference
+        const el = EscmsParser.jsonToDom({ tag: 'escms-component', ref: compData.ref_id });
+        if (!el) return;
+
+        const docRoot = this.shadowRoot.getElementById('document-root');
+        let target = targetNode || this.selectedNode;
+        
+        if (!target || (!['DIV', 'SECTION', 'HEADER', 'FOOTER', 'MAIN', 'ARTICLE'].includes(target.tagName) && target !== docRoot)) {
+            target = docRoot;
+        }
+
+        if (target) {
+            if (dropAction === 'before') {
+                target.parentNode.insertBefore(el, target);
+            } else if (dropAction === 'after') {
+                target.parentNode.insertBefore(el, target.nextSibling);
+            } else if (dropAction === 'first' && target.firstChild) {
+                target.insertBefore(el, target.firstChild);
+            } else {
+                target.appendChild(el);
+            }
+            setTimeout(() => el.click(), 10);
+            if (window.escmsEditor && window.escmsEditor.autosave) {
+                window.escmsEditor.autosave.saveToServer();
             }
         }
     }
