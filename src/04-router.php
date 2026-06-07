@@ -41,6 +41,8 @@ if (str_starts_with($route, 'api/')) {
 } elseif ($route === 'admin' || str_starts_with($route, 'admin/')) {
     if (file_exists(__DIR__ . '/core/05-login.php')) require_once __DIR__ . '/core/05-login.php';
     if (file_exists(__DIR__ . '/core/06-editor.php')) require_once __DIR__ . '/core/06-editor.php';
+} elseif ($route === 'sitemap.xml') {
+    if (file_exists(__DIR__ . '/core/api-sitemap.php')) require_once __DIR__ . '/core/api-sitemap.php';
 } else {
     if (file_exists(__DIR__ . '/core/08-front.php')) require_once __DIR__ . '/core/08-front.php';
 }
