@@ -253,6 +253,69 @@ switch ($route) {
             }
             break;
 
+    case 'api/pages/create_post':
+            if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            try {
+                $blog_id = (int)($config['blog_page_id'] ?? 0);
+                if (!$blog_id) {
+                    $stmt = $pdo->prepare("SELECT id FROM pages WHERE slug = 'blog'");
+                    $stmt->execute();
+                    $blog_id = (int)$stmt->fetchColumn();
+                } else {
+                    $stmt = $pdo->prepare("SELECT id FROM pages WHERE id = ?");
+                    $stmt->execute([$blog_id]);
+                    if (!$stmt->fetchColumn()) {
+                        $blog_id = 0;
+                    }
+                }
+
+                if (!$blog_id) {
+                    $blog_editor_data = '{"tag":"div","classes":["escms-container"],"styles":"max-width: var(--max-width); margin: 0px auto; padding: 20px;","children":[{"tag":"h1","children":["Blog"]}]}';
+                    $tpl_path = __DIR__ . '/../data/templates/pichi/pichi.json';
+                    if (file_exists($tpl_path)) {
+                        $tpl = json_decode(file_get_contents($tpl_path), true);
+                        if (isset($tpl['views']['blog'])) {
+                            $blog_editor_data = json_encode(['tag' => 'div', 'classes' => ['escms-template-blog'], 'children' => $tpl['views']['blog']]);
+                        }
+                    }
+                    $stmt = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html) VALUES (?, ?, ?, '')");
+                    $stmt->execute(['Blog', 'blog', $blog_editor_data]);
+                    $blog_id = (int)$pdo->lastInsertId();
+                    $pdo->prepare("INSERT INTO options (k, v) VALUES ('blog_page_id', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v")->execute([$blog_id]);
+                    $config['blog_page_id'] = $blog_id;
+                }
+
+                $title = 'New Post';
+                $slug = 'post-' . time();
+                
+                $uniqueSlug = $slug;
+                $counter = 1;
+                while (true) {
+                    $stmt = $pdo->prepare("SELECT id FROM pages WHERE slug = ?");
+                    $stmt->execute([$uniqueSlug]);
+                    if (!$stmt->fetch()) break;
+                    $uniqueSlug = $slug . '-' . $counter++;
+                }
+
+                $editor_data = '{"tag":"div","classes":["escms-container"],"styles":"max-width: var(--max-width); margin: 0px auto; padding: 20px;","children":[]}';
+                $tpl_path = __DIR__ . '/../data/templates/pichi/pichi.json';
+                if (file_exists($tpl_path)) {
+                    $tpl = json_decode(file_get_contents($tpl_path), true);
+                    if (isset($tpl['views']['single'])) {
+                        $editor_data = json_encode(['tag' => 'div', 'classes' => ['escms-template-single'], 'children' => $tpl['views']['single']]);
+                    }
+                }
+
+                $stmt = $pdo->prepare("INSERT INTO pages (title, slug, parent_id, is_hidden_menu, editor_data, public_html) VALUES (?, ?, ?, 1, ?, '')");
+                $stmt->execute([$title, $uniqueSlug, $blog_id, $editor_data]);
+                
+                $send_json(['status' => 'success', 'id' => $pdo->lastInsertId()]);
+            } catch (Throwable $e) {
+                $send_json(['status' => 'error', 'msg' => $e->getMessage()], 400);
+            }
+            break;
+
     case 'api/pages/update_order':
             if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
             if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);

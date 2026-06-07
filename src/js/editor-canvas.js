@@ -213,12 +213,28 @@ class EscmsCanvas {
         zoomGroup.appendChild(btnPreview);
 
         btnPreview.addEventListener('click', () => {
-            const slug = (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.slug) 
-                         ? window.escmsEditor.currentPageObj.slug 
-                         : 'home';
+            const pageObj = window.escmsEditor && window.escmsEditor.currentPageObj;
+            let fullSlug = 'home';
+            
+            if (pageObj) {
+                fullSlug = pageObj.slug;
+                const pm = window.escmsEditor.leftpanel && window.escmsEditor.leftpanel.pageManager;
+                if (pm && pm.pages) {
+                    const getFullSlug = (id) => {
+                        const p = pm.pages.find(x => parseInt(x.id) === parseInt(id));
+                        if (!p) return '';
+                        if (p.parent_id && parseInt(p.parent_id) !== 0) {
+                            const parentSlug = getFullSlug(p.parent_id);
+                            return parentSlug ? parentSlug + '/' + p.slug : p.slug;
+                        }
+                        return p.slug;
+                    };
+                    fullSlug = getFullSlug(pageObj.id) || fullSlug;
+                }
+            }
                          
             const openPreview = () => {
-                const url = slug === 'home' ? '/' : '/' + slug;
+                const url = fullSlug === 'home' ? '/' : '/' + fullSlug;
                 window.open(url, '_blank');
             };
 

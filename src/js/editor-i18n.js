@@ -151,7 +151,8 @@ const enFallback = Object.freeze({
     "add_page": "Add Page",
     "add_link": "Add Link",
     "copy_styles": "Copy Styles",
-    "paste_styles": "Paste Styles"
+    "paste_styles": "Paste Styles",
+    "add_post": "Add Post"
 });
 class I18nEngine {
     constructor() {

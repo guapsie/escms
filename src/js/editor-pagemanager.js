@@ -63,6 +63,25 @@ class EscmsPageManager {
         }
     }
 
+    async createPost() {
+        try {
+            const res = await fetch('/api/pages/create_post', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                await this.loadPages();
+                this.loadPage(data.id);
+            } else {
+                alert(data.msg || 'Error creating post');
+            }
+        } catch (e) {
+            console.error('[ESCMS] Error creating post', e);
+        }
+    }
+
     async duplicatePage(id) {
         try {
             const res = await fetch('/api/pages/duplicate', {
@@ -253,6 +272,21 @@ class EscmsPageManager {
         addPageItem.addEventListener('mouseleave', () => addPageItem.style.background = 'transparent');
         addPageItem.addEventListener('click', () => { dropdown.style.display = 'none'; this.createPage(); });
 
+        const addPostItem = document.createElement('div');
+        addPostItem.innerHTML = `<span style="width:14px; display:flex; align-items:center; justify-content:center; margin-right:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-article"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M7 8h10" /><path d="M7 12h10" /><path d="M7 16h10" /></svg></span> <span data-i18n="add_post">${this.i18n.dictionary['add_post'] || 'Add Post'}</span>`;
+        const addPostSvg = addPostItem.querySelector('svg');
+        if (addPostSvg) { addPostSvg.style.width = '14px'; addPostSvg.style.height = '14px'; }
+        addPostItem.style.padding = '8px 12px';
+        addPostItem.style.fontSize = '0.75rem';
+        addPostItem.style.color = 'var(--text-solid)';
+        addPostItem.style.cursor = 'pointer';
+        addPostItem.style.borderRadius = '4px';
+        addPostItem.style.display = 'flex';
+        addPostItem.style.alignItems = 'center';
+        addPostItem.addEventListener('mouseenter', () => addPostItem.style.background = 'var(--accent-faint)');
+        addPostItem.addEventListener('mouseleave', () => addPostItem.style.background = 'transparent');
+        addPostItem.addEventListener('click', () => { dropdown.style.display = 'none'; this.createPost(); });
+
         const addLinkItem = document.createElement('div');
         addLinkItem.innerHTML = `<span style="width:14px; display:flex; align-items:center; justify-content:center; margin-right:8px;">${icons.link}</span> <span data-i18n="add_link">${this.i18n.dictionary['add_link'] || 'Add Link'}</span>`;
         const addLinkSvg = addLinkItem.querySelector('svg');
@@ -269,6 +303,7 @@ class EscmsPageManager {
         addLinkItem.addEventListener('click', () => { dropdown.style.display = 'none'; this.createLink(); });
 
         dropdown.appendChild(addPageItem);
+        dropdown.appendChild(addPostItem);
         dropdown.appendChild(addLinkItem);
         header.appendChild(dropdown);
 

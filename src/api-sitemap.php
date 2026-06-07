@@ -6,7 +6,26 @@ if ($route !== 'sitemap.xml') return;
 header('Content-Type: application/xml; charset=utf-8');
 
 try {
-    $stmt = $pdo->prepare("SELECT id, slug, updated_at FROM pages WHERE status = 'published' AND is_custom_link = 0 ORDER BY updated_at DESC");
+    // Fetch all pages for path resolution
+    $stmtAll = $pdo->prepare("SELECT id, slug, parent_id FROM pages");
+    $stmtAll->execute();
+    $allPages = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
+    $map = [];
+    foreach ($allPages as $p) {
+        $map[(int)$p['id']] = $p;
+    }
+
+    $getPath = function($id) use (&$map, &$getPath) {
+        if (!isset($map[$id])) return '';
+        $node = $map[$id];
+        $slug = htmlspecialchars($node['slug']);
+        if (!empty($node['parent_id']) && isset($map[(int)$node['parent_id']])) {
+            return $getPath((int)$node['parent_id']) . '/' . $slug;
+        }
+        return $slug;
+    };
+
+    $stmt = $pdo->prepare("SELECT id, updated_at FROM pages WHERE status = 'published' AND is_custom_link = 0 ORDER BY updated_at DESC");
     $stmt->execute();
     $pages = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -21,9 +40,12 @@ try {
     
     foreach ($pages as $p) {
         $loc = $base_url . '/';
-        // Only append slug if it's not the home page
-        if ((int)$p['id'] !== $home_id && $p['slug'] !== 'home') {
-            $loc .= htmlspecialchars($p['slug']);
+        // Only append path if it's not the home page
+        if ((int)$p['id'] !== $home_id) {
+            $path = $getPath((int)$p['id']);
+            if ($path !== 'home') {
+                $loc .= $path;
+            }
         }
         
         // Format lastmod to YYYY-MM-DD

@@ -20,11 +20,30 @@ try {
             $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages ORDER BY id ASC LIMIT 1");
             $stmt->execute();
         }
+        $page = $stmt->fetch(PDO::FETCH_ASSOC);
     } else {
-        $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE slug = ?");
-        $stmt->execute([$slug]);
+        $segments = explode('/', $slug);
+        $current_parent_id = null;
+        $page = null;
+        foreach ($segments as $index => $seg) {
+            if ($current_parent_id === null) {
+                $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language, parent_id FROM pages WHERE slug = ? AND (parent_id IS NULL OR parent_id = 0)");
+                $stmt->execute([$seg]);
+            } else {
+                $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language, parent_id FROM pages WHERE slug = ? AND parent_id = ?");
+                $stmt->execute([$seg, $current_parent_id]);
+            }
+            $p = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$p) {
+                $page = null;
+                break;
+            }
+            $current_parent_id = (int)$p['id'];
+            if ($index === count($segments) - 1) {
+                $page = $p;
+            }
+        }
     }
-    $page = $stmt->fetch(PDO::FETCH_ASSOC);
 
     // Redirect if accessing home page via its slug
     if ($page && $slug !== null && isset($config['home_page_id']) && (int)$page['id'] === (int)$config['home_page_id']) {
@@ -82,7 +101,7 @@ $content = preg_replace_callback('/<!-- ESCMS_COMPONENT:([a-zA-Z0-9_-]+) -->/', 
 }, $content);
 
 // Inyección dinámica del Menú (Nav)
-$pages = $pdo->query("SELECT id, title, slug, parent_id, is_hidden_menu, is_custom_link, custom_link_url FROM pages WHERE is_hidden_menu = 0 ORDER BY menu_order ASC, updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+$pages = $pdo->query("SELECT id, title, slug, parent_id, is_hidden_menu, is_custom_link, custom_link_url FROM pages WHERE is_hidden_menu = 0 AND status = 'published' ORDER BY menu_order ASC, updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
 
 $map = [];
 $roots = [];
@@ -101,13 +120,16 @@ foreach ($pages as $p) {
 }
 
 $home_page_id = (int)($config['home_page_id'] ?? 0);
-$buildHtml = function($nodes, $isSub = false) use (&$buildHtml, $home_page_id) {
+$buildHtml = function($nodes, $parentPath = '') use (&$buildHtml, $home_page_id) {
     $html = '';
     foreach ($nodes as $node) {
         if ((int)$node['is_custom_link'] === 1) {
             $href = htmlspecialchars($node['custom_link_url']);
+            $currentPathForChildren = $parentPath;
         } else {
-            $href = ((int)$node['id'] === $home_page_id) ? '/' : '/' . htmlspecialchars($node['slug']);
+            $currentPath = $parentPath . '/' . htmlspecialchars($node['slug']);
+            $currentPathForChildren = $currentPath;
+            $href = ((int)$node['id'] === $home_page_id) ? '/' : $currentPath;
         }
         $icon = (int)$node['is_custom_link'] === 1 ? '<span style="display:inline-block; width:14px; margin-right:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 256 256"><path fill="currentColor" d="M141.66 114.34a8 8 0 0 0-11.32 0l-32 32a8 8 0 0 0 11.32 11.32l32-32a8 8 0 0 0 0-11.32Zm71.6 30.41l-24.36 24.36c-27.18 27.19-71.45 27.18-98.6 0a8 8 0 0 0-11.32 11.32c33.4 33.4 87.82 33.41 121.23 0l24.37-24.36a85.8 85.8 0 0 0 0-121.24a86.67 86.67 0 0 0-61-24.83a8 8 0 0 0 0 16a70.73 70.73 0 0 1 50.1 20.25a69.83 69.83 0 0 1 19.58 48.5Zm-83.33-91.8a8 8 0 0 0-11.31 0l-24.37 24.37a85.8 85.8 0 0 0 0 121.24a86.66 86.66 0 0 0 61 24.83a8 8 0 0 0 0-16a70.72 70.72 0 0 1-50.09-20.25a69.83 69.83 0 0 1-19.59-48.5a69.84 69.84 0 0 1 19.59-48.5l24.37-24.37c27.16-27.18 71.44-27.18 98.6 0a8 8 0 1 0 11.31-11.32c-33.39-33.4-87.82-33.4-121.22-.01Z"/></svg></span>' : '';
         
@@ -116,7 +138,7 @@ $buildHtml = function($nodes, $isSub = false) use (&$buildHtml, $home_page_id) {
         $html .= '<a href="' . $href . '" class="escms-nav-link">' . $icon . htmlspecialchars($node['title']) . $caret . '</a>';
         if (!empty($node['children'])) {
             $html .= '<ul class="escms-nav-sublist">';
-            $html .= $buildHtml($node['children'], true);
+            $html .= $buildHtml($node['children'], $currentPathForChildren);
             $html .= '</ul>';
         }
         $html .= '</li>';

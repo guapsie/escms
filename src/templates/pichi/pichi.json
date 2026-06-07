@@ -153,6 +153,37 @@
         ]
       }
     ],
+    "single": [
+      {
+        "tag": "article",
+        "classes": [
+          "pichi-container",
+          "pichi-post"
+        ],
+        "styles": "max-width: var(--max-width); margin: 0 auto; padding: 40px 20px;",
+        "children": [
+          {
+            "tag": "h1",
+            "children": [
+              "Post Title"
+            ]
+          },
+          {
+            "tag": "p",
+            "styles": "font-size: 0.85rem; opacity: 0.7; margin-bottom: 30px;",
+            "children": [
+              "Last edited: Just now"
+            ]
+          },
+          {
+            "tag": "p",
+            "children": [
+              "Start writing your post content here..."
+            ]
+          }
+        ]
+      }
+    ],
     "404": [
       {
         "tag": "div",
