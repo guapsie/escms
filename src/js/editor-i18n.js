@@ -149,7 +149,9 @@ const enFallback = Object.freeze({
     "save_atom": "Save as Atom",
     "ask_ai": "Ask Copilot",
     "add_page": "Add Page",
-    "add_link": "Add Link"
+    "add_link": "Add Link",
+    "copy_styles": "Copy Styles",
+    "paste_styles": "Paste Styles"
 });
 class I18nEngine {
     constructor() {

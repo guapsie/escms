@@ -143,5 +143,7 @@
     "save_atom": "Guardar como Átomo",
     "ask_ai": "Preguntar a IA",
     "add_page": "Añadir Página",
-    "add_link": "Añadir Enlace"
+    "add_link": "Añadir Enlace",
+    "copy_styles": "Copiar Estilos",
+    "paste_styles": "Pegar Estilos"
 }
