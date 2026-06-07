@@ -521,20 +521,26 @@ class EscmsSelection {
                 }
             }
 
-            if (e.key === 'Enter' && this.selectedNode && this.selectedNode.tagName === 'LI') {
-                e.preventDefault();
-                const parentList = this.selectedNode.closest('ul, ol');
-                if (parentList) {
-                    const newLi = document.createElement('li');
-                    newLi.textContent = 'New Item';
-                    // Insert after current selected node
-                    if (this.selectedNode.nextSibling) {
-                        parentList.insertBefore(newLi, this.selectedNode.nextSibling);
-                    } else {
-                        parentList.appendChild(newLi);
+            if (e.key === 'Enter' && this.selectedNode) {
+                if (this.selectedNode.tagName === 'LI') {
+                    e.preventDefault();
+                    const parentList = this.selectedNode.closest('ul, ol');
+                    if (parentList) {
+                        const newLi = document.createElement('li');
+                        newLi.textContent = 'New Item';
+                        // Insert after current selected node
+                        if (this.selectedNode.nextSibling) {
+                            parentList.insertBefore(newLi, this.selectedNode.nextSibling);
+                        } else {
+                            parentList.appendChild(newLi);
+                        }
+                        // Trigger click to select it
+                        newLi.click();
                     }
-                    // Trigger click to select it
-                    newLi.click();
+                } else if (this.selectedNode.hasAttribute('contenteditable')) {
+                    // Prevent default paragraph splitting (which creates divs/spans)
+                    e.preventDefault();
+                    document.execCommand('insertLineBreak');
                 }
             }
         });

@@ -14,12 +14,7 @@
         "opacity",
         "ariaLabel"
     ],
-    "children": [
-        {
-            "tag": "span",
-            "textKey": "leftpanel.default_text"
-        }
-    ],
+    "textKey": "leftpanel.default_paragraph",
     "category": "text",
     "version": "1.0.0",
     "authorized_domain": "localhost",

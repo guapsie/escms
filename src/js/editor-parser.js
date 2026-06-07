@@ -1,8 +1,10 @@
 class EscmsParser {
     static domToJson(node) {
         if (node.nodeType === Node.TEXT_NODE) {
-            const text = node.textContent.trim();
-            return text ? text : null;
+            const text = node.textContent;
+            // Drop empty nodes or nodes that are purely HTML formatting artifacts (newlines/tabs without spaces)
+            if (!text || /^[\n\t\r]+$/.test(text)) return null;
+            return text;
         }
 
         if (node.nodeType === Node.ELEMENT_NODE) {
@@ -102,9 +104,21 @@ class EscmsParser {
             if (atomDef) {
                 el = document.createElement(atomDef.tag || 'div');
                 if (atomDef.className) el.classList.add(...atomDef.className.split(' '));
-                if (atomDef.styles) el.style.cssText = atomDef.styles;
+                if (atomDef.styles) {
+                    if (typeof atomDef.styles === 'object') {
+                        el.style.cssText = Object.entries(atomDef.styles)
+                            .map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}:${v}`)
+                            .join(';');
+                    } else {
+                        el.style.cssText = atomDef.styles;
+                    }
+                }
                 if (atomDef.attributes) {
                     Object.entries(atomDef.attributes).forEach(([k, v]) => el.setAttribute(k, v));
+                }
+                if (atomDef.textKey && (!jsonNode.children || jsonNode.children.length === 0)) {
+                    const i18n = window.escmsEditor && window.escmsEditor.i18n ? window.escmsEditor.i18n.dictionary : {};
+                    el.textContent = i18n[atomDef.textKey] || atomDef.textKey;
                 }
             } else {
                 el = document.createElement('div');
@@ -225,21 +239,28 @@ class EscmsParser {
                     el.setAttribute('src', '/data/user-settings/default-logo.png'); // fallback
                 }
             } else {
-                // If atom schema provides default structural children
-                if (atomDef && atomDef.children) {
-                    atomDef.children.forEach(childAtom => {
-                        const childJson = { atom: childAtom.name, props: {} };
-                        if (childAtom.className) childJson.props['class-name'] = childAtom.className;
-                        const childDom = this.jsonToDom(childJson);
-                        if (childDom) el.appendChild(childDom);
-                    });
-                }
-                
-                // Inject user-defined children from the template
-                if (jsonNode.children && Array.isArray(jsonNode.children)) {
+                if (jsonNode.children && Array.isArray(jsonNode.children) && jsonNode.children.length > 0) {
+                    // Inject user-defined children from the template/save
                     jsonNode.children.forEach(childJson => {
                         const childDom = this.jsonToDom(childJson);
                         if (childDom) el.appendChild(childDom);
+                    });
+                } else if (atomDef && atomDef.children) {
+                    // If atom schema provides default structural children, and no user children exist
+                    atomDef.children.forEach(childDef => {
+                        let childJson;
+                        if (childDef.name) {
+                            childJson = { atom: childDef.name, props: {} };
+                            if (childDef.className) childJson.props['class-name'] = childDef.className;
+                        } else if (childDef.tag) {
+                            childJson = { tag: childDef.tag };
+                            if (childDef.className) childJson.classes = childDef.className.split(' ');
+                        }
+                        
+                        if (childJson) {
+                            const childDom = this.jsonToDom(childJson);
+                            if (childDom) el.appendChild(childDom);
+                        }
                     });
                 }
             }
