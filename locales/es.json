@@ -141,5 +141,7 @@
     "clone": "Clonar",
     "delete": "Borrar",
     "save_atom": "Guardar como Átomo",
-    "ask_ai": "Preguntar a IA"
+    "ask_ai": "Preguntar a IA",
+    "add_page": "Añadir Página",
+    "add_link": "Añadir Enlace"
 }

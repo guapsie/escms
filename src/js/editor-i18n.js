@@ -147,7 +147,9 @@ const enFallback = Object.freeze({
     "clone": "Clone",
     "delete": "Delete",
     "save_atom": "Save as Atom",
-    "ask_ai": "Ask Copilot"
+    "ask_ai": "Ask Copilot",
+    "add_page": "Add Page",
+    "add_link": "Add Link"
 });
 class I18nEngine {
     constructor() {

@@ -239,9 +239,11 @@ class EscmsPageManager {
         dropdown.style.minWidth = '120px';
 
         const addPageItem = document.createElement('div');
-        addPageItem.innerHTML = `<span style="width:14px; display:inline-block; margin-right:8px;">${icons.file}</span> ${this.i18n.dictionary['add_page'] || 'Add Page'}`;
+        addPageItem.innerHTML = `<span style="width:14px; display:flex; align-items:center; justify-content:center; margin-right:8px;">${icons.file}</span> <span data-i18n="add_page">${this.i18n.dictionary['add_page'] || 'Add Page'}</span>`;
+        const addPageSvg = addPageItem.querySelector('svg');
+        if (addPageSvg) { addPageSvg.style.width = '14px'; addPageSvg.style.height = '14px'; }
         addPageItem.style.padding = '8px 12px';
-        addPageItem.style.fontSize = '0.8rem';
+        addPageItem.style.fontSize = '0.75rem';
         addPageItem.style.color = 'var(--text-solid)';
         addPageItem.style.cursor = 'pointer';
         addPageItem.style.borderRadius = '4px';
@@ -252,9 +254,11 @@ class EscmsPageManager {
         addPageItem.addEventListener('click', () => { dropdown.style.display = 'none'; this.createPage(); });
 
         const addLinkItem = document.createElement('div');
-        addLinkItem.innerHTML = `<span style="width:14px; display:inline-block; margin-right:8px;">${icons.link}</span> ${this.i18n.dictionary['add_link'] || 'Add Link'}`;
+        addLinkItem.innerHTML = `<span style="width:14px; display:flex; align-items:center; justify-content:center; margin-right:8px;">${icons.link}</span> <span data-i18n="add_link">${this.i18n.dictionary['add_link'] || 'Add Link'}</span>`;
+        const addLinkSvg = addLinkItem.querySelector('svg');
+        if (addLinkSvg) { addLinkSvg.style.width = '14px'; addLinkSvg.style.height = '14px'; }
         addLinkItem.style.padding = '8px 12px';
-        addLinkItem.style.fontSize = '0.8rem';
+        addLinkItem.style.fontSize = '0.75rem';
         addLinkItem.style.color = 'var(--text-solid)';
         addLinkItem.style.cursor = 'pointer';
         addLinkItem.style.borderRadius = '4px';
