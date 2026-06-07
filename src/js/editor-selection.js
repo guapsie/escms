@@ -231,8 +231,8 @@ class EscmsSelection {
             updateHandlePosition(currentHoverNode || this.selectedNode);
         });
 
+        const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
         const resolveTarget = (target) => {
-            const textBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
             const closestBlock = target.closest(textBlockTags.join(','));
             if (closestBlock && closestBlock.id !== 'document-root') target = closestBlock;
             const compParent = target.closest('escms-component');

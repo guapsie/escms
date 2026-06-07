@@ -6,9 +6,14 @@ class EscmsParser {
         }
 
         if (node.nodeType === Node.ELEMENT_NODE) {
+            const relevantAttrs = ['src', 'href', 'alt', 'title', 'target', 'id', 'ref', 'aria-label', 'placeholder', 'type', 'name', 'value'];
+
             if (node.hasAttribute('data-escms-atom')) {
                 const atomName = node.getAttribute('data-escms-atom');
-                const jsonNode = { atom: atomName };
+                const jsonNode = { 
+                    atom: atomName,
+                    tag: node.tagName.toLowerCase()
+                };
                 
                 const propsStr = node.getAttribute('data-escms-props');
                 if (propsStr) {
@@ -19,10 +24,13 @@ class EscmsParser {
                 if (classes.length > 0) jsonNode.classes = classes;
                 if (node.style.cssText) jsonNode.styles = node.style.cssText;
                 
+                const attrs = {};
+                relevantAttrs.forEach(attr => {
+                    if (node.hasAttribute(attr)) attrs[attr] = node.getAttribute(attr);
+                });
+                if (Object.keys(attrs).length > 0) jsonNode.attributes = attrs;
+                
                 // If the atom accepts children (like Container), serialize them.
-                // We'll determine this by checking if the children are just raw elements or if they are slotted.
-                // For now, if the atom is NOT Nav and NOT SiteLogo, we serialize its children.
-                // In a more robust system, we'd check if the atom schema defines slots.
                 if (atomName !== 'Nav' && atomName !== 'SiteLogo') {
                     const children = [];
                     node.childNodes.forEach(child => {
@@ -56,16 +64,10 @@ class EscmsParser {
             }
 
             const attrs = {};
-            const relevantAttrs = ['src', 'href', 'alt', 'title', 'target', 'id', 'ref'];
             relevantAttrs.forEach(attr => {
-                if (node.hasAttribute(attr)) {
-                    attrs[attr] = node.getAttribute(attr);
-                }
+                if (node.hasAttribute(attr)) attrs[attr] = node.getAttribute(attr);
             });
-            
-            if (Object.keys(attrs).length > 0) {
-                jsonNode.attributes = attrs;
-            }
+            if (Object.keys(attrs).length > 0) jsonNode.attributes = attrs;
 
             const children = [];
             node.childNodes.forEach(child => {
@@ -126,6 +128,9 @@ class EscmsParser {
             if (jsonNode.styles) {
                 const existingAlign = el.style.textAlign;
                 el.style.cssText += ';' + jsonNode.styles; // Append to not overwrite defaults entirely if we do that later
+            }
+            if (jsonNode.attributes) {
+                Object.entries(jsonNode.attributes).forEach(([k, v]) => el.setAttribute(k, v));
             }
 
             if (atomName === 'Nav') {

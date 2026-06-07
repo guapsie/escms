@@ -221,6 +221,10 @@ class EscmsColorPicker {
             value: this.hex,
             oninput: (e) => {
                 this.hex = e.target.value;
+                if (this.alpha === 0) {
+                    this.alpha = 100;
+                    if (this.alphaSlider) this.alphaSlider.setValue(100, false);
+                }
                 this.updateUI();
                 this.triggerChange();
             }
