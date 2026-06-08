@@ -1,8 +1,8 @@
 class EscmsGradientControl {
-    constructor(labelKey, i18n, initialValues = { type: 'mesh', position: 'center', animate: false, c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100, enabled: false }, onChangeCallback) {
+    constructor(labelKey, i18n, initialValues = { type: 'none', position: 'center', animate: false, c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100 }, onChangeCallback) {
         this.labelKey = labelKey;
         this.i18n = i18n;
-        this.values = { type: 'mesh', position: 'center', animate: false, c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100, ...initialValues };
+        this.values = { type: 'none', position: 'center', animate: false, c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100, ...initialValues };
         this.onChange = onChangeCallback;
         this.element = this.render();
     }
@@ -29,21 +29,14 @@ class EscmsGradientControl {
         label.style.letterSpacing = '0.5px';
         label.style.textTransform = 'uppercase';
 
-        this.enableToggle = new EscmsToggle(null, this.values.enabled, (val) => {
-            this.values.enabled = val;
-            this.bodyWrapper.style.display = val ? 'block' : 'none';
-            this.triggerChange();
-        });
-
         header.appendChild(label);
-        header.appendChild(this.enableToggle.element);
         container.appendChild(header);
 
         this.bodyWrapper = document.createElement('div');
-        this.bodyWrapper.style.display = this.values.enabled ? 'block' : 'none';
         this.bodyWrapper.style.marginTop = '0.5rem';
 
         this.typeSelect = new EscmsSelect('inspector.gradient_type', [
+            { label: 'None', value: 'none' },
             { label: 'Linear', value: 'linear' },
             { label: 'Radial', value: 'radial' },
             { label: 'Mesh (Aurora)', value: 'mesh' }
@@ -52,6 +45,8 @@ class EscmsGradientControl {
             this.positionSelect.element.style.display = (val === 'radial' || val === 'mesh') ? 'grid' : 'none';
             this.stopSlider.element.style.display = (val === 'radial' || val === 'mesh') ? 'grid' : 'none';
             this.blurSlider.element.style.display = (val === 'mesh') ? 'grid' : 'none';
+            this.colorsRow.style.display = (val !== 'none') ? 'flex' : 'none';
+            this.animateToggle.element.style.display = (val !== 'none') ? 'flex' : 'none';
             this.triggerChange();
         });
         
@@ -71,6 +66,7 @@ class EscmsGradientControl {
             this.values.stop = val;
             this.triggerChange();
         }, '%');
+        this.stopSlider.element.style.display = (this.values.type === 'radial' || this.values.type === 'mesh') ? 'grid' : 'none';
         
         this.blurSlider = new EscmsSlider('inspector.gradient_blur', 0, 200, 1, this.values.blur !== undefined ? this.values.blur : 60, (val) => {
             this.values.blur = val;
@@ -83,12 +79,12 @@ class EscmsGradientControl {
             this.triggerChange();
         });
 
-        const colorsRow = document.createElement('div');
-        colorsRow.style.display = 'flex';
-        colorsRow.style.flexDirection = 'column';
-        colorsRow.style.gap = '0.5rem';
-        colorsRow.style.marginTop = '0.75rem';
-        colorsRow.style.marginBottom = '0.75rem';
+        this.colorsRow = document.createElement('div');
+        this.colorsRow.style.display = this.values.type !== 'none' ? 'flex' : 'none';
+        this.colorsRow.style.flexDirection = 'column';
+        this.colorsRow.style.gap = '0.5rem';
+        this.colorsRow.style.marginTop = '0.75rem';
+        this.colorsRow.style.marginBottom = '0.75rem';
         
         this.color1Picker = new EscmsColorPicker('inspector.color_1', this.values.c1, this.values.a1, (val) => {
             this.values.c1 = val.hex; this.values.a1 = val.alpha; this.values.rgba1 = val.rgba; this.triggerChange();
@@ -102,15 +98,17 @@ class EscmsGradientControl {
             this.values.c3 = val.hex; this.values.a3 = val.alpha; this.values.rgba3 = val.rgba; this.triggerChange();
         });
 
-        colorsRow.appendChild(this.color1Picker.element);
-        colorsRow.appendChild(this.color2Picker.element);
-        colorsRow.appendChild(this.color3Picker.element);
+        this.colorsRow.appendChild(this.color1Picker.element);
+        this.colorsRow.appendChild(this.color2Picker.element);
+        this.colorsRow.appendChild(this.color3Picker.element);
         
+        this.animateToggle.element.style.display = this.values.type !== 'none' ? 'flex' : 'none';
+
         this.bodyWrapper.appendChild(this.typeSelect.element);
         this.bodyWrapper.appendChild(this.positionSelect.element);
         this.bodyWrapper.appendChild(this.stopSlider.element);
         this.bodyWrapper.appendChild(this.blurSlider.element);
-        this.bodyWrapper.appendChild(colorsRow);
+        this.bodyWrapper.appendChild(this.colorsRow);
         this.bodyWrapper.appendChild(this.animateToggle.element);
 
         container.appendChild(this.bodyWrapper);
@@ -127,8 +125,8 @@ class EscmsGradientControl {
 
     triggerChange() {
         if (this.onChange) {
-            if (!this.values.enabled) {
-                this.onChange({ enabled: false, cssString: 'none', animate: false });
+            if (this.values.type === 'none') {
+                this.onChange({ enabled: false, type: 'none', cssString: 'none', animate: false });
                 return;
             }
 
@@ -198,18 +196,15 @@ class EscmsGradientControl {
 
     setValue(newValues, triggerCallback = false) {
         let changed = false;
-        
-        if (newValues.enabled !== undefined && this.values.enabled !== newValues.enabled) {
-            this.values.enabled = newValues.enabled;
-            this.enableToggle.setValue(newValues.enabled, false);
-            this.bodyWrapper.style.display = newValues.enabled ? 'block' : 'none';
-            changed = true;
-        }
 
         if (newValues.type !== undefined && this.values.type !== newValues.type) {
             this.values.type = newValues.type;
             this.typeSelect.setValue(newValues.type, false);
             this.positionSelect.element.style.display = (newValues.type === 'radial' || newValues.type === 'mesh') ? 'grid' : 'none';
+            this.stopSlider.element.style.display = (newValues.type === 'radial' || newValues.type === 'mesh') ? 'grid' : 'none';
+            this.blurSlider.element.style.display = (newValues.type === 'mesh') ? 'grid' : 'none';
+            this.colorsRow.style.display = (newValues.type !== 'none') ? 'flex' : 'none';
+            this.animateToggle.element.style.display = (newValues.type !== 'none') ? 'flex' : 'none';
             changed = true;
         }
 

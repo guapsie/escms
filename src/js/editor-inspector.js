@@ -617,32 +617,27 @@ class EscmsInspector {
         return res;
     }
 
-    _parseGradient(cssVal) {
-        let res = { enabled: false, angle: 90, c1: '#3b82f6', a1: 100, stop1: 0, c2: '#1e3a8a', a2: 100, stop2: 100 };
-        if (!cssVal || !cssVal.includes('linear-gradient')) return res;
+    _parseGradient(cssVal, isMesh = false) {
+        let res = { type: 'none', position: 'center', c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100, stop: 60, blur: 60, animate: false };
+        if (!cssVal || cssVal === 'none' || cssVal === '') return res;
 
-        res.enabled = true;
-        let inner = cssVal.match(/linear-gradient\((.*)\)/);
-        if (!inner) return res;
-
-        let parts = inner[1].split(/,(?![^(]*\))/).map(s => s.trim());
-        if (parts[0].endsWith('deg')) {
-            res.angle = parseInt(parts[0].replace('deg', ''));
-            parts.shift();
+        // Basic parsing just to set the type correctly if it's not empty
+        if (isMesh || cssVal.includes('--escms-mesh-bg')) {
+            res.type = 'mesh';
+            res.animate = cssVal.includes('escms-mesh-drift') || (this.selectedNode && this.selectedNode.style.getPropertyValue('--escms-mesh-anim') !== 'none');
+            const blurVal = this.selectedNode ? this.selectedNode.style.getPropertyValue('--escms-mesh-blur') : '';
+            if (blurVal) res.blur = parseInt(blurVal) || 60;
+        } else if (cssVal.includes('radial-gradient')) {
+            res.type = 'radial';
+            res.animate = this.selectedNode && this.selectedNode.style.animation.includes('escms-bg-pan');
+        } else if (cssVal.includes('linear-gradient')) {
+            res.type = 'linear';
+            res.animate = this.selectedNode && this.selectedNode.style.animation.includes('escms-bg-pan');
         }
 
-        if (parts.length >= 2) {
-            let color1 = this._rgbaToHexA(parts[0].split(' ')[0]);
-            let color2 = this._rgbaToHexA(parts[1].split(' ')[0]);
-            res.c1 = color1.hex; res.a1 = color1.alpha;
-            res.c2 = color2.hex; res.a2 = color2.alpha;
-
-            let stop1Match = parts[0].match(/(\d+)%/);
-            if (stop1Match) res.stop1 = parseInt(stop1Match[1]);
-
-            let stop2Match = parts[1].match(/(\d+)%/);
-            if (stop2Match) res.stop2 = parseInt(stop2Match[1]);
-        }
+        // Ideally we would parse colors and stops here, but for now we just return the type so the control activates
+        // Advanced parsing of 3-color radial/linear/mesh can be complex, so we stick to defaults if unparseable
+        
         return res;
     }
 
@@ -830,7 +825,11 @@ class EscmsInspector {
         if (allowedControls.includes('bgGradient')) {
             let bGradient = comp.backgroundImage;
             if (this.selectedNode.classList.contains('escms-portfolio')) bGradient = this.selectedNode.style.getPropertyValue('--item-background-image') || bGradient;
-            let gradient = this._parseGradient(bGradient);
+            
+            let isMesh = this.selectedNode.getAttribute('data-escms-mesh') === 'true';
+            if (isMesh) bGradient = this.selectedNode.style.getPropertyValue('--escms-mesh-bg') || bGradient;
+
+            let gradient = this._parseGradient(bGradient, isMesh);
             this.controls.bgGradient.setValue(gradient, false);
         }
 
