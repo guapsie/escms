@@ -21,6 +21,7 @@ const enFallback = Object.freeze({
     'inspector.item_align': 'Item Align',
     'inspector.font_size': 'Font Size',
     'inspector.text_align': 'Text Align',
+    'inspector.text_style': 'Text Style',
     'inspector.visibility': 'Visibility',
     'inspector.hidden_element': 'Hidden element',
     'inspector.styles': 'Styles',

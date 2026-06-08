@@ -15,7 +15,7 @@ class EscmsInspector {
         this.container.style.padding = '1.5rem 1.5rem 5rem 1.5rem';
         this.container.style.display = 'flex';
         this.container.style.flexDirection = 'column';
-        this.container.style.gap = '2rem';
+        this.container.style.gap = '1rem';
         this.container.style.overflowY = 'auto';
         this.container.style.height = '100%';
         this.container.style.boxSizing = 'border-box';
@@ -72,8 +72,10 @@ class EscmsInspector {
         const section = document.createElement('div');
         section.style.display = 'flex';
         section.style.flexDirection = 'column';
-        section.style.gap = '1rem';
-        section.style.marginBottom = '2rem';
+        section.style.gap = '0.5rem';
+        section.style.marginBottom = '1rem';
+        section.style.paddingTop = '1rem';
+        section.style.borderTop = '1px solid rgba(255, 255, 255, 0.05)';
 
         const title = document.createElement('div');
         title.setAttribute('data-i18n', titleI18n);
@@ -81,9 +83,8 @@ class EscmsInspector {
         title.style.fontWeight = '600';
         title.style.letterSpacing = '1px';
         title.style.textTransform = 'uppercase';
-        title.style.color = 'rgba(245, 245, 245, 0.4)';
-        title.style.borderBottom = '1px solid rgba(255, 255, 255, 0.05)';
-        title.style.paddingBottom = '0.5rem';
+        title.style.color = 'rgba(245, 245, 245, 0.6)';
+        title.style.paddingBottom = '0.25rem';
 
         section.appendChild(title);
         return section;
@@ -493,28 +494,26 @@ class EscmsInspector {
 
     createTextInput(i18nKey, onChange) {
         const container = document.createElement('div');
-        container.style.marginBottom = '0.75rem';
+        container.className = 'escms-control-row';
         container.style.display = 'none';
 
         const label = document.createElement('div');
         label.setAttribute('data-i18n', i18nKey);
-        label.style.fontSize = '0.75rem';
-        label.style.color = 'rgba(245, 245, 245, 0.6)';
-        label.style.marginBottom = '0.35rem';
+        label.className = 'escms-ui-label';
 
         const input = document.createElement('input');
         input.type = 'text';
         input.style.width = '100%';
-        input.style.background = '#121212';
+        input.style.background = 'rgba(255, 255, 255, 0.04)';
         input.style.border = '1px solid rgba(255, 255, 255, 0.05)';
         input.style.color = 'var(--text-solid)';
-        input.style.padding = '0.5rem';
+        input.style.padding = '0.35rem 0.5rem';
         input.style.borderRadius = '4px';
         input.style.boxSizing = 'border-box';
         input.style.fontFamily = 'monospace';
-        input.style.fontSize = '0.8rem';
+        input.style.fontSize = '11px';
         input.className = 'escms-inspector-text-input';
-        input.style.transition = 'border-color 0.2s, box-shadow 0.2s';
+        input.style.transition = 'border-color 0.2s, background 0.2s';
 
         input.addEventListener('input', (e) => onChange(e.target.value));
 
@@ -524,7 +523,7 @@ class EscmsInspector {
         return {
             element: container,
             input: input,
-            show: () => container.style.display = 'block',
+            show: () => container.style.display = 'grid',
             hide: () => container.style.display = 'none',
             setValue: (val) => input.value = val || ''
         };
@@ -684,12 +683,12 @@ class EscmsInspector {
         // Hide/Show Controls based on allowedControls
         Object.keys(this.controls).forEach(key => {
             if (this.controls[key].element) {
-                this.controls[key].element.style.display = allowedControls.includes(key) ? 'block' : 'none';
+                this.controls[key].element.style.display = allowedControls.includes(key) ? 'grid' : 'none';
             }
         });
         Object.keys(this.attrInputs).forEach(key => {
             if (this.attrInputs[key].element) {
-                this.attrInputs[key].element.style.display = allowedControls.includes(key) ? 'block' : 'none';
+                this.attrInputs[key].element.style.display = allowedControls.includes(key) ? 'grid' : 'none';
             }
         });
 
@@ -733,7 +732,7 @@ class EscmsInspector {
         // Sync Attributes
         if (allowedControls.includes('src')) {
             this.attrInputs.src.setValue(this.selectedNode.getAttribute('src'), false);
-            this.attrInputs.src.element.style.display = 'block';
+            this.attrInputs.src.element.style.display = 'grid';
         }
         if (allowedControls.includes('alt')) {
             this.attrInputs.alt.setValue(this.selectedNode.getAttribute('alt'), false);
@@ -741,11 +740,11 @@ class EscmsInspector {
         }
         if (allowedControls.includes('href')) {
             this.attrInputs.href.setValue(this.selectedNode.getAttribute('href'), false);
-            this.attrInputs.href.element.style.display = 'block';
+            this.attrInputs.href.element.style.display = 'grid';
         }
         if (allowedControls.includes('ariaLabel')) {
             this.attrInputs.ariaLabel.setValue(this.selectedNode.getAttribute('aria-label'), false);
-            this.attrInputs.ariaLabel.element.style.display = 'block';
+            this.attrInputs.ariaLabel.element.style.display = 'grid';
         }
 
         // Typography

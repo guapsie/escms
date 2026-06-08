@@ -8,14 +8,14 @@ class EscmsToggle {
         this.pill = el('div', { class: 'escms-toggle-pill' }, this.ball);
         
         this.element = el('div', { 
-            class: 'escms-toggle-container escms-ui-mb',
+            class: 'escms-control-row',
             onclick: () => {
                 this.state = !this.state;
                 this.updateStyles();
                 if (this.onChange) this.onChange(this.state);
             }
         }, [
-            el('span', { 'data-i18n': this.labelKey, class: 'escms-toggle-label' }),
+            el('span', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }),
             this.pill
         ]);
 
@@ -63,8 +63,8 @@ class EscmsSelect {
         this.dropdown = el('div', { class: 'escms-dropdown escms-select-dropdown' });
         this._renderOptions();
 
-        this.element = el('div', { class: 'escms-select-container escms-ui-mb' }, [
-            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : null,
+        this.element = el('div', { class: 'escms-control-row' }, [
+            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div'),
             this.button,
             this.dropdown
         ]);
@@ -158,12 +158,14 @@ class EscmsSlider {
             }
         }, this.track);
 
-        this.element = el('div', { class: 'escms-ui-mb-lg' }, [
-            el('div', { class: 'escms-slider-header' }, [
-                this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label', style: { marginBottom: '0' } }) : el('div'),
-                this.valDisplay
-            ]),
-            trackContainer
+        this.element = el('div', { class: 'escms-control-row' }, [
+            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div'),
+            el('div', { style: 'display: flex; flex-direction: column;' }, [
+                el('div', { class: 'escms-slider-header' }, [
+                    this.valDisplay
+                ]),
+                trackContainer
+            ])
         ]);
 
         document.addEventListener('mousemove', (e) => {
@@ -262,8 +264,8 @@ class EscmsColorPicker {
             onclick: (e) => e.stopPropagation()
         }, this.alphaSlider.element);
 
-        this.element = el('div', { class: 'escms-ui-mb', style: 'position: relative;' }, [
-            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : null,
+        this.element = el('div', { class: 'escms-control-row', style: 'position: relative;' }, [
+            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div'),
             this.button,
             this.dropdown
         ]);
@@ -378,8 +380,8 @@ class EscmsSpacing {
             ]);
         }));
 
-        this.element = el('div', { class: 'escms-ui-mb-lg' }, [
-            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : null,
+        this.element = el('div', { class: 'escms-control-row' }, [
+            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div'),
             grid
         ]);
     }
@@ -431,8 +433,8 @@ class EscmsButtonGroup {
             return btn;
         }));
 
-        this.element = el('div', { class: 'escms-ui-mb' }, [
-            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : null,
+        this.element = el('div', { class: 'escms-control-row' }, [
+            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div'),
             group
         ]);
     }
@@ -483,8 +485,8 @@ class EscmsCollectionControl {
             }
         }, labelText);
 
-        this.element = el('div', { class: 'escms-ui-mb' }, [
-            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label', style: 'margin-bottom: 0.5rem;' }) : null,
+        this.element = el('div', { class: 'escms-control-row' }, [
+            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div'),
             this.btn
         ]);
     }
