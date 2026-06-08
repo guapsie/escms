@@ -388,23 +388,6 @@ class EscmsCanvas {
             pillGroup.appendChild(btn);
         });
 
-        const dirtyIndicator = document.createElement('div');
-        dirtyIndicator.id = 'escms-dirty-indicator';
-        dirtyIndicator.style.cssText = `
-            position: absolute;
-            right: -16px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #f5f5f5;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        `;
-
-        pillGroup.appendChild(dirtyIndicator);
         tabsContainer.appendChild(pillGroup);
         
         return tabsContainer;

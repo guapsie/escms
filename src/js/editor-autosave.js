@@ -38,12 +38,12 @@ class EscmsAutosave {
             subtree: true
         });
 
-        // Background server sync every 10 seconds
+        // Background server sync every 60 seconds
         this.syncInterval = setInterval(() => {
             if (this.needsSync && !this.isSaving) {
                 this.saveToServer();
             }
-        }, 10000);
+        }, 60000);
 
         // Ensure data is sent on tab close
         document.addEventListener('visibilitychange', () => {
@@ -187,13 +187,8 @@ class EscmsAutosave {
     updateStatus(i18nKey, isError = false) {
         if (this.i18n) {
             const text = this.i18n.dictionary[i18nKey] || i18nKey;
-            const indicator = document.getElementById('escms-dirty-indicator');
             
-            if (i18nKey === 'Saved (Local)') {
-                if (indicator) indicator.style.opacity = '0.8';
-            } else if (i18nKey === 'topbar.saved') {
-                if (indicator) indicator.style.opacity = '0';
-            } else if (isError && window.escmsToast) {
+            if (isError && window.escmsToast) {
                 window.escmsToast(text, 'error');
             }
         }
