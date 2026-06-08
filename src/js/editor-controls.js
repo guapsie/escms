@@ -63,10 +63,11 @@ class EscmsSelect {
         this.dropdown = el('div', { class: 'escms-dropdown escms-select-dropdown' });
         this._renderOptions();
 
+        const container = el('div', { class: 'escms-select-container' }, [this.button, this.dropdown]);
+
         this.element = el('div', { class: 'escms-control-row' }, [
             this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div'),
-            this.button,
-            this.dropdown
+            container
         ]);
 
         document.addEventListener('click', () => { if (this.isOpen) this.close(); });

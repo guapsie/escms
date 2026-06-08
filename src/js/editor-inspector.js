@@ -337,7 +337,41 @@ class EscmsInspector {
         this.controls.bgColor = new EscmsColorPicker('inspector.solid_color', '#0a0a0a', 0, (val) => this.applyStyle('background-color', val.rgba));
         bgSection.appendChild(this.controls.bgColor.element);
 
-        this.controls.bgGradient = new EscmsGradientControl('inspector.linear_gradient', this.i18n, undefined, (val) => this.applyStyle('background-image', val.cssString));
+        this.controls.bgGradient = new EscmsGradientControl('inspector.linear_gradient', this.i18n, undefined, (val) => {
+            if (val.type === 'mesh') {
+                this.selectedNode.setAttribute('data-escms-mesh', 'true');
+                this.applyStyle('background-image', ''); // Clear inline bg-image!
+                this.applyStyle('--escms-mesh-bg', val.cssString);
+                
+                if (val.bgSize !== undefined) this.applyStyle('--escms-mesh-size', val.bgSize);
+                if (val.bgRepeat !== undefined) this.applyStyle('--escms-mesh-repeat', val.bgRepeat);
+                if (val.animation !== undefined) this.applyStyle('--escms-mesh-anim', val.animation);
+                if (val.blur !== undefined) this.applyStyle('--escms-mesh-blur', val.blur + 'px');
+                
+                // Clear the normal ones so they don't conflict
+                this.applyStyle('background-size', '');
+                this.applyStyle('background-repeat', '');
+                this.applyStyle('animation', '');
+            } else {
+                if (this.selectedNode) this.selectedNode.removeAttribute('data-escms-mesh');
+                this.applyStyle('--escms-mesh-bg', '');
+                this.applyStyle('--escms-mesh-size', '');
+                this.applyStyle('--escms-mesh-repeat', '');
+                this.applyStyle('--escms-mesh-anim', '');
+                this.applyStyle('--escms-mesh-blur', '');
+                
+                this.applyStyle('background-image', val.cssString);
+                if (val.bgSize !== undefined) this.applyStyle('background-size', val.bgSize);
+                if (val.bgRepeat !== undefined) this.applyStyle('background-repeat', val.bgRepeat);
+                if (val.animation !== undefined) this.applyStyle('animation', val.animation);
+                
+                if (!val.animate) {
+                    this.applyStyle('background-size', '');
+                    this.applyStyle('background-repeat', '');
+                    this.applyStyle('animation', '');
+                }
+            }
+        });
         bgSection.appendChild(this.controls.bgGradient.element);
 
         this.controls.bgImage = new EscmsBgImageControl('inspector.bg_image', this.i18n, { image: '' }, (val) => {

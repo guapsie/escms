@@ -273,6 +273,37 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
         
         /* Ajustes Globales del Usuario */
         <?= $custom_css_vars ?>
+        
+        /* ESCMS Core Animations */
+        @keyframes escms-bg-pan {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes escms-mesh-drift {
+            0% { background-position: 0% 0%, 100% 100%, 50% 0%; }
+            33% { background-position: 100% 0%, 0% 50%, 100% 100%; }
+            66% { background-position: 50% 100%, 0% 0%, 0% 100%; }
+            100% { background-position: 0% 0%, 100% 100%, 50% 0%; }
+        }
+        [data-escms-mesh="true"] {
+            position: relative;
+            isolation: isolate;
+        }
+        [data-escms-mesh="true"]::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            border-radius: inherit;
+            background-image: var(--escms-mesh-bg);
+            background-size: var(--escms-mesh-size, 100% 100%);
+            background-repeat: var(--escms-mesh-repeat, no-repeat);
+            animation: var(--escms-mesh-anim, none);
+            filter: blur(var(--escms-mesh-blur, 60px));
+            clip-path: inset(0);
+        }
     </style>
 </head>
 <body>

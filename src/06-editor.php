@@ -59,6 +59,17 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
         .escms-anim-fade { animation: escmsFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         .escms-anim-slide-up { animation: escmsSlideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         .escms-anim-scale-up { animation: escmsScaleUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        @keyframes escms-bg-pan {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes escms-mesh-drift {
+            0% { background-position: 0% 0%, 100% 100%, 50% 0%; }
+            33% { background-position: 100% 0%, 0% 50%, 100% 100%; }
+            66% { background-position: 50% 100%, 0% 0%, 0% 100%; }
+            100% { background-position: 0% 0%, 100% 100%, 50% 0%; }
+        }
         
         ::-webkit-scrollbar {
             width: 6px;

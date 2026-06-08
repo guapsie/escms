@@ -8,7 +8,7 @@ class EscmsParser {
         }
 
         if (node.nodeType === Node.ELEMENT_NODE) {
-            const relevantAttrs = ['src', 'href', 'alt', 'title', 'target', 'id', 'ref', 'aria-label', 'placeholder', 'type', 'name', 'value'];
+            const relevantAttrs = ['src', 'href', 'alt', 'title', 'target', 'id', 'ref', 'aria-label', 'placeholder', 'type', 'name', 'value', 'data-escms-mesh'];
 
             if (node.hasAttribute('data-escms-atom')) {
                 const atomName = node.getAttribute('data-escms-atom');
