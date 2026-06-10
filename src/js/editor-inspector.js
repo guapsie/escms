@@ -590,12 +590,19 @@ export class EscmsInspector {
 
     _rgbaToHexA(rgba) {
         if (!rgba || rgba === 'transparent' || rgba === 'none' || rgba.trim() === '') return { hex: '#000000', alpha: 0 };
-        let parts = rgba.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+        let parts = rgba.match(/^rgba?\(\s*([0-9.%]+)(?:\s*,?\s*)([0-9.%]+)(?:\s*,?\s*)([0-9.%]+)(?:(?:\s*,?\s*|\s*\/\s*)([0-9.]+))?\s*\)$/i);
         if (!parts) return { hex: '#000000', alpha: 100 };
 
-        let r = parseInt(parts[1]).toString(16).padStart(2, '0');
-        let g = parseInt(parts[2]).toString(16).padStart(2, '0');
-        let b = parseInt(parts[3]).toString(16).padStart(2, '0');
+        const parseVal = (v) => {
+            if (v.endsWith('%')) {
+                return Math.round((parseFloat(v) / 100) * 255);
+            }
+            return Math.round(parseFloat(v));
+        };
+
+        let r = parseVal(parts[1]).toString(16).padStart(2, '0');
+        let g = parseVal(parts[2]).toString(16).padStart(2, '0');
+        let b = parseVal(parts[3]).toString(16).padStart(2, '0');
         let a = parts[4] !== undefined ? Math.round(parseFloat(parts[4]) * 100) : 100;
 
         return { hex: `#${r}${g}${b}`, alpha: a };
@@ -653,14 +660,35 @@ export class EscmsInspector {
         } else if (cssVal.includes('radial-gradient')) {
             res.type = 'radial';
             res.animate = this.selectedNode && this.selectedNode.style.animation.includes('escms-bg-pan');
+            let match = cssVal.match(/radial-gradient\(([^,]+),\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^,]*),\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^,]*)(?:,\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^)]*))?\)/);
+            if (match) {
+                res.position = match[1].trim();
+                let c1 = this._rgbaToHexA(match[2]); res.c1 = c1.hex; res.a1 = c1.alpha;
+                let c2 = this._rgbaToHexA(match[4]); res.c2 = c2.hex; res.a2 = c2.alpha;
+                if (match[5]) res.stop = parseInt(match[5]) || 60;
+                if (match[6]) {
+                    let c3 = this._rgbaToHexA(match[6]); res.c3 = c3.hex; res.a3 = c3.alpha;
+                } else {
+                    res.c3 = res.c2; res.a3 = res.a2;
+                }
+            }
         } else if (cssVal.includes('linear-gradient')) {
             res.type = 'linear';
             res.animate = this.selectedNode && this.selectedNode.style.animation.includes('escms-bg-pan');
+            let match = cssVal.match(/linear-gradient\(([^,]+),\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^,]*),\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^,]*)(?:,\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^)]*))?\)/);
+            if (match) {
+                res.position = match[1].trim();
+                let c1 = this._rgbaToHexA(match[2]); res.c1 = c1.hex; res.a1 = c1.alpha;
+                let c2 = this._rgbaToHexA(match[4]); res.c2 = c2.hex; res.a2 = c2.alpha;
+                if (match[5]) res.stop = parseInt(match[5]) || 60;
+                if (match[6]) {
+                    let c3 = this._rgbaToHexA(match[6]); res.c3 = c3.hex; res.a3 = c3.alpha;
+                } else {
+                    res.c3 = res.c2; res.a3 = res.a2;
+                }
+            }
         }
 
-        // Ideally we would parse colors and stops here, but for now we just return the type so the control activates
-        // Advanced parsing of 3-color radial/linear/mesh can be complex, so we stick to defaults if unparseable
-        
         return res;
     }
 
