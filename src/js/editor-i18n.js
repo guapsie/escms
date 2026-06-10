@@ -127,6 +127,7 @@ const enFallback = Object.freeze({
     "editor.editing_component": "Editing Component:",
     "editor.back_to_page": "Back to Page",
     "inspector.columns_count": "Columns",
+    "inspector.sticky": "Sticky Header",
     "settings.tab_ide": "IDE",
     "settings.tab_identity": "Identity",
     "settings.tab_layout": "Layout & Colors",

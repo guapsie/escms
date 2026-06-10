@@ -31,10 +31,15 @@ export class EscmsParser {
                 tag: tag
             };
 
-            // Si es un componente puro, devolvemos ya (no necesitamos sus hijos internos en el JSON de la página)
-            if (isComponent) return jsonNode;
-
             // --- Extracción unificada de Clases, Estilos y Atributos ---
+            
+            // Estilos inline (IMPORTANTE: Esto debe extraerse incluso para componentes si queremos que guarden posición, etc)
+            if (node.style && node.style.length > 0) {
+                jsonNode.styles = node.style.cssText;
+            }
+
+            // Si es un componente puro, devolvemos ya (no necesitamos sus hijos internos ni clases/attrs, solo los estilos base)
+            if (isComponent) return jsonNode;
 
             // Props de Atoms
             if (isAtom) {
@@ -149,6 +154,9 @@ export class EscmsParser {
         if (jsonNode.tag === 'escms-component') {
             el = document.createElement('escms-component');
             el.setAttribute('ref', jsonNode.ref);
+            if (jsonNode.styles) {
+                el.style.cssText += ';' + jsonNode.styles;
+            }
 
             const compDataStr = window.escmsComponents?.[jsonNode.ref]?.editor_data;
             if (compDataStr) {

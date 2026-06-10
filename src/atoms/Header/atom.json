@@ -6,6 +6,7 @@
     "allowedControls": [
         "bgColor",
         "bgGradient",
+        "sticky",
         "margin",
         "padding",
         "border",

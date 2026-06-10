@@ -2,7 +2,7 @@ import { EscmsBorderControl } from './editor-control-border.js';
 import { EscmsEffectsControl } from './editor-control-effects.js';
 import { EscmsGradientControl } from './editor-control-gradient.js';
 import { EscmsUploadControl, EscmsBgImageControl } from './editor-control-upload.js';
-import { EscmsSelect, EscmsSlider, EscmsColorPicker, EscmsSpacing, EscmsButtonGroup, EscmsCollectionControl } from './editor-controls.js';
+import { EscmsSelect, EscmsSlider, EscmsColorPicker, EscmsSpacing, EscmsButtonGroup, EscmsCollectionControl, EscmsToggle } from './editor-controls.js';
 import { icons } from './editor-icons.js';
 
 export class EscmsInspector {
@@ -416,7 +416,20 @@ export class EscmsInspector {
         // --- LAYOUT ---
         const layoutSection = this.createSection('inspector.layout');
 
-
+        this.controls.sticky = new EscmsToggle('inspector.sticky', false, (val) => {
+            if (!this.selectedNode || this.isSyncing) return;
+            if (val) {
+                this.selectedNode.style.position = 'sticky';
+                this.selectedNode.style.top = '0px';
+                this.selectedNode.style.zIndex = '50';
+            } else {
+                this.selectedNode.style.removeProperty('position');
+                this.selectedNode.style.removeProperty('top');
+                this.selectedNode.style.removeProperty('z-index');
+            }
+            window.dispatchEvent(new Event('escms-dom-mutated'));
+        });
+        layoutSection.appendChild(this.controls.sticky.element);
 
         this.controls.width = this.createTextInput('inspector.width', (val) => this.applyStyle('width', val));
         layoutSection.appendChild(this.controls.width.element);
@@ -725,7 +738,8 @@ export class EscmsInspector {
             'a': ['href', 'fontFamily', 'color', 'fontSize', 'textAlign', 'textStyle', 'margin', 'padding', 'border', 'opacity'],
             'iframe': ['src', 'margin', 'padding', 'border', 'opacity'],
             'column': ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
-            'default': ['tagSwap', 'fontFamily', 'color', 'fontSize', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity']
+            'escms-component': ['sticky', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
+            'default': ['sticky', 'tagSwap', 'fontFamily', 'color', 'fontSize', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity']
         };
 
         let isAtom = false;
@@ -897,6 +911,11 @@ export class EscmsInspector {
         }
 
         // Layout
+        if (allowedControls.includes('sticky')) {
+            let isSticky = comp.position === 'sticky';
+            this.controls.sticky.setValue(isSticky, false);
+        }
+
         if (allowedControls.includes('width')) {
             this.controls.width.setValue(comp.width !== 'auto' ? comp.width : '', false);
         }
