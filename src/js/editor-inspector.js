@@ -57,6 +57,22 @@ class EscmsInspector {
             }
         });
 
+        window.addEventListener('escms-fonts-updated', () => {
+            if (this.controls && this.controls.fontFamily) {
+                this.controls.fontFamily.updateOptions(this.getInstalledFonts());
+                if (this.selectedNode) {
+                    const comp = window.getComputedStyle(this.selectedNode);
+                    let fFamily = comp.fontFamily;
+                    if (fFamily) {
+                        let firstFont = fFamily.split(',')[0].trim().replace(/['"]/g, '');
+                        let fontOpt = this.controls.fontFamily.options.find(o => o.label === firstFont);
+                        if (fontOpt) this.controls.fontFamily.setValue(fontOpt.value, false);
+                        else this.controls.fontFamily.setValue('', false);
+                    }
+                }
+            }
+        });
+
         const style = document.createElement('style');
         style.textContent = `
             .escms-inspector-text-input:focus {

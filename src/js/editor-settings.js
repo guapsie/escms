@@ -12,7 +12,8 @@ class EscmsGlobalSettings {
             escms_p2p_enabled: false,
             site_logo: '',
             site_favicon: '',
-            editor_language: 'en'
+            editor_language: 'en',
+            auto_save_server: true
         };
     }
 
@@ -42,6 +43,7 @@ class EscmsGlobalSettings {
                     this.config.site_logo = data.data.site_logo || '';
                     this.config.site_favicon = data.data.site_favicon || '';
                     this.config.editor_language = data.data.editor_language || 'en';
+                    this.config.auto_save_server = data.data.auto_save_server !== '0';
                     if (this.config.editor_language !== 'en' && window.escmsEditor && window.escmsEditor.i18n) {
                         window.escmsEditor.i18n.loadLanguage(this.config.editor_language).then(() => {
                             window.escmsEditor.i18n.translateDOM();
@@ -72,28 +74,6 @@ class EscmsGlobalSettings {
         } catch (e) { console.error('Failed to save settings', e); }
     }
 
-    applyGoogleFonts() {
-        let link = document.getElementById('escms-google-fonts');
-        if (!link) {
-            link = document.createElement('link');
-            link.id = 'escms-google-fonts';
-            link.rel = 'stylesheet';
-            document.head.appendChild(link);
-        }
-        
-        if (this.googleFonts.length > 0) {
-            link.href = this.googleFonts.join('&family='); // No exact, but valid enough for editor preview
-            // Actually the correct way is:
-            const urls = this.googleFonts.map(u => '@import url("' + u + '");').join('\n');
-            let style = document.getElementById('escms-google-fonts-style');
-            if (!style) {
-                style = document.createElement('style');
-                style.id = 'escms-google-fonts-style';
-                document.head.appendChild(style);
-            }
-            style.textContent = urls;
-        }
-    }
 
     updateFavicon() {
         if (!this.config.site_favicon) return;
@@ -338,6 +318,20 @@ class EscmsGlobalSettings {
     }
 
     applyGoogleFonts() {
+        // Remove existing from head
+        const existingHeadLinks = document.head.querySelectorAll('link[data-type="escms-google-font"]');
+        existingHeadLinks.forEach(l => l.remove());
+
+        // Append to head so they load globally and work in ShadowRoot
+        this.googleFonts.forEach(url => {
+            const link = document.createElement('link');
+            link.setAttribute('data-type', 'escms-google-font');
+            link.rel = 'stylesheet';
+            link.href = url;
+            document.head.appendChild(link);
+        });
+
+        // Also append to shadowRoot for inspector/components to query if needed
         const host = document.getElementById('escms-canvas-host');
         if (host && host.shadowRoot) {
             const existingLinks = host.shadowRoot.querySelectorAll('link[data-type="escms-google-font"]');
@@ -350,6 +344,7 @@ class EscmsGlobalSettings {
                 link.href = url;
                 host.shadowRoot.appendChild(link);
             });
+            window.dispatchEvent(new Event('escms-fonts-updated'));
         }
     }
 
@@ -405,6 +400,15 @@ class EscmsGlobalSettings {
             'webp_enabled', 
             this.config.webp_enabled, 
             (val) => { this.saveConfig('webp_enabled', val); }
+        ));
+
+        // Auto Save Server
+        tab.appendChild(createToggleSetting(
+            'settings.autosave_title', 
+            'settings.autosave_desc', 
+            'auto_save_server', 
+            this.config.auto_save_server, 
+            (val) => { this.saveConfig('auto_save_server', val); }
         ));
 
         // Language

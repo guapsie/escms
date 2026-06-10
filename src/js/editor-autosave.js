@@ -40,7 +40,8 @@ class EscmsAutosave {
 
         // Background server sync every 60 seconds
         this.syncInterval = setInterval(() => {
-            if (this.needsSync && !this.isSaving) {
+            const autoSaveEnabled = window.escmsEditor && window.escmsEditor.settings ? window.escmsEditor.settings.config.auto_save_server !== false : true;
+            if (autoSaveEnabled && this.needsSync && !this.isSaving) {
                 this.saveToServer();
             }
         }, 60000);

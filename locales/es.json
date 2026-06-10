@@ -86,6 +86,8 @@
     "settings.sounds_desc": "Reproducir sonidos al interactuar con el editor.",
     "settings.webp_title": "Optimizar Imágenes (WebP)",
     "settings.webp_desc": "Convierte tus fotos a WebP automáticamente para ahorrar ancho de banda y mejorar el SEO.",
+    "settings.autosave_title": "Autoguardado en Servidor",
+    "settings.autosave_desc": "Guarda en el servidor cada 60s. Si lo desactivas, guardará en el navegador (local) y solo subirá al servidor al pulsar CTRL+S.",
     "settings.language_title": "Idioma del Editor",
     "settings.logo_title": "Logo del Sitio",
     "settings.favicon_title": "Favicon del Sitio",

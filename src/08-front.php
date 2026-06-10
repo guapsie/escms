@@ -188,11 +188,15 @@ while (($start = strpos($content, 'escms-nav-list', $offset)) !== false) {
     }
 }
 
-// Cargar el CSS del tema activo (por ahora asumimos pichi)
-$style_css = '';
+// Cargar el CSS del usuario o del tema activo (por ahora asumimos pichi)
+$css_href = '/data/templates/pichi/style.css';
+$user_css_path = __DIR__ . '/../data/user_settings/style.css';
 $template_css_path = __DIR__ . '/../data/templates/pichi/style.css';
-if (file_exists($template_css_path)) {
-    $style_css = file_get_contents($template_css_path);
+
+if (file_exists($user_css_path)) {
+    $css_href = '/data/user_settings/style.css?v=' . filemtime($user_css_path);
+} else if (file_exists($template_css_path)) {
+    $css_href = '/data/templates/pichi/style.css?v=' . filemtime($template_css_path);
 }
 
 // Cargar opciones globales
@@ -267,10 +271,8 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
     <?= $google_fonts_html ?>
     <?= $favicon_html ?>
 
+    <link rel="stylesheet" type="text/css" href="<?= $css_href ?>">
     <style>
-        /* Estilos del Tema */
-        <?= $style_css ?>
-        
         /* Ajustes Globales del Usuario */
         <?= $custom_css_vars ?>
         

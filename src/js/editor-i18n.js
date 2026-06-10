@@ -45,7 +45,8 @@ const enFallback = Object.freeze({
     'inspector.background': 'Background',
     'inspector.layout': 'Layout & Spacing',
     'inspector.spacer_height': 'Spacer Height',
-    'inspector.radius': 'Border Radius',
+    'inspector.radius': 'Radius',
+    'inspector.border_style': 'Style',
     "topbar.network_btn": "ESCMS Network",
     "network.modal_title": "ESCMS Network",
     "network.modal_desc": "Boost your SEO and organic traffic instantly. By joining the network, your posts will be automatically distributed across hundreds of ESCMS websites, generating high-quality backlinks and free traffic. In return, your site will display a small, elegant feed of articles from other network members.",
@@ -96,6 +97,8 @@ const enFallback = Object.freeze({
     "settings.sounds_desc": "Play feedback sounds when performing actions in the editor.",
     "settings.webp_title": "Optimize Images (WebP)",
     "settings.webp_desc": "Convert all uploaded images to WebP format automatically to save bandwidth and improve SEO.",
+    "settings.autosave_title": "Auto Save to Server",
+    "settings.autosave_desc": "Save to server every 60s. If disabled, it will only save locally and requires CTRL+S to upload to the server.",
     "settings.language_title": "Editor Language",
     "settings.logo_title": "Site Logo",
     "settings.favicon_title": "Site Favicon",
@@ -188,7 +191,7 @@ class I18nEngine {
                 console.warn(`Failed to load ${lang} locale, using fallback`);
                 this.dictionary = { ...enFallback };
             }
-        } catch(e) {
+        } catch (e) {
             console.warn(`Error loading ${lang} locale from github, using fallback`, e);
             this.dictionary = { ...enFallback };
         }

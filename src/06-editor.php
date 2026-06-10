@@ -214,7 +214,13 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
 
     <script src="/assets/js/editor-ai.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-leftpanel.js?v=<?= time() ?>"></script>
+
+    <script src="/assets/js/editor-selection-styles.js?v=<?= time() ?>"></script>
+    <script src="/assets/js/editor-selection-utils.js?v=<?= time() ?>"></script>
+    <script src="/assets/js/editor-selection-handles.js?v=<?= time() ?>"></script>
+    <script src="/assets/js/editor-selection-dragdrop.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-selection.js?v=<?= time() ?>"></script>
+
     <script src="/assets/js/editor-floating-toolbar.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-parser.js?v=<?= time() ?>"></script>
     <script src="/assets/js/editor-autosave.js?v=<?= time() ?>"></script>

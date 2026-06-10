@@ -4,20 +4,22 @@
 
 ESCMS was born from a real frustration: the modern web is bloated. We are tired of systems that need 20 plugins, massive databases, or science fiction workflows where you have to compile HTML (like Astro) just to load a simple page. ESCMS is an ultra-lightweight content management system and visual builder designed exclusively for performance purists.
 
-## 🔥 Philosophy (The Manifesto)
+<img width="2232" height="1224" alt="escms" src="https://github.com/user-attachments/assets/e17605a2-c01f-4412-b0af-486f1dde8873" />
+
+## 🔥 Philosophy
 
 - **Zero-Bloat:** No unnecessary external libraries. Zero trash dependencies.
 - **Vanilla Power:** The core and the visual builder are coded in pure Vanilla JS and CSS. No heavy frameworks slowing down the browser.
 - **Pocket-Sized Database:** Forget about configuring MySQL. ESCMS uses SQLite: fast, portable, and frictionless. 
-- **Featherweight:** The full installer weighs around ~650 KB. The size of a single profile picture.
+- **Featherweight:** The full installer weighs around ~750 KB.
 
 ## 🛠️ Main Features
 
-* **Kamikaze Installer:** A single PHP file that deploys the entire system on your server in a blink.
-* **Visual Atom Builder:** An intuitive block-based (Atoms) Canvas editor. Native CSS Grid system, inline editing, copy/paste styles, and full DOM control without leaving the UI.
+* **Installer:** A single PHP file that deploys the entire system on your server in a blink.
+* **Visual Builder:** An intuitive block-based Canvas editor. Native CSS Grid system, inline editing, copy/paste styles, and full DOM control without leaving the UI.
 * **OTA (Over-The-Air) Updates:** Silent, direct updates from this GitHub repo with a single click, right from your dashboard.
 * **BYOK AI (Bring Your Own Key):** Native integration with Groq, Gemini, Claude, ChatGPT, and support for Custom APIs with custom endpoints. Plug in your own keys and generate copy/SEO without paying abusive subscriptions.
-* **Built-in Media Manager:** Drag, drop, and organize your photos natively.
+* **Built-in Media Manager:** Convert your photos to WebP, natively.
 
 ## ⚡ Installation
 
@@ -32,11 +34,7 @@ ESCMS was born from a real frustration: the modern web is bloated. We are tired 
 - [x] Dynamic hierarchical navigation menu.
 - [x] OTA Update system.
 - [x] ESCMS Network: Native P2P infrastructure.
-- [ ] **Atom Market:** Centralized repository to expand visual components.
-
-## 🤝 Contributing
-
-If you dig Vanilla JS, hate compiling HTML, and absolutely despise obese software, you belong here. Open an issue or submit a pull request.
+- [ ] **Atom & Template Market:** Centralized repository to expand visual components.
 
 ## 📄 License
 

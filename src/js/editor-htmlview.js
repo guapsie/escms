@@ -28,11 +28,14 @@ class EscmsHtmlView {
 
         this.htmlContainer = document.createElement('pre');
         this.htmlContainer.style.margin = '0';
+        this.htmlContainer.style.padding = '0';
+        this.htmlContainer.style.boxSizing = 'border-box';
         this.htmlContainer.style.fontFamily = 'monospace';
         this.htmlContainer.style.fontSize = '0.85rem';
         this.htmlContainer.style.lineHeight = '1.5';
         this.htmlContainer.style.color = '#e5e7eb';
         this.htmlContainer.style.whiteSpace = 'pre-wrap';
+        this.htmlContainer.style.wordWrap = 'break-word';
         this.htmlContainer.style.position = 'absolute';
         this.htmlContainer.style.top = '2rem';
         this.htmlContainer.style.left = '2rem';
@@ -46,10 +49,13 @@ class EscmsHtmlView {
 
         this.textarea = document.createElement('textarea');
         this.textarea.style.margin = '0';
+        this.textarea.style.padding = '0';
+        this.textarea.style.boxSizing = 'border-box';
         this.textarea.style.fontFamily = 'monospace';
         this.textarea.style.fontSize = '0.85rem';
         this.textarea.style.lineHeight = '1.5';
         this.textarea.style.whiteSpace = 'pre-wrap';
+        this.textarea.style.wordWrap = 'break-word';
         this.textarea.style.position = 'absolute';
         this.textarea.style.top = '2rem';
         this.textarea.style.left = '2rem';
