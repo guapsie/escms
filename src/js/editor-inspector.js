@@ -330,6 +330,20 @@ export class EscmsInspector {
         this.controls.fontFamily = new EscmsSelect('inspector.font_family', [{ value: '', label: 'Default' }], '', (val) => this.applyStyle('font-family', val));
         typoSection.appendChild(this.controls.fontFamily.element);
 
+        this.controls.fontWeight = new EscmsSelect('inspector.font_weight', [
+            { value: '', label: 'Default' },
+            { value: '100', label: '100 - Thin' },
+            { value: '200', label: '200 - Extra Light' },
+            { value: '300', label: '300 - Light' },
+            { value: '400', label: '400 - Normal' },
+            { value: '500', label: '500 - Medium' },
+            { value: '600', label: '600 - Semi Bold' },
+            { value: '700', label: '700 - Bold' },
+            { value: '800', label: '800 - Extra Bold' },
+            { value: '900', label: '900 - Black' }
+        ], '', (val) => this.applyStyle('font-weight', val));
+        typoSection.appendChild(this.controls.fontWeight.element);
+
         this.controls.color = new EscmsColorPicker('inspector.text_color', '#f5f5f5', 100, (val) => this.applyStyle('color', val.rgba));
         typoSection.appendChild(this.controls.color.element);
 
@@ -735,11 +749,11 @@ export class EscmsInspector {
         let allowedControls = [];
         const defaultControls = {
             'img': ['src', 'alt', 'margin', 'padding', 'border', 'opacity'],
-            'a': ['href', 'fontFamily', 'color', 'fontSize', 'textAlign', 'textStyle', 'margin', 'padding', 'border', 'opacity'],
+            'a': ['href', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'textAlign', 'textStyle', 'margin', 'padding', 'border', 'opacity'],
             'iframe': ['src', 'margin', 'padding', 'border', 'opacity'],
             'column': ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
             'escms-component': ['sticky', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
-            'default': ['sticky', 'tagSwap', 'fontFamily', 'color', 'fontSize', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity']
+            'default': ['sticky', 'tagSwap', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity']
         };
 
         let isAtom = false;
@@ -853,6 +867,15 @@ export class EscmsInspector {
             } else {
                 this.controls.fontFamily.setValue('', false);
             }
+        }
+
+        if (allowedControls.includes('fontWeight')) {
+            let fWeight = comp.fontWeight;
+            if (fWeight === 'normal') fWeight = '400';
+            if (fWeight === 'bold') fWeight = '700';
+            let weightOpt = this.controls.fontWeight.options.find(o => o.value === fWeight);
+            if (weightOpt) this.controls.fontWeight.setValue(weightOpt.value, false);
+            else this.controls.fontWeight.setValue('', false);
         }
 
         if (allowedControls.includes('color')) {

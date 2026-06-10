@@ -4,6 +4,7 @@
     "icon": "list",
     "className": "escms-list",
     "allowedControls": [
+        "fontWeight",
         "bgColor",
         "bgGradient",
         "margin",

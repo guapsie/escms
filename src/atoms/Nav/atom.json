@@ -5,6 +5,7 @@
     "className": "escms-nav",
     "allowedControls": [
         "navAlign",
+        "fontWeight",
         "navHoverBg",
         "navSubBg",
         "navSubGlow",
