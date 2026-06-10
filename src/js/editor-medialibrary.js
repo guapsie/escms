@@ -1,4 +1,7 @@
-class EscmsMediaLibrary {
+import { el } from './escms-dom.js';
+import { icons } from './editor-icons.js';
+
+export class EscmsMediaLibrary {
     constructor(i18n) {
         this.i18n = i18n;
         this.media = [];
@@ -142,7 +145,7 @@ class EscmsMediaLibrary {
         };
 
         this.uploadBtn = document.createElement('button');
-        this.uploadBtn.innerHTML = window.icons && window.icons.upload ? window.icons.upload : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+        this.uploadBtn.innerHTML = icons && icons.upload ? icons.upload : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
         const svgUpload = this.uploadBtn.querySelector('svg');
         if (svgUpload) { svgUpload.style.width = '16px'; svgUpload.style.height = '16px'; }
         this.uploadBtn.title = this.i18n ? (this.i18n.dictionary['medialibrary.upload'] || 'Upload Files') : 'Upload Files';
@@ -150,8 +153,8 @@ class EscmsMediaLibrary {
         this.uploadBtn.addEventListener('click', () => this.hiddenFileInput.click());
 
         this.deleteToggleBtn = document.createElement('button');
-        this.deleteToggleBtn.innerHTML = window.icons && window.icons.trash ? window.icons.trash : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>';
-        // Ajustar el SVG en caso de usar window.icons.trash
+        this.deleteToggleBtn.innerHTML = icons && icons.trash ? icons.trash : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>';
+        // Ajustar el SVG en caso de usar icons.trash
         const svgTrash = this.deleteToggleBtn.querySelector('svg');
         if (svgTrash) { svgTrash.style.width = '14px'; svgTrash.style.height = '14px'; }
         this.deleteToggleBtn.title = this.i18n ? (this.i18n.dictionary['medialibrary.select_delete'] || 'Select to Delete') : 'Select to Delete';
@@ -233,7 +236,7 @@ class EscmsMediaLibrary {
         rightControls.style.justifyContent = 'flex-end';
 
         const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = window.icons && window.icons.close ? window.icons.close : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M18 6l-12 12M6 6l12 12"/></svg>';
+        closeBtn.innerHTML = icons && icons.close ? icons.close : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M18 6l-12 12M6 6l12 12"/></svg>';
 
         const svgClose = closeBtn.querySelector('svg');
         if (svgClose) { svgClose.style.width = '20px'; svgClose.style.height = '20px'; }

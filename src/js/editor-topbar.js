@@ -1,4 +1,7 @@
-class EscmsTopBar {
+import { EscmsMediaLibrary } from './editor-medialibrary.js';
+import { icons } from './editor-icons.js';
+
+export class EscmsTopBar {
     constructor(i18nEngine) {
         this.i18n = i18nEngine;
         this.isPublished = false;

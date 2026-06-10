@@ -1,4 +1,6 @@
-class EscmsHtmlView {
+import { el } from './escms-dom.js';
+
+export class EscmsHtmlView {
     constructor() {
         this.view = null;
         this.htmlContainer = null;

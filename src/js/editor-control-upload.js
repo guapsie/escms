@@ -1,4 +1,7 @@
-class EscmsUploadControl {
+import { EscmsSelect } from './editor-controls.js';
+import { EscmsMediaLibrary } from './editor-medialibrary.js';
+
+export class EscmsUploadControl {
     constructor(labelKey, i18n, value = '', onChange = null) {
         this.labelKey = labelKey;
         this.i18n = i18n;
@@ -207,7 +210,7 @@ class EscmsUploadControl {
     }
 }
 
-class EscmsBgImageControl {
+export class EscmsBgImageControl {
     constructor(labelKey, i18n, initialValue = {}, onChange = null) {
         this.labelKey = labelKey;
         this.i18n = i18n;

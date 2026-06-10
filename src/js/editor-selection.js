@@ -1,4 +1,9 @@
-class EscmsSelection {
+import { escmsTextBlockTags, escmsResolveTarget } from './editor-selection-utils.js';
+import { ESCMS_SELECTION_STYLES } from './editor-selection-styles.js';
+import { escmsSetupUIHandles, escmsUpdateHandlePosition } from './editor-selection-handles.js';
+import { escmsSetupDragDrop } from './editor-selection-dragdrop.js';
+
+export class EscmsSelection {
     constructor() {
         this.selectedNode = null;
         this.currentHoverNode = null;
@@ -14,19 +19,19 @@ class EscmsSelection {
             }
             this.selectedNode = null;
             window.dispatchEvent(new CustomEvent('escms-element-selected', { detail: { node: null } }));
-            window.escmsUpdateHandlePosition(this, null);
+            escmsUpdateHandlePosition(this, null);
         }
     }
 
     init(shadowRoot, documentRoot, emptyText = 'Drop atoms here') {
         // 1. Inyectar Estilos desde la variable global
         const style = document.createElement('style');
-        style.textContent = window.ESCMS_SELECTION_STYLES;
+        style.textContent = ESCMS_SELECTION_STYLES;
         shadowRoot.appendChild(style);
 
         // 2. Ejecutar lógicas separadas (llamando a las funciones globales)
-        window.escmsSetupUIHandles(this, shadowRoot);
-        window.escmsSetupDragDrop(this, documentRoot);
+        escmsSetupUIHandles(this, shadowRoot);
+        escmsSetupDragDrop(this, documentRoot);
 
         // 3. Eventos generales
         this.setupGeneralEvents(shadowRoot, documentRoot);
@@ -35,17 +40,17 @@ class EscmsSelection {
     setupGeneralEvents(shadowRoot, documentRoot) {
         window.addEventListener('scroll', () => {
             const active = this.currentHoverNode || this.selectedNode;
-            if (active) window.escmsUpdateHandlePosition(this, active);
+            if (active) escmsUpdateHandlePosition(this, active);
         }, true);
 
         window.addEventListener('escms-dom-mutated', () => {
             const active = this.currentHoverNode || this.selectedNode;
-            if (active) window.escmsUpdateHandlePosition(this, active);
+            if (active) escmsUpdateHandlePosition(this, active);
         });
 
         window.addEventListener('escms-element-selected', (e) => {
             if (!this.currentHoverNode || e.detail.node === this.currentHoverNode) {
-                window.escmsUpdateHandlePosition(this, e.detail.node);
+                escmsUpdateHandlePosition(this, e.detail.node);
             }
         });
 
@@ -53,12 +58,12 @@ class EscmsSelection {
         documentRoot.addEventListener('mouseover', (e) => {
             if (window.escmsEditor?.leftpanel?.draggedDomNode || window.escmsDraggedNode) return;
 
-            let target = window.escmsResolveTarget(e.target);
+            let target = escmsResolveTarget(e.target);
             if (target === documentRoot) {
                 if (this.currentHoverNode) {
                     this.currentHoverNode.classList.remove('escms-hover');
                     this.currentHoverNode = null;
-                    window.escmsUpdateHandlePosition(this, this.selectedNode);
+                    escmsUpdateHandlePosition(this, this.selectedNode);
                 }
                 return;
             }
@@ -67,7 +72,7 @@ class EscmsSelection {
                 if (this.currentHoverNode) this.currentHoverNode.classList.remove('escms-hover');
                 this.currentHoverNode = target;
                 this.currentHoverNode.classList.add('escms-hover');
-                window.escmsUpdateHandlePosition(this, this.currentHoverNode);
+                escmsUpdateHandlePosition(this, this.currentHoverNode);
             }
         });
 
@@ -77,7 +82,7 @@ class EscmsSelection {
                 if (this.currentHoverNode) {
                     this.currentHoverNode.classList.remove('escms-hover');
                     this.currentHoverNode = null;
-                    window.escmsUpdateHandlePosition(this, this.selectedNode);
+                    escmsUpdateHandlePosition(this, this.selectedNode);
                 }
             }
         });
@@ -88,7 +93,7 @@ class EscmsSelection {
             const sel = shadowRoot.getSelection ? shadowRoot.getSelection() : window.getSelection();
             let savedRange = (sel && sel.rangeCount > 0 && !sel.isCollapsed) ? sel.getRangeAt(0).cloneRange() : null;
 
-            let target = window.escmsResolveTarget(e.target);
+            let target = escmsResolveTarget(e.target);
             if (this.selectedNode === target) return;
 
             this.clearSelection();
@@ -98,7 +103,7 @@ class EscmsSelection {
                 this.selectedNode.classList.add('escms-selected');
             }
 
-            const editableTags = [...window.escmsTextBlockTags, 'SPAN', 'A'];
+            const editableTags = [...escmsTextBlockTags, 'SPAN', 'A'];
             if (editableTags.includes(this.selectedNode.tagName)) {
                 this.selectedNode.setAttribute('contenteditable', 'true');
                 setTimeout(() => {
@@ -119,7 +124,7 @@ class EscmsSelection {
         // Context menu
         documentRoot.addEventListener('contextmenu', (e) => {
             e.preventDefault(); e.stopPropagation();
-            let target = window.escmsResolveTarget(e.target);
+            let target = escmsResolveTarget(e.target);
 
             if (this.selectedNode !== target) {
                 this.clearSelection();

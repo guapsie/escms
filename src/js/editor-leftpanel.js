@@ -1,4 +1,10 @@
-class EscmsLeftPanel {
+import { EscmsCopilot } from './editor-ai.js';
+import { EscmsPageManager } from './editor-pagemanager.js';
+import { EscmsParser } from './editor-parser.js';
+import { el } from './escms-dom.js';
+import { icons } from './editor-icons.js';
+
+export class EscmsLeftPanel {
     constructor(i18n) {
         this.i18n = i18n;
         this.shadowRoot = null;

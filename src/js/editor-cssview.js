@@ -1,4 +1,4 @@
-class EscmsCssView {
+export class EscmsCssView {
     constructor() {
         this.view = null;
         this.cssContainer = null;

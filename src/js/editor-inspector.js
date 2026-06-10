@@ -1,4 +1,11 @@
-class EscmsInspector {
+import { EscmsBorderControl } from './editor-control-border.js';
+import { EscmsEffectsControl } from './editor-control-effects.js';
+import { EscmsGradientControl } from './editor-control-gradient.js';
+import { EscmsUploadControl, EscmsBgImageControl } from './editor-control-upload.js';
+import { EscmsSelect, EscmsSlider, EscmsColorPicker, EscmsSpacing, EscmsButtonGroup, EscmsCollectionControl } from './editor-controls.js';
+import { icons } from './editor-icons.js';
+
+export class EscmsInspector {
     constructor(i18nEngine) {
         this.i18n = i18nEngine;
         this.selectedNode = null;

@@ -1,4 +1,4 @@
-window.ESCMS_SELECTION_STYLES = `
+export const ESCMS_SELECTION_STYLES = `
     * { outline: none !important; }
     :where(#document-root) {
         color: var(--color-text, #0a0a0a);

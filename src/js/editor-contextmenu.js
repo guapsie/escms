@@ -1,4 +1,6 @@
-class EscmsContextMenu {
+import { icons } from './editor-icons.js';
+
+export class EscmsContextMenu {
     constructor(i18n) {
         this.i18n = i18n;
         this.menu = null;

@@ -194,40 +194,7 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
         <div id="escms-inspector"><div style="padding: 1rem; opacity: 0.5; font-size: 0.85rem;">Inspector</div></div>
     </div>
 
-    <script src="/assets/js/escms-dom.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-icons.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-i18n.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-topbar.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-controls.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-control-border.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-control-gradient.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-control-upload.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-control-effects.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-settings.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-inspector.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-canvas.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-seoview.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-htmlview.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-cssview.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-pagemanager.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-contextmenu.js?v=<?= time() ?>"></script>
-
-    <script src="/assets/js/editor-ai.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-leftpanel.js?v=<?= time() ?>"></script>
-
-    <script src="/assets/js/editor-selection-styles.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-selection-utils.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-selection-handles.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-selection-dragdrop.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-selection.js?v=<?= time() ?>"></script>
-
-    <script src="/assets/js/editor-floating-toolbar.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-parser.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-autosave.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-history.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-column-resizer.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-medialibrary.js?v=<?= time() ?>"></script>
-    <script src="/assets/js/editor-app.js?v=<?= time() ?>"></script>
+    <script type="module" src="/assets/js/index.js?v=<?= time() ?>"></script>
 </body>
 </html>';
     exit;

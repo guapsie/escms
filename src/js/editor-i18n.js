@@ -1,3 +1,5 @@
+import { el } from './escms-dom.js';
+
 const enFallback = Object.freeze({
     'topbar.draft': 'Draft',
     'topbar.saving': 'Saving...',
@@ -167,7 +169,7 @@ const enFallback = Object.freeze({
     "paste_styles": "Paste Styles",
     "add_post": "Add Post"
 });
-class I18nEngine {
+export class I18nEngine {
     constructor() {
         this.dictionary = { ...enFallback };
     }

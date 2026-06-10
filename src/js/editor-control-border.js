@@ -1,4 +1,6 @@
-class EscmsBorderControl {
+import { EscmsSelect, EscmsSlider, EscmsColorPicker } from './editor-controls.js';
+
+export class EscmsBorderControl {
     constructor(labelKey, i18n, initialValues = { width: 0, style: 'solid', color: '#000000', alpha: 100 }, onChangeCallback) {
         this.labelKey = labelKey;
         this.i18n = i18n;

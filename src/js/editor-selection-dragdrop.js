@@ -1,4 +1,8 @@
-window.escmsSetupDragDrop = function (editor, documentRoot) {
+import { el } from './escms-dom.js';
+import { escmsResolveTarget } from './editor-selection-utils.js';
+import { escmsUpdateHandlePosition } from './editor-selection-handles.js';
+
+export const escmsSetupDragDrop = function (editor, documentRoot) {
     editor.dragHandle.addEventListener('dragstart', (e) => {
         window.escmsDraggedNode = editor.currentHoverNode || editor.selectedNode;
         if (!window.escmsDraggedNode) {
@@ -16,7 +20,7 @@ window.escmsSetupDragDrop = function (editor, documentRoot) {
             window.escmsDraggedNode = null;
         }
         documentRoot.querySelectorAll('.escms-drag-target').forEach(el => el.classList.remove('escms-drag-target'));
-        window.escmsUpdateHandlePosition(editor, editor.currentHoverNode || editor.selectedNode);
+        escmsUpdateHandlePosition(editor, editor.currentHoverNode || editor.selectedNode);
     });
 
     documentRoot.addEventListener('dragover', (e) => {
@@ -33,7 +37,7 @@ window.escmsSetupDragDrop = function (editor, documentRoot) {
         documentRoot.querySelectorAll('.escms-drag-target, .escms-drag-top, .escms-drag-bottom, .escms-drag-inside')
             .forEach(el => el.classList.remove('escms-drag-target', 'escms-drag-top', 'escms-drag-bottom', 'escms-drag-inside'));
 
-        let target = window.escmsResolveTarget(e.target);
+        let target = escmsResolveTarget(e.target);
         if (target) {
             const rect = target.getBoundingClientRect();
             const relY = e.clientY - rect.top;
@@ -67,7 +71,7 @@ window.escmsSetupDragDrop = function (editor, documentRoot) {
 
         try {
             const payload = JSON.parse(dataString);
-            let target = window.escmsResolveTarget(e.target);
+            let target = escmsResolveTarget(e.target);
 
             if (payload.action === 'canvas-move' && window.escmsDraggedNode) {
                 if (target && target !== window.escmsDraggedNode && !window.escmsDraggedNode.contains(target)) {

@@ -1,4 +1,6 @@
-class EscmsGradientControl {
+import { EscmsToggle, EscmsSelect, EscmsSlider, EscmsColorPicker } from './editor-controls.js';
+
+export class EscmsGradientControl {
     constructor(labelKey, i18n, initialValues = { type: 'none', position: 'center', animate: false, c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100 }, onChangeCallback) {
         this.labelKey = labelKey;
         this.i18n = i18n;

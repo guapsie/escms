@@ -1,4 +1,7 @@
-class EscmsPageManager {
+import { el } from './escms-dom.js';
+import { icons } from './editor-icons.js';
+
+export class EscmsPageManager {
     constructor(i18n) {
         this.i18n = i18n;
         this.container = null;

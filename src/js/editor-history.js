@@ -1,4 +1,7 @@
-class EscmsHistory {
+import { EscmsParser } from './editor-parser.js';
+import { el } from './escms-dom.js';
+
+export class EscmsHistory {
     constructor() {
         this.stack = [];
         this.currentIndex = -1;

@@ -1,4 +1,7 @@
-class EscmsCopilot {
+import { el } from './escms-dom.js';
+import { icons } from './editor-icons.js';
+
+export class EscmsCopilot {
     constructor(i18n) {
         this.i18n = i18n;
         this.container = null;

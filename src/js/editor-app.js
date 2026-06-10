@@ -1,4 +1,21 @@
-class EscmsEditor {
+import { EscmsAutosave } from './editor-autosave.js';
+import { EscmsCanvas } from './editor-canvas.js';
+import { EscmsColumnResizer } from './editor-column-resizer.js';
+import { EscmsContextMenu } from './editor-contextmenu.js';
+import { EscmsCssView } from './editor-cssview.js';
+import { EscmsFloatingToolbar } from './editor-floating-toolbar.js';
+import { EscmsHistory } from './editor-history.js';
+import { EscmsHtmlView } from './editor-htmlview.js';
+import { I18nEngine } from './editor-i18n.js';
+import { EscmsInspector } from './editor-inspector.js';
+import { EscmsLeftPanel } from './editor-leftpanel.js';
+import { EscmsParser } from './editor-parser.js';
+import { EscmsSelection } from './editor-selection.js';
+import { EscmsSeoView } from './editor-seoview.js';
+import { EscmsGlobalSettings } from './editor-settings.js';
+import { EscmsTopBar } from './editor-topbar.js';
+
+export class EscmsEditor {
     constructor() {
         this.host = null;
         this.shadow = null;
@@ -351,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Global Toast System (Premium UX)
-window.escmsToast = function(msg, type = 'info') {
+export const escmsToast = function(msg, type = 'info') {
     let container = document.getElementById('escms-toast-container');
     if (!container) {
         container = document.createElement('div');

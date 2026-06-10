@@ -1,4 +1,4 @@
-class EscmsSeoView {
+export class EscmsSeoView {
     constructor() {
         this.view = null;
         this.inputs = {};

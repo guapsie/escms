@@ -1,4 +1,8 @@
-class EscmsGlobalSettings {
+import { EscmsUploadControl } from './editor-control-upload.js';
+import { EscmsToggle, EscmsSelect, EscmsColorPicker } from './editor-controls.js';
+import { icons } from './editor-icons.js';
+
+export class EscmsGlobalSettings {
     constructor(i18n) {
         this.i18n = i18n;
         this.overlay = null;

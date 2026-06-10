@@ -1,4 +1,6 @@
-class EscmsEffectsControl {
+import { icons } from './editor-icons.js';
+
+export class EscmsEffectsControl {
     constructor(labelKey, i18n, value = '', onChange = null) {
         this.labelKey = labelKey;
         this.i18n = i18n;

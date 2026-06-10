@@ -1,4 +1,6 @@
-class EscmsFloatingToolbar {
+import { icons } from './editor-icons.js';
+
+export class EscmsFloatingToolbar {
     constructor(i18n) {
         this.i18n = i18n;
         this.element = null;

@@ -1,4 +1,7 @@
-class EscmsAutosave {
+import { EscmsParser } from './editor-parser.js';
+import { el } from './escms-dom.js';
+
+export class EscmsAutosave {
     constructor(i18nEngine) {
         this.i18n = i18nEngine;
         this.documentRoot = null;

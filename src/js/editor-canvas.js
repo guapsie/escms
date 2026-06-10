@@ -1,8 +1,11 @@
+import { el } from './escms-dom.js';
+import { icons } from './editor-icons.js';
+
 /**
  * @class EscmsCanvas
  * Controla el lienzo central y los viewports responsivos del editor.
  */
-class EscmsCanvas {
+export class EscmsCanvas {
     constructor() {
         this.area = null;
         this.viewport = null;

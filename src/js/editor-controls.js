@@ -1,4 +1,7 @@
-class EscmsToggle {
+import { EscmsMediaLibrary } from './editor-medialibrary.js';
+import { el } from './escms-dom.js';
+
+export class EscmsToggle {
     constructor(labelKey, initialState = false, onChangeCallback) {
         this.labelKey = labelKey;
         this.state = initialState;
@@ -39,7 +42,7 @@ class EscmsToggle {
     }
 }
 
-class EscmsSelect {
+export class EscmsSelect {
     constructor(labelKey, optionsArray, selectedValue, onChangeCallback) {
         this.labelKey = labelKey;
         this.options = optionsArray;
@@ -133,7 +136,7 @@ class EscmsSelect {
     }
 }
 
-class EscmsSlider {
+export class EscmsSlider {
     constructor(labelKey, min = 0, max = 100, step = 1, initialValue = 50, onChangeCallback, unit = '') {
         this.labelKey = labelKey;
         this.min = min;
@@ -209,7 +212,7 @@ class EscmsSlider {
     }
 }
 
-class EscmsColorPicker {
+export class EscmsColorPicker {
     constructor(labelKey, initialHex = '#3b82f6', initialAlpha = 100, onChangeCallback) {
         this.labelKey = labelKey;
         this.hex = initialHex;
@@ -349,7 +352,7 @@ class EscmsColorPicker {
     }
 }
 
-class EscmsSpacing {
+export class EscmsSpacing {
     constructor(labelKey, initialValues = {t:0, r:0, b:0, l:0}, onChangeCallback) {
         this.labelKey = labelKey;
         this.values = { ...initialValues };
@@ -402,7 +405,7 @@ class EscmsSpacing {
     }
 }
 
-class EscmsButtonGroup {
+export class EscmsButtonGroup {
     constructor(labelKey, buttons, initialValue, onChangeCallback, isMulti = false) {
         this.labelKey = labelKey;
         this.buttons = buttons;
@@ -462,7 +465,7 @@ class EscmsButtonGroup {
     }
 }
 
-class EscmsCollectionControl {
+export class EscmsCollectionControl {
     constructor(labelKey, i18n, value = [], onChangeCallback) {
         this.labelKey = labelKey;
         this.i18n = i18n;

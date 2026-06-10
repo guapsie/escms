@@ -9,7 +9,7 @@
  *    el('button', { onclick: () => alert('Hola') }, 'Click')
  * ]);
  */
-const EscmsDOM = {
+export const EscmsDOM = {
     el: (tag, attrs = {}, children = []) => {
         const element = document.createElement(tag);
         
@@ -43,4 +43,4 @@ const EscmsDOM = {
     }
 };
 
-window.el = EscmsDOM.el;
+export const el = EscmsDOM.el;

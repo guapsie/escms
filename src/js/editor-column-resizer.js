@@ -1,4 +1,6 @@
-class EscmsColumnResizer {
+import { el } from './escms-dom.js';
+
+export class EscmsColumnResizer {
     constructor(shadowRoot) {
         this.shadowRoot = shadowRoot;
         this.overlayLayer = document.createElement('div');

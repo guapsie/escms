@@ -1,4 +1,6 @@
-window.escmsSetupUIHandles = function (editor, shadowRoot) {
+import { el } from './escms-dom.js';
+
+export const escmsSetupUIHandles = function (editor, shadowRoot) {
     const handle = document.createElement('div');
     handle.className = 'escms-global-drag-handle';
     handle.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>';
@@ -19,7 +21,7 @@ window.escmsSetupUIHandles = function (editor, shadowRoot) {
             if (editor.currentHoverNode) {
                 editor.currentHoverNode.classList.remove('escms-hover');
                 editor.currentHoverNode = null;
-                window.escmsUpdateHandlePosition(editor, editor.selectedNode);
+                escmsUpdateHandlePosition(editor, editor.selectedNode);
             }
         }
     });
@@ -62,7 +64,7 @@ window.escmsSetupUIHandles = function (editor, shadowRoot) {
                 if (newWidth > 10) {
                     editor.selectedNode.style.width = newWidth + 'px';
                     editor.selectedNode.style.height = 'auto';
-                    window.escmsUpdateHandlePosition(editor, editor.selectedNode);
+                    escmsUpdateHandlePosition(editor, editor.selectedNode);
                 }
             };
 
@@ -84,7 +86,7 @@ window.escmsSetupUIHandles = function (editor, shadowRoot) {
     editor.resizeHandles = resizeHandles;
 };
 
-window.escmsUpdateHandlePosition = function (editor, targetNode) {
+export const escmsUpdateHandlePosition = function (editor, targetNode) {
     if (!editor.dragHandle || !editor.resizeHandles) return;
     const { dragHandle, resizeHandles } = editor;
     const corners = ['nw', 'ne', 'sw', 'se'];
