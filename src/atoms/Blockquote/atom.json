@@ -8,6 +8,7 @@
         "fontFamily",
         "fontWeight",
         "fontSize",
+        "letterSpacing",
         "textAlign",
         "textStyle",
         "bgColor",

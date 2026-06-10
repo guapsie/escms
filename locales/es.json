@@ -11,6 +11,7 @@
     "inspector.html_tag": "Etiqueta HTML",
     "inspector.font_family": "Fuente",
     "inspector.font_weight": "Grosor (Weight)",
+    "inspector.letter_spacing": "Espaciado de Letras",
     "inspector.nav_styles": "Estilos Nav",
     "inspector.nav_align": "Alineación H.",
     "inspector.content_valign": "Alineación V.",

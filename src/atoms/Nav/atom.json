@@ -6,6 +6,7 @@
     "allowedControls": [
         "navAlign",
         "fontWeight",
+        "letterSpacing",
         "navHoverBg",
         "navSubBg",
         "navSubGlow",

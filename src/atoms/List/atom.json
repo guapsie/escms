@@ -5,6 +5,7 @@
     "className": "escms-list",
     "allowedControls": [
         "fontWeight",
+        "letterSpacing",
         "bgColor",
         "bgGradient",
         "margin",

@@ -350,6 +350,9 @@ export class EscmsInspector {
         this.controls.fontSize = new EscmsSlider('inspector.font_size', 8, 120, 1, 16, (val) => this.applyStyle('font-size', `${val}px`), 'px');
         typoSection.appendChild(this.controls.fontSize.element);
 
+        this.controls.letterSpacing = new EscmsSlider('inspector.letter_spacing', -5, 20, 0.5, 0, (val) => this.applyStyle('letter-spacing', `${val}px`), 'px');
+        typoSection.appendChild(this.controls.letterSpacing.element);
+
         this.controls.textAlign = new EscmsButtonGroup('inspector.text_align', [
             { value: 'left', icon: icons.textAlignLeft || 'L' },
             { value: 'center', icon: icons.textAlignCenter || 'C' },
@@ -749,11 +752,11 @@ export class EscmsInspector {
         let allowedControls = [];
         const defaultControls = {
             'img': ['src', 'alt', 'margin', 'padding', 'border', 'opacity'],
-            'a': ['href', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'textAlign', 'textStyle', 'margin', 'padding', 'border', 'opacity'],
+            'a': ['href', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'letterSpacing', 'textAlign', 'textStyle', 'margin', 'padding', 'border', 'opacity'],
             'iframe': ['src', 'margin', 'padding', 'border', 'opacity'],
             'column': ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
             'escms-component': ['sticky', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
-            'default': ['sticky', 'tagSwap', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity']
+            'default': ['sticky', 'tagSwap', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'letterSpacing', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity']
         };
 
         let isAtom = false;
@@ -886,6 +889,12 @@ export class EscmsInspector {
         if (allowedControls.includes('fontSize')) {
             let fSize = parseInt(comp.fontSize) || 16;
             this.controls.fontSize.setValue(fSize, false);
+        }
+
+        if (allowedControls.includes('letterSpacing')) {
+            let lSpacingStr = comp.letterSpacing;
+            let lSpacing = lSpacingStr === 'normal' ? 0 : parseFloat(lSpacingStr) || 0;
+            this.controls.letterSpacing.setValue(lSpacing, false);
         }
 
         if (allowedControls.includes('textAlign')) {

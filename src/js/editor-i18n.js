@@ -13,6 +13,7 @@ const enFallback = Object.freeze({
     'inspector.html_tag': 'HTML Tag',
     'inspector.font_family': 'Font Family',
     'inspector.font_weight': 'Font Weight',
+    'inspector.letter_spacing': 'Letter Spacing',
     'inspector.nav_styles': 'Nav Styles',
     'inspector.nav_align': 'Horizontal Alignment',
     'inspector.content_valign': 'Vertical Alignment',
