@@ -1,4 +1,5 @@
 import { icons } from './editor-icons.js';
+import { EscmsSlider } from './editor-controls.js';
 
 export class EscmsEffectsControl {
     constructor(labelKey, i18n, value = '', onChange = null) {
@@ -41,10 +42,15 @@ export class EscmsEffectsControl {
         this.element.className = 'inspector-control';
         this.element.style.marginBottom = '1rem';
 
+        const topRow = document.createElement('div');
+        topRow.style.display = 'flex';
+        topRow.style.justifyContent = 'space-between';
+        topRow.style.alignItems = 'center';
+        topRow.style.marginBottom = '0.5rem';
+
         const label = document.createElement('div');
-        label.className = 'inspector-label';
+        label.className = 'escms-ui-label';
         label.setAttribute('data-i18n', this.labelKey);
-        this.element.appendChild(label);
 
         const filterTypes = [
             { id: 'grayscale', label: 'Grayscale', unit: '%', max: 100 },
@@ -59,16 +65,15 @@ export class EscmsEffectsControl {
 
         const selectContainer = document.createElement('div');
         selectContainer.style.display = 'flex';
-        selectContainer.style.gap = '0.5rem';
-        selectContainer.style.marginBottom = '0.5rem';
+        selectContainer.style.gap = '4px';
 
         const select = document.createElement('select');
-        select.style.flex = '1';
         select.style.background = '#121212';
         select.style.border = '1px solid rgba(255,255,255,0.05)';
         select.style.color = 'var(--text-solid)';
-        select.style.padding = '0.4rem';
+        select.style.padding = '0.25rem 0.5rem';
         select.style.borderRadius = '4px';
+        select.style.fontSize = '0.75rem';
 
         filterTypes.forEach(ft => {
             const opt = document.createElement('option');
@@ -78,17 +83,23 @@ export class EscmsEffectsControl {
         });
 
         const addBtn = document.createElement('button');
-        addBtn.textContent = 'Add Filter';
+        addBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"></path><path d="M5 12l14 0"></path></svg>`;
         addBtn.style.background = 'var(--accent-solid)';
         addBtn.style.color = 'var(--text-solid)';
         addBtn.style.border = 'none';
-        addBtn.style.padding = '0.4rem 0.8rem';
+        addBtn.style.padding = '0.25rem 0.5rem';
         addBtn.style.borderRadius = '4px';
         addBtn.style.cursor = 'pointer';
+        addBtn.style.display = 'flex';
+        addBtn.style.alignItems = 'center';
+        addBtn.style.justifyContent = 'center';
 
         selectContainer.appendChild(select);
         selectContainer.appendChild(addBtn);
-        this.element.appendChild(selectContainer);
+
+        topRow.appendChild(label);
+        topRow.appendChild(selectContainer);
+        this.element.appendChild(topRow);
 
         this.slidersContainer = document.createElement('div');
         this.slidersContainer.style.display = 'flex';
@@ -115,62 +126,59 @@ export class EscmsEffectsControl {
             const def = filterTypes.find(f => f.id === filterId);
             if (!def) continue;
 
-            const row = document.createElement('div');
-            row.style.display = 'flex';
-            row.style.alignItems = 'center';
-            row.style.gap = '0.5rem';
-
-            const name = document.createElement('span');
-            name.textContent = def.label;
-            name.style.fontSize = '0.75rem';
-            name.style.color = 'var(--text-solid)';
-            name.style.width = '60px';
-
             const numericVal = parseFloat(val);
 
-            const slider = document.createElement('input');
-            slider.type = 'range';
-            slider.min = '0';
-            slider.max = def.max;
-            slider.value = numericVal;
-            slider.style.flex = '1';
-
-            const valDisplay = document.createElement('span');
-            valDisplay.textContent = val;
-            valDisplay.style.fontSize = '0.75rem';
-            valDisplay.style.color = 'var(--text-faint)';
-            valDisplay.style.width = '40px';
-            valDisplay.style.textAlign = 'right';
-
-            const delBtn = document.createElement('button');
-            delBtn.innerHTML = icons.trash;
-            delBtn.style.background = 'transparent';
-            delBtn.style.border = 'none';
-            delBtn.style.color = '#ef4444';
-            delBtn.style.cursor = 'pointer';
-            delBtn.style.width = '20px';
-            delBtn.style.height = '20px';
-            const svg = delBtn.querySelector('svg');
-            if (svg) { svg.style.width = '12px'; svg.style.height = '12px'; }
-
-            slider.addEventListener('input', (e) => {
-                const newVal = e.target.value + def.unit;
-                valDisplay.textContent = newVal;
-                this.activeFilters[filterId] = newVal;
+            const slider = new EscmsSlider(null, 0, def.max, 1, numericVal, (newVal) => {
+                const strVal = newVal + def.unit;
+                this.activeFilters[filterId] = strVal;
                 this.triggerChange();
-            });
+            }, def.unit);
 
-            delBtn.addEventListener('click', () => {
-                delete this.activeFilters[filterId];
-                this.renderSliders(filterTypes);
-                this.triggerChange();
-            });
+            // Set the left label
+            const labelContainer = slider.element.children[0];
+            labelContainer.textContent = def.label;
+            labelContainer.className = 'escms-ui-label';
+            labelContainer.style.width = '80px';
+            labelContainer.style.flexShrink = '0';
 
-            row.appendChild(name);
-            row.appendChild(slider);
-            row.appendChild(valDisplay);
-            row.appendChild(delBtn);
-            this.slidersContainer.appendChild(row);
+            // Set the right column to fill remaining space
+            const rightSide = slider.element.children[1];
+            rightSide.style.flex = '1';
+
+            // Add delete button to header
+            const header = slider.element.querySelector('.escms-slider-header');
+            if (header) {
+                header.style.display = 'flex';
+                header.style.justifyContent = 'flex-end';
+                header.style.alignItems = 'center';
+                header.style.gap = '8px';
+
+                const delBtn = document.createElement('button');
+                delBtn.innerHTML = icons.trash;
+                delBtn.style.background = 'transparent';
+                delBtn.style.border = 'none';
+                delBtn.style.color = '#ef4444';
+                delBtn.style.cursor = 'pointer';
+                delBtn.style.width = '14px';
+                delBtn.style.height = '14px';
+                delBtn.style.padding = '0';
+                delBtn.style.display = 'flex';
+                delBtn.style.alignItems = 'center';
+                delBtn.style.justifyContent = 'center';
+                
+                const svg = delBtn.querySelector('svg');
+                if (svg) { svg.style.width = '12px'; svg.style.height = '12px'; }
+
+                delBtn.addEventListener('click', () => {
+                    delete this.activeFilters[filterId];
+                    this.renderSliders(filterTypes);
+                    this.triggerChange();
+                });
+
+                header.appendChild(delBtn);
+            }
+
+            this.slidersContainer.appendChild(slider.element);
         }
     }
 

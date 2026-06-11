@@ -550,10 +550,14 @@ export class EscmsInspector {
         this.controls.opacity = new EscmsSlider('inspector.opacity', 0, 100, 1, 100, (val) => this.applyStyle('opacity', val / 100), '%');
         visSection.appendChild(this.controls.opacity.element);
 
-        this.controls.effects = new EscmsEffectsControl('inspector.effects', this.i18n, '', (val) => this.applyStyle('filter', val));
-        visSection.appendChild(this.controls.effects.element);
-
         this.sectionsContainer.appendChild(visSection);
+
+        // --- EFFECTS ---
+        this.effectsSection = this.createSection('inspector.effects_section');
+        this.controls.effects = new EscmsEffectsControl('inspector.filters', this.i18n, '', (val) => this.applyStyle('filter', val));
+        this.effectsSection.appendChild(this.controls.effects.element);
+
+        this.sectionsContainer.appendChild(this.effectsSection);
 
         // --- NAV STYLES ---
         this.navStylesSection = this.createSection('inspector.nav_styles');
@@ -751,7 +755,7 @@ export class EscmsInspector {
         // 1. Determine allowed controls for this node based on Atom Schema or tag fallback
         let allowedControls = [];
         const defaultControls = {
-            'img': ['src', 'alt', 'margin', 'padding', 'border', 'opacity'],
+            'img': ['src', 'alt', 'margin', 'padding', 'border', 'opacity', 'effects'],
             'a': ['href', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'letterSpacing', 'textAlign', 'textStyle', 'margin', 'padding', 'border', 'opacity'],
             'iframe': ['src', 'margin', 'padding', 'border', 'opacity'],
             'column': ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
@@ -804,7 +808,7 @@ export class EscmsInspector {
         });
 
         // Hide Sections if all their controls are hidden
-        [this.structureSection, this.attrSection, this.controls.tagSwap.element.parentElement, this.controls.bgColor.element.parentElement, this.controls.margin.element.parentElement, this.controls.opacity.element.parentElement, this.navStylesSection].forEach(section => {
+        [this.structureSection, this.attrSection, this.controls.tagSwap.element.parentElement, this.controls.bgColor.element.parentElement, this.controls.margin.element.parentElement, this.controls.opacity.element.parentElement, this.effectsSection, this.navStylesSection].forEach(section => {
             if (!section) return;
             // Typo section is the parent of tagSwap, background is parent of bgColor, layout is parent of margin, visibility is parent of opacity
             let hasVisibleControls = Array.from(section.children).some(child => {

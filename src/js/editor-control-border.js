@@ -11,26 +11,27 @@ export class EscmsBorderControl {
 
     render() {
         const container = document.createElement('div');
+        container.style.marginTop = '1rem';
+        container.style.paddingTop = '1rem';
+        container.style.borderTop = '1px solid rgba(255, 255, 255, 0.05)';
         container.style.marginBottom = '1rem';
-        container.style.padding = '0.75rem';
-        container.style.background = '#121212';
-        container.style.border = '1px solid rgba(255, 255, 255, 0.05)';
-        container.style.borderRadius = '6px';
 
         const label = document.createElement('div');
         if (this.labelKey) label.setAttribute('data-i18n', this.labelKey);
         label.style.fontSize = '0.75rem';
         label.style.fontWeight = '600';
-        label.style.color = 'rgba(245, 245, 245, 0.8)';
-        label.style.marginBottom = '0.75rem';
-        label.style.letterSpacing = '0.5px';
+        label.style.letterSpacing = '1px';
+        label.style.textTransform = 'uppercase';
+        label.style.color = 'rgba(245, 245, 245, 0.6)';
+        label.style.paddingBottom = '0.25rem';
+        label.style.marginBottom = '0.5rem';
 
-        this.widthSlider = new EscmsSlider(null, 0, 20, 1, this.values.width, (val) => {
+        this.widthSlider = new EscmsSlider('inspector.border_width', 0, 20, 1, this.values.width, (val) => {
             this.values.width = val;
             this.triggerChange();
         }, 'px');
 
-        this.styleSelect = new EscmsSelect(null, [
+        this.styleSelect = new EscmsSelect('inspector.border_style', [
             { value: 'none', label: 'None' },
             { value: 'solid', label: 'Solid' },
             { value: 'dashed', label: 'Dashed' },
@@ -40,7 +41,7 @@ export class EscmsBorderControl {
             this.triggerChange();
         });
 
-        this.colorPicker = new EscmsColorPicker(null, this.values.color, this.values.alpha, (val) => {
+        this.colorPicker = new EscmsColorPicker('inspector.border_color', this.values.color, this.values.alpha, (val) => {
             this.values.color = val.hex;
             this.values.alpha = val.alpha;
             this.values.rgba = val.rgba;
@@ -54,16 +55,8 @@ export class EscmsBorderControl {
 
         container.appendChild(label);
         
-        const row1 = document.createElement('div');
-        row1.style.display = 'grid';
-        row1.style.gridTemplateColumns = '1fr';
-        row1.style.gap = '0.5rem';
-        row1.style.marginBottom = '0.5rem';
-        
-        row1.appendChild(this.styleSelect.element);
-        row1.appendChild(this.colorPicker.element);
-        
-        container.appendChild(row1);
+        container.appendChild(this.styleSelect.element);
+        container.appendChild(this.colorPicker.element);
         container.appendChild(this.widthSlider.element);
         container.appendChild(this.radiusSlider.element);
 
