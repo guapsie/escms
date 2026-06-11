@@ -1,5 +1,6 @@
 import { EscmsMediaLibrary } from './editor-medialibrary.js';
 import { el } from './escms-dom.js';
+import { icons } from './editor-icons.js';
 
 export class EscmsToggle {
     constructor(labelKey, initialState = false, onChangeCallback) {
@@ -254,7 +255,10 @@ export class EscmsColorPicker {
         }, [
             el('div', { class: 'escms-color-swatch-container' }, [this.swatchColor, this.nativeInput]),
             this.hexInput,
-            this.alphaDisplay
+            el('div', { style: 'display: flex; align-items: center;' }, [
+                this.alphaDisplay,
+                el('span', { html: icons.caretDown, style: 'display: flex; opacity: 0.7; pointer-events: none;' })
+            ])
         ]);
 
         this.alphaSlider = new EscmsSlider(null, 0, 100, 1, this.alpha, (val) => {
