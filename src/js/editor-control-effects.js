@@ -1,5 +1,5 @@
 import { icons } from './editor-icons.js';
-import { EscmsSlider } from './editor-controls.js';
+import { EscmsSlider, EscmsSelect } from './editor-controls.js';
 
 export class EscmsEffectsControl {
     constructor(labelKey, i18n, value = '', onChange = null) {
@@ -43,9 +43,7 @@ export class EscmsEffectsControl {
         this.element.style.marginBottom = '1rem';
 
         const topRow = document.createElement('div');
-        topRow.style.display = 'flex';
-        topRow.style.justifyContent = 'space-between';
-        topRow.style.alignItems = 'center';
+        topRow.className = 'escms-control-row';
         topRow.style.marginBottom = '0.5rem';
 
         const label = document.createElement('div');
@@ -64,37 +62,28 @@ export class EscmsEffectsControl {
         ];
 
         const selectContainer = document.createElement('div');
-        selectContainer.style.display = 'flex';
+        selectContainer.style.display = 'grid';
+        selectContainer.style.gridTemplateColumns = '1fr auto';
         selectContainer.style.gap = '4px';
 
-        const select = document.createElement('select');
-        select.style.background = '#121212';
-        select.style.border = '1px solid rgba(255,255,255,0.05)';
-        select.style.color = 'var(--text-solid)';
-        select.style.padding = '0.25rem 0.5rem';
-        select.style.borderRadius = '4px';
-        select.style.fontSize = '0.75rem';
-
-        filterTypes.forEach(ft => {
-            const opt = document.createElement('option');
-            opt.value = ft.id;
-            opt.textContent = ft.label;
-            select.appendChild(opt);
-        });
+        const filterSelect = new EscmsSelect(null, filterTypes.map(f => ({ value: f.id, label: f.label })), filterTypes[0].id, () => {});
+        const selectInner = filterSelect.element.querySelector('.escms-select-container');
 
         const addBtn = document.createElement('button');
         addBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"></path><path d="M5 12l14 0"></path></svg>`;
         addBtn.style.background = 'var(--accent-solid)';
         addBtn.style.color = 'var(--text-solid)';
         addBtn.style.border = 'none';
-        addBtn.style.padding = '0.25rem 0.5rem';
+        addBtn.style.padding = '0';
+        addBtn.style.width = '24px';
+        addBtn.style.height = '24px';
         addBtn.style.borderRadius = '4px';
         addBtn.style.cursor = 'pointer';
         addBtn.style.display = 'flex';
         addBtn.style.alignItems = 'center';
         addBtn.style.justifyContent = 'center';
 
-        selectContainer.appendChild(select);
+        selectContainer.appendChild(selectInner);
         selectContainer.appendChild(addBtn);
 
         topRow.appendChild(label);
@@ -108,7 +97,7 @@ export class EscmsEffectsControl {
         this.element.appendChild(this.slidersContainer);
 
         addBtn.addEventListener('click', () => {
-            const filterId = select.value;
+            const filterId = filterSelect.value;
             if (this.activeFilters[filterId]) return; // Already exists
             
             const def = filterTypes.find(f => f.id === filterId);

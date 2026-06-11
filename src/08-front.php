@@ -257,6 +257,11 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
     }
 }
 
+$has_mesh = strpos($content, 'data-escms-mesh') !== false;
+$has_layout = strpos($content, 'data-escms-layout') !== false;
+$has_anim = strpos($content, 'data-escms-anim') !== false;
+$has_bg_pan = strpos($content, 'escms-bg-pan') !== false;
+
 ?>
 <!DOCTYPE html>
 <html lang="<?= $html_lang ?>">
@@ -277,12 +282,16 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
         /* Ajustes Globales del Usuario */
         <?= $custom_css_vars ?>
         
+        <?php if ($has_bg_pan): ?>
         /* ESCMS Core Animations */
         @keyframes escms-bg-pan {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        <?php endif; ?>
+
+        <?php if ($has_mesh): ?>
         @keyframes escms-mesh-drift {
             0% { background-position: 0% 0%, 100% 100%, 50% 0%; }
             33% { background-position: 100% 0%, 0% 50%, 100% 100%; }
@@ -307,7 +316,9 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
             filter: blur(var(--escms-mesh-blur, 60px));
             clip-path: inset(0);
         }
+        <?php endif; ?>
 
+        <?php if ($has_layout): ?>
         /* Layout Engine */
         [data-escms-layout="flexbox"] {
             display: flex !important;
@@ -351,7 +362,9 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
                 gap: var(--l-gap-p, var(--l-gap-t, var(--l-gap-d, 0px)));
             }
         }
+        <?php endif; ?>
 
+        <?php if ($has_anim): ?>
         /* Entrance Animations */
         .escms-anim-ready[data-escms-anim] {
             opacity: 0;
@@ -374,6 +387,7 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
         @keyframes escms-fade-right { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes escms-zoom-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         @keyframes escms-zoom-out { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
+        <?php endif; ?>
     </style>
 </head>
 <body>
@@ -410,6 +424,7 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
     </script>
     <?php endif; ?>
     
+    <?php if ($has_anim): ?>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const animElements = document.querySelectorAll('[data-escms-anim]');
@@ -430,5 +445,6 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
             }
         });
     </script>
+    <?php endif; ?>
 </body>
 </html>
