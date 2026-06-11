@@ -1,4 +1,7 @@
+let isInstalled = true;
+
 window.addEventListener('escms:colorpicker:ready', (e) => {
+    if (!isInstalled) return;
     const { picker, dropdown } = e.detail;
     
     if (!dropdown || dropdown.querySelector('.addon-color-palette')) return;
@@ -72,6 +75,7 @@ function hslToHex(h, s, l) {
 
 window.addEventListener('escms:addon:uninstall', (e) => {
     if (e.detail.id === 'color-palette') {
+        isInstalled = false;
         document.querySelectorAll('.addon-color-palette').forEach(el => el.remove());
         document.querySelectorAll(`script[src*="/data/addons/color-palette"]`).forEach(el => el.remove());
         document.querySelectorAll(`link[href*="/data/addons/color-palette"]`).forEach(el => el.remove());

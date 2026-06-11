@@ -756,6 +756,7 @@ export class EscmsGlobalSettings {
                                     const script = document.createElement('script');
                                     script.type = 'module';
                                     script.src = `/data/addons/${addon.id}/${addon.id}.js?v=` + Date.now();
+                                    script.onload = () => window.dispatchEvent(new CustomEvent('escms:addons:refresh'));
                                     document.head.appendChild(script);
                                 }
                                 if (!document.querySelector(`link[href*="/data/addons/${addon.id}"]`)) {
