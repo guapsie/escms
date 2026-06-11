@@ -443,8 +443,31 @@ export class EscmsInspector {
         this.controls.layoutModel = new EscmsLayoutControl(this.i18n, 
             (prop, val) => {
                 if (!this.selectedNode || this.isSyncing) return;
-                if (val === '') this.selectedNode.style.removeProperty(prop);
-                else this.selectedNode.style.setProperty(prop, val);
+                if (val === '') {
+                    if (prop === 'data-escms-layout') this.selectedNode.removeAttribute(prop);
+                    else this.selectedNode.style.removeProperty(prop);
+                } else {
+                    if (prop === 'data-escms-layout') {
+                        this.selectedNode.setAttribute(prop, val);
+                        if (val === 'flexbox' || val === 'grid') {
+                            Array.from(this.selectedNode.children).forEach(child => {
+                                const m = child.style.margin;
+                                const mLeft = child.style.marginLeft;
+                                const mRight = child.style.marginRight;
+                                if ((mLeft === 'auto' && mRight === 'auto') || m === '0px auto' || m === '0 auto' || 
+                                    (mLeft === '0px' && mRight === 'auto') || m === '0px auto 0px 0px' ||
+                                    (mLeft === 'auto' && mRight === '0px') || m === '0px 0px 0px auto') {
+                                    child.style.marginLeft = '';
+                                    child.style.marginRight = '';
+                                    child.style.margin = '';
+                                    if (child.style.display === 'block') child.style.display = '';
+                                }
+                            });
+                        }
+                    } else {
+                        this.selectedNode.style.setProperty(prop, val);
+                    }
+                }
                 window.dispatchEvent(new Event('escms-dom-mutated'));
             },
             (prop, val) => {
@@ -1005,6 +1028,23 @@ export class EscmsInspector {
             if (comp.marginRight === 'auto' && comp.marginLeft === 'auto') align = 'center';
             else if (comp.marginLeft === 'auto' && comp.marginRight === '0px') align = 'right';
             this.controls.itemAlign.setValue(align, false);
+        }
+
+        if (this.controls.imageAlign) {
+            let showAlign = allowedControls.includes('imageAlign');
+            if (showAlign && this.selectedNode.parentElement) {
+                const parentLayout = this.selectedNode.parentElement.getAttribute('data-escms-layout');
+                if (parentLayout === 'flexbox' || parentLayout === 'grid') {
+                    showAlign = false;
+                }
+            }
+            this.controls.imageAlign.element.style.display = showAlign ? '' : 'none';
+            if (showAlign) {
+                let align = 'left';
+                if (comp.marginRight === 'auto' && comp.marginLeft === 'auto') align = 'center';
+                else if (comp.marginLeft === 'auto' && comp.marginRight === '0px') align = 'right';
+                this.controls.imageAlign.setValue(align, false);
+            }
         }
 
         if (allowedControls.includes('contentValign')) {
