@@ -276,6 +276,10 @@ export class EscmsColorPicker {
 
         document.addEventListener('click', () => { if (this.isOpen) this.close(); });
         this.updateUI();
+        
+        window.dispatchEvent(new CustomEvent('escms:colorpicker:ready', { 
+            detail: { picker: this, dropdown: this.dropdown, element: this.element } 
+        }));
     }
 
     _handleHexInputChange(e) {

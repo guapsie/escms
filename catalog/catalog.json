@@ -1,0 +1,14 @@
+{
+    "version": "1.0",
+    "addons": [
+        {
+            "id": "color-palette",
+            "name": "Color Palette Generator",
+            "version": "1.0.0",
+            "description": "Get beautiful HSL color palettes directly inside any ColorPicker. No more guessing, just perfect harmonies.",
+            "author": "Guapsie",
+            "inject": ["admin_js", "admin_css"],
+            "download_url": "https://raw.githubusercontent.com/guapsie/escms/main/catalog/color-palette/color-palette.zip"
+        }
+    ]
+}

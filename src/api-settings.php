@@ -243,10 +243,15 @@ switch ($route) {
                 $force = isset($_GET['force']) && $_GET['force'] == '1';
                 
                 if ($force || !$last_check || (time() - (int)$last_check) > 86400) {
-                    $ch = curl_init("https://raw.githubusercontent.com/guapsie/escms/main/catalog/catalog.json");
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-                    $response = curl_exec($ch);
-                    curl_close($ch);
+                    $local_catalog = __DIR__ . '/../../catalog/catalog.json';
+                    if (file_exists($local_catalog)) {
+                        $response = file_get_contents($local_catalog);
+                    } else {
+                        $ch = curl_init("https://raw.githubusercontent.com/guapsie/escms/main/catalog/catalog.json");
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                        $response = curl_exec($ch);
+                        curl_close($ch);
+                    }
                     
                     if ($response) {
                         $catalog_data = $response;
@@ -309,6 +314,14 @@ switch ($route) {
                 $content = curl_exec($ch);
                 $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 curl_close($ch);
+                
+                if (str_starts_with($url, 'https://raw.githubusercontent.com/guapsie/escms/main/catalog/')) {
+                    $local_file = __DIR__ . '/../../' . str_replace('https://raw.githubusercontent.com/guapsie/escms/main/', '', $url);
+                    if (file_exists($local_file)) {
+                        $content = file_get_contents($local_file);
+                        $code = 200;
+                    }
+                }
                 
                 if ($code !== 200 || !$content) {
                     $send_json(['error' => 'Failed to download addon'], 500);

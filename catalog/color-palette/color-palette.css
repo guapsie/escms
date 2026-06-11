@@ -1,0 +1,42 @@
+.addon-color-palette {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.addon-palette-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.addon-palette-shuffle {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px;
+    transition: transform 0.2s;
+    opacity: 0.7;
+}
+.addon-palette-shuffle:hover {
+    transform: rotate(180deg);
+    opacity: 1;
+}
+.addon-palette-grid {
+    display: flex;
+    gap: 4px;
+    height: 32px;
+}
+.addon-palette-swatch {
+    flex: 1;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.addon-palette-swatch:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    z-index: 10;
+    position: relative;
+}
