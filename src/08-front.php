@@ -307,6 +307,29 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
             filter: blur(var(--escms-mesh-blur, 60px));
             clip-path: inset(0);
         }
+
+        /* Entrance Animations */
+        .escms-anim-ready[data-escms-anim] {
+            opacity: 0;
+            animation-duration: 0.8s;
+            animation-fill-mode: forwards;
+            animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .escms-anim-ready[data-escms-anim="fade-in"].is-visible { animation-name: escms-fade-in; }
+        .escms-anim-ready[data-escms-anim="fade-up"].is-visible { animation-name: escms-fade-up; }
+        .escms-anim-ready[data-escms-anim="fade-down"].is-visible { animation-name: escms-fade-down; }
+        .escms-anim-ready[data-escms-anim="fade-left"].is-visible { animation-name: escms-fade-left; }
+        .escms-anim-ready[data-escms-anim="fade-right"].is-visible { animation-name: escms-fade-right; }
+        .escms-anim-ready[data-escms-anim="zoom-in"].is-visible { animation-name: escms-zoom-in; }
+        .escms-anim-ready[data-escms-anim="zoom-out"].is-visible { animation-name: escms-zoom-out; }
+
+        @keyframes escms-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes escms-fade-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes escms-fade-down { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes escms-fade-left { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes escms-fade-right { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes escms-zoom-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes escms-zoom-out { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -342,5 +365,26 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
         })();
     </script>
     <?php endif; ?>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const animElements = document.querySelectorAll('[data-escms-anim]');
+            if (animElements.length > 0) {
+                // Initialize elements to be hidden only if JS is running
+                animElements.forEach(el => el.classList.add('escms-anim-ready'));
+                
+                const observer = new IntersectionObserver((entries, obs) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            obs.unobserve(entry.target);
+                        }
+                    });
+                }, { rootMargin: '0px 0px -50px 0px', threshold: 0.01 });
+                
+                animElements.forEach(el => observer.observe(el));
+            }
+        });
+    </script>
 </body>
 </html>

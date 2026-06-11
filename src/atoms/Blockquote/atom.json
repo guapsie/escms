@@ -17,6 +17,7 @@
         "padding",
         "border",
         "opacity",
+        "animation",
         "ariaLabel"
     ],
     "textKey": "leftpanel.default_cite",

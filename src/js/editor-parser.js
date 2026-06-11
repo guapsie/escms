@@ -2,7 +2,7 @@ import { el } from './escms-dom.js';
 
 export class EscmsParser {
     // Definimos los atributos relevantes como propiedad estática para no recrear el array en cada iteración
-    static RELEVANT_ATTRS = ['src', 'href', 'alt', 'title', 'target', 'id', 'ref', 'aria-label', 'placeholder', 'type', 'name', 'value', 'data-escms-mesh'];
+    static RELEVANT_ATTRS = ['src', 'href', 'alt', 'title', 'target', 'id', 'ref', 'aria-label', 'placeholder', 'type', 'name', 'value', 'data-escms-mesh', 'data-escms-anim'];
 
     // ==========================================
     // 1. SERIALIZACIÓN (DOM -> JSON)

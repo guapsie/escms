@@ -14,6 +14,7 @@
         "margin",
         "padding",
         "opacity",
+        "animation",
         "ariaLabel"
     ],
     "textKey": "leftpanel.default_paragraph",

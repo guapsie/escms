@@ -557,6 +557,26 @@ export class EscmsInspector {
 
         this.sectionsContainer.appendChild(this.effectsSection);
 
+        this.controls.animation = new EscmsSelect('inspector.animation', [
+            { value: '', label: 'None' },
+            { value: 'fade-in', label: 'Fade In' },
+            { value: 'fade-up', label: 'Fade Up' },
+            { value: 'fade-down', label: 'Fade Down' },
+            { value: 'fade-left', label: 'Fade Left' },
+            { value: 'fade-right', label: 'Fade Right' },
+            { value: 'zoom-in', label: 'Zoom In' },
+            { value: 'zoom-out', label: 'Zoom Out' }
+        ], '', (val) => {
+            if (!this.selectedNode || this.isSyncing) return;
+            if (val) {
+                this.selectedNode.setAttribute('data-escms-anim', val);
+            } else {
+                this.selectedNode.removeAttribute('data-escms-anim');
+            }
+            window.dispatchEvent(new Event('escms-dom-mutated'));
+        });
+        this.effectsSection.appendChild(this.controls.animation.element);
+
         // --- NAV STYLES ---
         this.navStylesSection = this.createSection('inspector.nav_styles');
         this.navStylesSection.style.display = 'none';
@@ -756,9 +776,9 @@ export class EscmsInspector {
             'img': ['src', 'alt', 'margin', 'padding', 'border', 'opacity', 'effects'],
             'a': ['href', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'letterSpacing', 'textAlign', 'textStyle', 'margin', 'padding', 'border', 'opacity'],
             'iframe': ['src', 'margin', 'padding', 'border', 'opacity'],
-            'column': ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
-            'escms-component': ['sticky', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity'],
-            'default': ['sticky', 'tagSwap', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'letterSpacing', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity']
+            'column': ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation'],
+            'escms-component': ['sticky', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation'],
+            'default': ['sticky', 'tagSwap', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'letterSpacing', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation']
         };
 
         let isAtom = false;
@@ -1032,6 +1052,10 @@ export class EscmsInspector {
         // Visibility
         if (allowedControls.includes('opacity')) this.controls.opacity.setValue(this.selectedNode.style.opacity !== '' ? Math.round(parseFloat(this.selectedNode.style.opacity) * 100) : 100, false);
         if (allowedControls.includes('effects')) this.controls.effects.setValue(this.selectedNode.style.filter || 'none', false);
+        if (allowedControls.includes('animation')) {
+            let anim = this.selectedNode.getAttribute('data-escms-anim') || '';
+            this.controls.animation.setValue(anim, false);
+        }
 
         this.isSyncing = false;
     }

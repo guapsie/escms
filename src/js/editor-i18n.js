@@ -134,6 +134,7 @@ const enFallback = Object.freeze({
     "inspector.border_color": "Color",
     "inspector.effects_section": "Effects",
     "inspector.filters": "Filters",
+    "inspector.animation": "Animations",
     "inspector.sticky": "Sticky Header",
     "settings.tab_ide": "IDE",
     "settings.tab_identity": "Identity",

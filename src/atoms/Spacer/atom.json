@@ -5,6 +5,7 @@
     "className": "escms-spacer",
     "allowedControls": [
         "spacerHeight",
+        "animation",
         "ariaLabel"
     ],
     "styles": {

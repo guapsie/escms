@@ -5,6 +5,7 @@
     "className": "escms-separator",
     "allowedControls": [
         "bgColor",
+        "animation",
         "ariaLabel"
     ],
     "styles": {

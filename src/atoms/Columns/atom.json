@@ -12,6 +12,7 @@
         "padding",
         "border",
         "opacity",
+        "animation",
         "ariaLabel"
     ],
     "attributes": {
