@@ -750,6 +750,21 @@ export class EscmsGlobalSettings {
                                     headers: {'Content-Type': 'application/json'},
                                     body: JSON.stringify({id: addon.id})
                                 });
+                                
+                                // Inject scripts immediately without refresh
+                                if (!document.querySelector(`script[src*="/data/addons/${addon.id}"]`)) {
+                                    const script = document.createElement('script');
+                                    script.type = 'module';
+                                    script.src = `/data/addons/${addon.id}/${addon.id}.js?v=` + Date.now();
+                                    document.head.appendChild(script);
+                                }
+                                if (!document.querySelector(`link[href*="/data/addons/${addon.id}"]`)) {
+                                    const link = document.createElement('link');
+                                    link.rel = 'stylesheet';
+                                    link.href = `/data/addons/${addon.id}/${addon.id}.css?v=` + Date.now();
+                                    document.head.appendChild(link);
+                                }
+                                
                                 loadAddons();
                             }));
                         } else {
