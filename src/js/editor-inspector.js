@@ -448,8 +448,6 @@ export class EscmsInspector {
         });
         layoutSection.appendChild(this.controls.sticky.element);
 
-        this.controls.width = this.createTextInput('inspector.width', (val) => this.applyStyle('width', val));
-        layoutSection.appendChild(this.controls.width.element);
 
         this.controls.navAlign = new EscmsButtonGroup('inspector.nav_align', [
             { value: 'flex-start', icon: icons.layoutAlignLeft || 'L' },
@@ -482,9 +480,9 @@ export class EscmsInspector {
         layoutSection.appendChild(this.controls.contentValign.element);
 
         this.controls.imageAlign = new EscmsButtonGroup('inspector.image_align', [
-            { value: 'left', icon: icons.textAlignLeft },
-            { value: 'center', icon: icons.textAlignCenter },
-            { value: 'right', icon: icons.textAlignRight }
+            { value: 'left', icon: icons.layoutAlignLeft },
+            { value: 'center', icon: icons.layoutAlignCenter },
+            { value: 'right', icon: icons.layoutAlignRight }
         ], 'left', (val) => {
             if (!this.selectedNode || this.isSyncing) return;
             this.selectedNode.style.display = 'block';

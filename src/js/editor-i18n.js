@@ -21,7 +21,7 @@ const enFallback = Object.freeze({
     'inspector.nav_sub_bg': 'Dropdown BG',
     'inspector.nav_sub_glow': 'Dropdown Glow',
     'inspector.nav_sub_border': 'Dropdown Border',
-    'inspector.image_align': 'Image Align',
+    'inspector.image_align': 'Align',
     'inspector.item_align': 'Item Align',
     'inspector.font_size': 'Font Size',
     'inspector.text_align': 'Text Align',
