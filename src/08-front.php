@@ -14,10 +14,10 @@ try {
     if ($slug === null) {
         $home_id = $config['home_page_id'] ?? null;
         if ($home_id) {
-            $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language, page_css, page_js FROM pages WHERE id = ?");
             $stmt->execute([$home_id]);
         } else {
-            $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language FROM pages ORDER BY id ASC LIMIT 1");
+            $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language, page_css, page_js FROM pages ORDER BY id ASC LIMIT 1");
             $stmt->execute();
         }
         $page = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -27,10 +27,10 @@ try {
         $page = null;
         foreach ($segments as $index => $seg) {
             if ($current_parent_id === null) {
-                $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language, parent_id FROM pages WHERE slug = ? AND (parent_id IS NULL OR parent_id = 0)");
+                $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language, parent_id, page_css, page_js FROM pages WHERE slug = ? AND (parent_id IS NULL OR parent_id = 0)");
                 $stmt->execute([$seg]);
             } else {
-                $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language, parent_id FROM pages WHERE slug = ? AND parent_id = ?");
+                $stmt = $pdo->prepare("SELECT id, title, public_html, status, seo_title, seo_desc, seo_keywords, seo_language, parent_id, page_css, page_js FROM pages WHERE slug = ? AND parent_id = ?");
                 $stmt->execute([$seg, $current_parent_id]);
             }
             $p = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -57,7 +57,7 @@ try {
     }
 
     if (!$page) {
-        $stmt = $pdo->prepare("SELECT id, title, public_html, seo_title, seo_desc, seo_keywords, seo_language FROM pages WHERE slug = '404'");
+        $stmt = $pdo->prepare("SELECT id, title, public_html, seo_title, seo_desc, seo_keywords, seo_language, page_css, page_js FROM pages WHERE slug = '404'");
         $stmt->execute();
         $page = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -188,13 +188,16 @@ while (($start = strpos($content, 'escms-nav-list', $offset)) !== false) {
     }
 }
 
-// Cargar el CSS del usuario o del tema activo (por ahora asumimos pichi)
+// Cargar el CSS global (variables de usuario) y la hoja de estilo personalizada
+$vars_css_path = __DIR__ . '/../data/user-settings/vars.css';
+$vars_css_href = file_exists($vars_css_path) ? '/data/user-settings/vars.css?v=' . filemtime($vars_css_path) : '';
+
 $css_href = '/data/templates/pichi/style.css';
-$user_css_path = __DIR__ . '/../data/user_settings/style.css';
+$user_css_path = __DIR__ . '/../data/user-settings/style.css';
 $template_css_path = __DIR__ . '/../data/templates/pichi/style.css';
 
 if (file_exists($user_css_path)) {
-    $css_href = '/data/user_settings/style.css?v=' . filemtime($user_css_path);
+    $css_href = '/data/user-settings/style.css?v=' . filemtime($user_css_path);
 } else if (file_exists($template_css_path)) {
     $css_href = '/data/templates/pichi/style.css?v=' . filemtime($template_css_path);
 }
@@ -215,23 +218,7 @@ if (!empty($options['google_fonts'])) {
     }
 }
 
-// Generar variables CSS
-$custom_css_vars = ":root {\n";
-$css_keys = [
-    '--max-width', 
-    '--color-background', 
-    '--color-text', 
-    '--color-accent', 
-    '--color-link', 
-    '--color-link-hover', 
-    '--font-body'
-];
-foreach ($css_keys as $ck) {
-    if (!empty($options[$ck])) {
-        $custom_css_vars .= "    {$ck}: " . htmlspecialchars($options[$ck]) . ";\n";
-    }
-}
-$custom_css_vars .= "}";
+
 
 $escms_default_favicon = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJjdXJyZW50Q29sb3IiIGNsYXNzPSJpY29uIGljb24tdGFibGVyIGljb25zLXRhYmxlci1maWxsZWQgaWNvbi10YWJsZXItYXBwcyI+PHBhdGggc3Ryb2tlPSJub25lIiBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIiAvPjxwYXRoIGQ9Ik05IDNoLTRhMiAyIDAgMCAwIC0yIDJ2NGEyIDIgMCAwIDAgMiAyaDRhMiAyIDAgMCAwIDIgLTJ2LTRhMiAyIDAgMCAwIC0yIC0yeiIgLz48cGF0aCBkPSJNOSAxM2gtNGEyIDIgMCAwIDAgLTIgMnY0YTIgMiAwIDAgMCAyIDJoNGEyIDIgMCAwIDAgMiAtMnYtNGEyIDIgMCAwIDAgLTIgLTJ6IiAvPjxwYXRoIGQ9Ik0xOSAxM2gtNGEyIDIgMCAwIDAgLTIgMnY0YTIgMiAwIDAgMCAyIDJoNGEyIDIgMCAwIDAgMiAtMnYtNGEyIDIgMCAwIDAgLTIgLTJ6IiAvPjxwYXRoIGQ9Ik0xNyAzYTEgMSAwIDAgMSAuOTkzIC44ODNsLjAwNyAuMTE3djJoMmExIDEgMCAwIDEgLjExNyAxLjk5M2wtLjExNyAuMDA3aC0ydjJhMSAxIDAgMCAxIC0xLjk5MyAuMTE3bC0uMDA3IC0uMTE3di0yaC0yYTEgMSAwIDAgMSAtLjExNyAtMS45OTNsLjExNyAtLjAwN2gydi0yYTEgMSAwIDAgMSAxIC0xeiIgLz48L3N2Zz4=';
 $favicon_html = '<link rel="icon" href="' . $escms_default_favicon . '">';
@@ -257,10 +244,7 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
     }
 }
 
-$has_mesh = strpos($content, 'data-escms-mesh') !== false;
-$has_layout = strpos($content, 'data-escms-layout') !== false;
-$has_anim = strpos($content, 'data-escms-anim') !== false;
-$has_bg_pan = strpos($content, 'escms-bg-pan') !== false;
+
 
 ?>
 <!DOCTYPE html>
@@ -277,118 +261,16 @@ $has_bg_pan = strpos($content, 'escms-bg-pan') !== false;
     <?= $google_fonts_html ?>
     <?= $favicon_html ?>
 
+    <?php if ($vars_css_href): ?>
+    <link rel="stylesheet" type="text/css" href="<?= $vars_css_href ?>">
+    <?php endif; ?>
     <link rel="stylesheet" type="text/css" href="<?= $css_href ?>">
+    
+    <?php if (!empty($page['page_css'])): ?>
     <style>
-        /* Ajustes Globales del Usuario */
-        <?= $custom_css_vars ?>
-        
-        <?php if ($has_bg_pan): ?>
-        /* ESCMS Core Animations */
-        @keyframes escms-bg-pan {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        <?php endif; ?>
-
-        <?php if ($has_mesh): ?>
-        @keyframes escms-mesh-drift {
-            0% { background-position: 0% 0%, 100% 100%, 50% 0%; }
-            33% { background-position: 100% 0%, 0% 50%, 100% 100%; }
-            66% { background-position: 50% 100%, 0% 0%, 0% 100%; }
-            100% { background-position: 0% 0%, 100% 100%, 50% 0%; }
-        }
-        [data-escms-mesh="true"] {
-            position: relative;
-            isolation: isolate;
-        }
-        [data-escms-mesh="true"]::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            z-index: -1;
-            pointer-events: none;
-            border-radius: inherit;
-            background-image: var(--escms-mesh-bg);
-            background-size: var(--escms-mesh-size, 100% 100%);
-            background-repeat: var(--escms-mesh-repeat, no-repeat);
-            animation: var(--escms-mesh-anim, none);
-            filter: blur(var(--escms-mesh-blur, 60px));
-            clip-path: inset(0);
-        }
-        <?php endif; ?>
-
-        <?php if ($has_layout): ?>
-        /* Layout Engine */
-        [data-escms-layout="flexbox"] {
-            display: flex !important;
-            flex-direction: var(--l-dir-d, row);
-            flex-wrap: var(--l-wrap-d, nowrap);
-            justify-content: var(--l-jc-d, flex-start);
-            align-items: var(--l-ai-d, stretch);
-            gap: var(--l-gap-d, 0px);
-        }
-        [data-escms-layout="grid"] {
-            display: grid !important;
-            grid-template-columns: var(--l-cols-d, 1fr);
-            grid-template-rows: var(--l-rows-d, auto);
-            gap: var(--l-gap-d, 0px);
-        }
-        @media (max-width: 768px) {
-            [data-escms-layout="flexbox"] {
-                flex-direction: var(--l-dir-t, var(--l-dir-d, row));
-                flex-wrap: var(--l-wrap-t, var(--l-wrap-d, nowrap));
-                justify-content: var(--l-jc-t, var(--l-jc-d, flex-start));
-                align-items: var(--l-ai-t, var(--l-ai-d, stretch));
-                gap: var(--l-gap-t, var(--l-gap-d, 0px));
-            }
-            [data-escms-layout="grid"] {
-                grid-template-columns: var(--l-cols-t, var(--l-cols-d, 1fr));
-                grid-template-rows: var(--l-rows-t, var(--l-rows-d, auto));
-                gap: var(--l-gap-t, var(--l-gap-d, 0px));
-            }
-        }
-        @media (max-width: 390px) {
-            [data-escms-layout="flexbox"] {
-                flex-direction: var(--l-dir-p, var(--l-dir-t, var(--l-dir-d, row)));
-                flex-wrap: var(--l-wrap-p, var(--l-wrap-t, var(--l-wrap-d, nowrap)));
-                justify-content: var(--l-jc-p, var(--l-jc-t, var(--l-jc-d, flex-start)));
-                align-items: var(--l-ai-p, var(--l-ai-t, var(--l-ai-d, stretch)));
-                gap: var(--l-gap-p, var(--l-gap-t, var(--l-gap-d, 0px)));
-            }
-            [data-escms-layout="grid"] {
-                grid-template-columns: var(--l-cols-p, var(--l-cols-t, var(--l-cols-d, 1fr)));
-                grid-template-rows: var(--l-rows-p, var(--l-rows-t, var(--l-rows-d, auto)));
-                gap: var(--l-gap-p, var(--l-gap-t, var(--l-gap-d, 0px)));
-            }
-        }
-        <?php endif; ?>
-
-        <?php if ($has_anim): ?>
-        /* Entrance Animations */
-        .escms-anim-ready[data-escms-anim] {
-            opacity: 0;
-            animation-duration: 0.8s;
-            animation-fill-mode: forwards;
-            animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .escms-anim-ready[data-escms-anim="fade-in"].is-visible { animation-name: escms-fade-in; }
-        .escms-anim-ready[data-escms-anim="fade-up"].is-visible { animation-name: escms-fade-up; }
-        .escms-anim-ready[data-escms-anim="fade-down"].is-visible { animation-name: escms-fade-down; }
-        .escms-anim-ready[data-escms-anim="fade-left"].is-visible { animation-name: escms-fade-left; }
-        .escms-anim-ready[data-escms-anim="fade-right"].is-visible { animation-name: escms-fade-right; }
-        .escms-anim-ready[data-escms-anim="zoom-in"].is-visible { animation-name: escms-zoom-in; }
-        .escms-anim-ready[data-escms-anim="zoom-out"].is-visible { animation-name: escms-zoom-out; }
-
-        @keyframes escms-fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes escms-fade-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes escms-fade-down { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes escms-fade-left { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes escms-fade-right { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes escms-zoom-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        @keyframes escms-zoom-out { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
-        <?php endif; ?>
+        <?= $page['page_css'] ?>
     </style>
+    <?php endif; ?>
 </head>
 <body>
     <?= $content ?>
@@ -424,27 +306,6 @@ $has_bg_pan = strpos($content, 'escms-bg-pan') !== false;
     </script>
     <?php endif; ?>
     
-    <?php if ($has_anim): ?>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const animElements = document.querySelectorAll('[data-escms-anim]');
-            if (animElements.length > 0) {
-                // Initialize elements to be hidden only if JS is running
-                animElements.forEach(el => el.classList.add('escms-anim-ready'));
-                
-                const observer = new IntersectionObserver((entries, obs) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add('is-visible');
-                            obs.unobserve(entry.target);
-                        }
-                    });
-                }, { rootMargin: '0px 0px -50px 0px', threshold: 0.01 });
-                
-                animElements.forEach(el => observer.observe(el));
-            }
-        });
-    </script>
-    <?php endif; ?>
+    <?= $page['page_js'] ?? '' ?>
 </body>
 </html>

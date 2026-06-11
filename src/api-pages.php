@@ -58,14 +58,61 @@ switch ($route) {
                 $nodeTree = json_decode($editor_data, true) ?: [];
                 $public_html = $jsonToHtml($nodeTree);
 
+                // --- CSS/JS EXTRACTION ---
+                $page_css = '';
+                $page_js = '';
+
+                $has_mesh = strpos($public_html, 'data-escms-mesh') !== false;
+                $has_layout = strpos($public_html, 'data-escms-layout') !== false;
+                $has_bg_pan = strpos($public_html, 'escms-bg-pan') !== false;
+                $has_anim = strpos($public_html, 'data-escms-anim') !== false;
+
+                if ($has_anim || $has_mesh || $has_bg_pan) {
+                    if ($has_bg_pan) {
+                        $page_css .= "@keyframes escms-bg-pan { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }\n";
+                    }
+                    if ($has_mesh) {
+                        $page_css .= "@keyframes escms-mesh-drift { 0% { background-position: 0% 0%, 100% 100%, 50% 0%; } 33% { background-position: 100% 0%, 0% 50%, 100% 100%; } 66% { background-position: 50% 100%, 0% 0%, 0% 100%; } 100% { background-position: 0% 0%, 100% 100%, 50% 0%; } }\n";
+                        $page_css .= "[data-escms-mesh=\"true\"] { position: relative; isolation: isolate; }\n";
+                        $page_css .= "[data-escms-mesh=\"true\"]::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit; background-image: var(--escms-mesh-bg); background-size: var(--escms-mesh-size, 100% 100%); background-repeat: var(--escms-mesh-repeat, no-repeat); animation: var(--escms-mesh-anim, none); filter: blur(var(--escms-mesh-blur, 60px)); clip-path: inset(0); }\n";
+                    }
+                }
+
+                if ($has_layout) {
+                    $page_css .= "[data-escms-layout=\"flexbox\"] { display: flex !important; flex-direction: var(--l-dir-d, row); flex-wrap: var(--l-wrap-d, nowrap); justify-content: var(--l-jc-d, flex-start); align-items: var(--l-ai-d, stretch); gap: var(--l-gap-d, 0px); }\n";
+                    $page_css .= "[data-escms-layout=\"grid\"] { display: grid !important; grid-template-columns: var(--l-cols-d, 1fr); grid-template-rows: var(--l-rows-d, auto); gap: var(--l-gap-d, 0px); }\n";
+                    $page_css .= "@media (max-width: 768px) { [data-escms-layout=\"flexbox\"] { flex-direction: var(--l-dir-t, var(--l-dir-d, row)); flex-wrap: var(--l-wrap-t, var(--l-wrap-d, nowrap)); justify-content: var(--l-jc-t, var(--l-jc-d, flex-start)); align-items: var(--l-ai-t, var(--l-ai-d, stretch)); gap: var(--l-gap-t, var(--l-gap-d, 0px)); } [data-escms-layout=\"grid\"] { grid-template-columns: var(--l-cols-t, var(--l-cols-d, 1fr)); grid-template-rows: var(--l-rows-t, var(--l-rows-d, auto)); gap: var(--l-gap-t, var(--l-gap-d, 0px)); } }\n";
+                    $page_css .= "@media (max-width: 390px) { [data-escms-layout=\"flexbox\"] { flex-direction: var(--l-dir-p, var(--l-dir-t, var(--l-dir-d, row))); flex-wrap: var(--l-wrap-p, var(--l-wrap-t, var(--l-wrap-d, nowrap))); justify-content: var(--l-jc-p, var(--l-jc-t, var(--l-jc-d, flex-start))); align-items: var(--l-ai-p, var(--l-ai-t, var(--l-ai-d, stretch))); gap: var(--l-gap-p, var(--l-gap-t, var(--l-gap-d, 0px))); } [data-escms-layout=\"grid\"] { grid-template-columns: var(--l-cols-p, var(--l-cols-t, var(--l-cols-d, 1fr))); grid-template-rows: var(--l-rows-p, var(--l-rows-t, var(--l-rows-d, auto))); gap: var(--l-gap-p, var(--l-gap-t, var(--l-gap-d, 0px))); } }\n";
+                }
+
+                if ($has_anim) {
+                    $page_css .= ".escms-anim-ready[data-escms-anim] { opacity: 0; animation-duration: 0.8s; animation-fill-mode: forwards; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }\n";
+                    $anim_types = ['fade-in', 'fade-up', 'fade-down', 'fade-left', 'fade-right', 'zoom-in', 'zoom-out'];
+                    foreach ($anim_types as $anim) {
+                        if (strpos($public_html, 'data-escms-anim="' . $anim . '"') !== false) {
+                            $page_css .= ".escms-anim-ready[data-escms-anim=\"$anim\"].is-visible { animation-name: escms-$anim; }\n";
+                            if ($anim === 'fade-in') $page_css .= "@keyframes escms-fade-in { from { opacity: 0; } to { opacity: 1; } }\n";
+                            if ($anim === 'fade-up') $page_css .= "@keyframes escms-fade-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }\n";
+                            if ($anim === 'fade-down') $page_css .= "@keyframes escms-fade-down { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }\n";
+                            if ($anim === 'fade-left') $page_css .= "@keyframes escms-fade-left { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }\n";
+                            if ($anim === 'fade-right') $page_css .= "@keyframes escms-fade-right { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }\n";
+                            if ($anim === 'zoom-in') $page_css .= "@keyframes escms-zoom-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }\n";
+                            if ($anim === 'zoom-out') $page_css .= "@keyframes escms-zoom-out { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }\n";
+                        }
+                    }
+                    
+                    $page_js .= "<script>\n        document.addEventListener(\"DOMContentLoaded\", () => {\n            const animElements = document.querySelectorAll('[data-escms-anim]');\n            if (animElements.length > 0) {\n                animElements.forEach(el => el.classList.add('escms-anim-ready'));\n                const observer = new IntersectionObserver((entries, obs) => {\n                    entries.forEach(entry => {\n                        if (entry.isIntersecting) {\n                            entry.target.classList.add('is-visible');\n                            obs.unobserve(entry.target);\n                        }\n                    });\n                }, { rootMargin: '0px 0px -50px 0px', threshold: 0.01 });\n                animElements.forEach(el => observer.observe(el));\n            }\n        });\n    </script>";
+                }
+                // --- CSS/JS EXTRACTION END ---
+
                 if ($id) {
-                    $stmt = $pdo->prepare("UPDATE pages SET editor_data = ?, public_html = ?, status = ? WHERE id = ?");
-                    $stmt->execute([$editor_data, $public_html, $status, $id]);
+                    $stmt = $pdo->prepare("UPDATE pages SET editor_data = ?, public_html = ?, status = ?, page_css = ?, page_js = ? WHERE id = ?");
+                    $stmt->execute([$editor_data, $public_html, $status, $page_css, $page_js, $id]);
                 } else {
                     $title = 'Draft ' . date('Y-m-d H:i:s');
                     $slug = 'draft-' . bin2hex(random_bytes(4));
-                    $stmt = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html, status) VALUES (?, ?, ?, ?, ?)");
-                    $stmt->execute([$title, $slug, $editor_data, $public_html, $status]);
+                    $stmt = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html, status, page_css, page_js) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([$title, $slug, $editor_data, $public_html, $status, $page_css, $page_js]);
                     $id = $pdo->lastInsertId();
                 }
 
@@ -413,7 +460,7 @@ switch ($route) {
                 $id = $input['id'] ?? null;
                 if (!$id) throw new RuntimeException('ID required');
                 
-                $stmt = $pdo->prepare("SELECT title, editor_data FROM pages WHERE id = ?");
+                $stmt = $pdo->prepare("SELECT title, editor_data, page_css, page_js FROM pages WHERE id = ?");
                 $stmt->execute([$id]);
                 $page = $stmt->fetch(PDO::FETCH_ASSOC);
                 
@@ -422,8 +469,8 @@ switch ($route) {
                 $newTitle = $page['title'] . ' (Copy)';
                 $newSlug = 'draft-' . bin2hex(random_bytes(4));
                 
-                $stmtInsert = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html) VALUES (?, ?, ?, '')");
-                $stmtInsert->execute([$newTitle, $newSlug, $page['editor_data']]);
+                $stmtInsert = $pdo->prepare("INSERT INTO pages (title, slug, editor_data, public_html, page_css, page_js) VALUES (?, ?, ?, '', ?, ?)");
+                $stmtInsert->execute([$newTitle, $newSlug, $page['editor_data'], $page['page_css'] ?? '', $page['page_js'] ?? '']);
                 
                 $send_json(['status' => 'success', 'id' => $pdo->lastInsertId()]);
             } catch (Throwable $e) {

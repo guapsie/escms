@@ -63,6 +63,12 @@ try {
         $pdo->exec("ALTER TABLE pages ADD COLUMN menu_order INTEGER DEFAULT 0");
     } catch (PDOException $e) {}
     try {
+        $pdo->exec("ALTER TABLE pages ADD COLUMN page_css TEXT DEFAULT ''");
+    } catch (PDOException $e) {}
+    try {
+        $pdo->exec("ALTER TABLE pages ADD COLUMN page_js TEXT DEFAULT ''");
+    } catch (PDOException $e) {}
+    try {
         $pdo->exec("ALTER TABLE pages ADD COLUMN is_hidden_menu INTEGER DEFAULT 0");
     } catch (PDOException $e) {}
     try {

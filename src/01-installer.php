@@ -16,6 +16,7 @@ if ($needs_install || $needs_assets) {
         $data_dir . '/templates',
         $data_dir . '/atoms',
         $data_dir . '/locales',
+        $data_dir . '/user-settings',
         $root_dir . '/assets/js',
         $root_dir . '/assets/css'
     ];

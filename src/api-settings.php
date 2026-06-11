@@ -201,6 +201,32 @@ switch ($route) {
 
                 $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
                 $stmt->execute([$key, (string)$value]);
+
+                // Regenerate vars.css
+                $allOptions = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE 'ai_%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
+                $custom_css_vars = ":root {\n";
+                $css_keys = [
+                    '--max-width', 
+                    '--color-background', 
+                    '--color-text', 
+                    '--color-accent', 
+                    '--color-link', 
+                    '--color-link-hover', 
+                    '--font-body'
+                ];
+                foreach ($css_keys as $ck) {
+                    if (!empty($allOptions[$ck])) {
+                        $custom_css_vars .= "    {$ck}: " . $allOptions[$ck] . ";\n";
+                    }
+                }
+                $custom_css_vars .= "}\n";
+                
+                $userDir = __DIR__ . '/../data/user-settings';
+                if (!is_dir($userDir)) {
+                    @mkdir($userDir, 0755, true);
+                }
+                @file_put_contents($userDir . '/vars.css', $custom_css_vars);
+
                 $send_json(['status' => 'success']);
             } else {
                 $send_json(['error' => 'Method not allowed'], 405);
