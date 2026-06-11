@@ -253,6 +253,9 @@ export class EscmsCanvas {
     setView(viewId, width) {
         this.activeView = viewId;
         document.body.setAttribute('data-viewport', viewId);
+        
+        const docRoot = this.host?.shadowRoot?.getElementById('document-root');
+        if (docRoot) docRoot.setAttribute('data-viewport', viewId);
         let targetZoom = 1;
         
         if (viewId === 'desktop') {

@@ -14,6 +14,7 @@ import { EscmsSelection } from './editor-selection.js';
 import { EscmsSeoView } from './editor-seoview.js';
 import { EscmsGlobalSettings } from './editor-settings.js';
 import { EscmsTopBar } from './editor-topbar.js';
+import { ESCMS_CANVAS_STYLES } from './editor-canvas-styles.js';
 
 export class EscmsEditor {
     constructor() {
@@ -46,6 +47,10 @@ export class EscmsEditor {
         if (!this.host) return;
 
         this.shadow = this.host.attachShadow({ mode: 'open' });
+        
+        const canvasStyle = document.createElement('style');
+        canvasStyle.textContent = ESCMS_CANVAS_STYLES;
+        this.shadow.appendChild(canvasStyle);
         
         const docRoot = document.createElement('div');
         docRoot.id = 'document-root';

@@ -993,10 +993,6 @@ export class EscmsInspector {
             this.controls.sticky.setValue(isSticky, false);
         }
 
-        if (allowedControls.includes('width')) {
-            this.controls.width.setValue(comp.width !== 'auto' ? comp.width : '', false);
-        }
-
 
 
         if (allowedControls.includes('navAlign')) {
@@ -1043,17 +1039,7 @@ export class EscmsInspector {
             this.controls.navSubBorder.setValue({ width, style, color: parsedColor.hex, alpha: parsedColor.alpha, radius, cssString: `${width}px ${style} ${colorStr}` }, false);
         }
 
-        if (allowedControls.includes('imageAlign')) {
-            let mLeft = comp.marginLeft;
-            let mRight = comp.marginRight;
-            let align = '';
-            if (comp.display === 'block') {
-                if (mLeft === 'auto' && mRight === 'auto') align = 'center';
-                else if (mLeft === 'auto') align = 'right';
-                else if (mRight === 'auto') align = 'left';
-            }
-            this.controls.imageAlign.setValue(align, false);
-        }
+
 
         if (allowedControls.includes('spacerHeight')) {
             let sHeight = parseInt(comp.height) || 50;

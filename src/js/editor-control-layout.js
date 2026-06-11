@@ -58,6 +58,17 @@ export class EscmsLayoutControl {
             if (val === 'flexbox' || val === 'grid') {
                 this.onStyleChange('display', '');
                 this._handleLayoutAttr(val);
+                if (val === 'grid') {
+                    let view = 'desktop';
+                    if (window.escmsEditor && window.escmsEditor.canvas) view = window.escmsEditor.canvas.activeView || 'desktop';
+                    const suffix = view === 'phone' ? '-p' : view === 'tablet' ? '-t' : '-d';
+                    
+                    const node = window.escmsEditor.inspector.selectedNode;
+                    if (node) {
+                        if (!node.style.getPropertyValue('--l-cols' + suffix)) this.onVarChange('--l-cols' + suffix, '1fr 1fr');
+                        if (!node.style.getPropertyValue('--l-rows' + suffix)) this.onVarChange('--l-rows' + suffix, 'auto');
+                    }
+                }
             } else {
                 this._handleLayoutAttr('');
                 this.onStyleChange('display', val);
