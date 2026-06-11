@@ -128,6 +128,8 @@ const enFallback = Object.freeze({
     "settings.p2p_title": "ESCMS Network",
     "settings.tab_addons": "Addons",
     "settings.addons_desc": "Expand the capabilities of ESCMS with community addons. Browse and install new components, palettes, and integrations.",
+    "settings.addons_loading": "Loading addons...",
+    "settings.addons_empty": "No addons found.",
     "settings.addons_btn_install": "Install Addon",
     "settings.addons_btn_update": "Update Addon",
     "settings.addons_btn_delete": "Remove Addon",

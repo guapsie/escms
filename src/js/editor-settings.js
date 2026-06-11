@@ -648,6 +648,7 @@ export class EscmsGlobalSettings {
         
         const desc = document.createElement('div');
         desc.setAttribute('data-i18n', 'settings.addons_desc');
+        desc.textContent = this.i18n ? (this.i18n.dictionary['settings.addons_desc'] || 'Expand the capabilities of ESCMS with community addons.') : 'Expand the capabilities of ESCMS with community addons.';
         desc.style.fontSize = '0.85rem';
         desc.style.color = 'rgba(245, 245, 245, 0.7)';
         desc.style.marginBottom = '2rem';
@@ -661,14 +662,16 @@ export class EscmsGlobalSettings {
         tab.appendChild(grid);
 
         const loadAddons = async () => {
-            grid.innerHTML = '<div style="color: rgba(245,245,245,0.4); grid-column: 1/-1;">Loading addons...</div>';
+            const loadingText = this.i18n ? (this.i18n.dictionary['settings.addons_loading'] || 'Loading addons...') : 'Loading addons...';
+            grid.innerHTML = `<div style="color: rgba(245,245,245,0.4); grid-column: 1/-1;">${loadingText}</div>`;
             try {
                 const res = await fetch('/api/settings?route=api/addons&action=list');
                 const data = await res.json();
                 if (data.status === 'success' && data.data) {
                     grid.innerHTML = '';
                     if (data.data.length === 0) {
-                        grid.innerHTML = '<div style="color: rgba(245,245,245,0.4); grid-column: 1/-1;">No addons found.</div>';
+                        const emptyText = this.i18n ? (this.i18n.dictionary['settings.addons_empty'] || 'No addons found.') : 'No addons found.';
+                        grid.innerHTML = `<div style="color: rgba(245,245,245,0.4); grid-column: 1/-1;">${emptyText}</div>`;
                         return;
                     }
                     data.data.forEach(addon => {
