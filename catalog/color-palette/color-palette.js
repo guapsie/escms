@@ -1,7 +1,7 @@
 window.addEventListener('escms:colorpicker:ready', (e) => {
     const { picker, dropdown } = e.detail;
     
-    if (!dropdown) return;
+    if (!dropdown || dropdown.querySelector('.addon-color-palette')) return;
     
     const paletteContainer = document.createElement('div');
     paletteContainer.className = 'addon-color-palette';
@@ -14,6 +14,7 @@ window.addEventListener('escms:colorpicker:ready', (e) => {
     shuffleBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 4l3 3l-3 3" /><path d="M18 20l3 -3l-3 -3" /><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" /><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3" /></svg>';
     shuffleBtn.className = 'addon-palette-shuffle';
     shuffleBtn.title = 'Generate new palette';
+    shuffleBtn.style.color = '#888';
     
     header.appendChild(shuffleBtn);
     paletteContainer.appendChild(header);
@@ -68,3 +69,11 @@ function hslToHex(h, s, l) {
   };
   return `#${f(0)}${f(8)}${f(4)}`;
 }
+
+window.addEventListener('escms:addon:uninstall', (e) => {
+    if (e.detail.id === 'color-palette') {
+        document.querySelectorAll('.addon-color-palette').forEach(el => el.remove());
+        document.querySelectorAll(`script[src*="/data/addons/color-palette"]`).forEach(el => el.remove());
+        document.querySelectorAll(`link[href*="/data/addons/color-palette"]`).forEach(el => el.remove());
+    }
+});

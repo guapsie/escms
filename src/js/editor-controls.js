@@ -214,12 +214,16 @@ export class EscmsSlider {
 }
 
 export class EscmsColorPicker {
+    static instances = [];
+
     constructor(labelKey, initialHex = '#3b82f6', initialAlpha = 100, onChangeCallback) {
         this.labelKey = labelKey;
         this.hex = initialHex;
         this.alpha = initialAlpha;
         this.onChange = onChangeCallback;
         this.isOpen = false;
+        
+        EscmsColorPicker.instances.push(this);
         
         this.swatchColor = el('div', { class: 'escms-color-swatch' });
         this.nativeInput = el('input', { 
@@ -280,7 +284,10 @@ export class EscmsColorPicker {
 
         document.addEventListener('click', () => { if (this.isOpen) this.close(); });
         this.updateUI();
-        
+        this.broadcastReady();
+    }
+
+    broadcastReady() {
         window.dispatchEvent(new CustomEvent('escms:colorpicker:ready', { 
             detail: { picker: this, dropdown: this.dropdown, element: this.element } 
         }));
@@ -508,3 +515,9 @@ export class EscmsCollectionControl {
         if (triggerCallback && this.onChange) this.onChange(this.value);
     }
 }
+
+window.addEventListener('escms:addons:refresh', () => {
+    if (EscmsColorPicker.instances) {
+        EscmsColorPicker.instances.forEach(p => p.broadcastReady());
+    }
+});
