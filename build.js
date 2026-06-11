@@ -163,7 +163,8 @@ if ($__is_kamikaze_trigger) {
         __DIR__ . '/assets/css',
         __DIR__ . '/data',
         __DIR__ . '/data/user-settings',
-        __DIR__ . '/data/locales'
+        __DIR__ . '/data/locales',
+        __DIR__ . '/data/addons'
     ];
     foreach ($__dirs as $d) {
         if (!is_dir($d)) mkdir($d, 0755, true);

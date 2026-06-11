@@ -254,7 +254,19 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
             }
     </style>
     <link rel="stylesheet" href="/assets/css/editor-ui.css?v=<?= time() ?>">
-</head>
+';
+        global $pdo;
+        if ($pdo) {
+            $installed_raw = $pdo->query("SELECT v FROM options WHERE k='installed_addons'")->fetchColumn();
+            $installed = json_decode((string)$installed_raw, true) ?: [];
+            foreach ($installed as $id => $addon) {
+                if (isset($addon['inject']) && in_array('admin_css', (array)$addon['inject'])) {
+                    $main_file = $addon['main_file'] ?: $id . '.css';
+                    echo '<link rel="stylesheet" href="/data/addons/' . htmlspecialchars($id) . '/' . htmlspecialchars($main_file) . '?v=' . time() . '">' . "\n";
+                }
+            }
+        }
+    echo '</head>
 <body>
     <div id="escms-topbar">
         <span style="padding: 0 1rem; line-height: 50px; font-weight: 600; letter-spacing: 1px;">ESCMS</span>
@@ -264,8 +276,19 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
         <div id="escms-canvas-wrapper"><div id="escms-canvas-host"></div></div>
         <div id="escms-inspector"><div style="padding: 1rem; opacity: 0.5; font-size: 0.85rem;">Inspector</div></div>
     </div>
-
-    <script type="module" src="/assets/js/index.js?v=<?= time() ?>"></script>
+';
+        global $pdo;
+        if ($pdo) {
+            $installed_raw = $pdo->query("SELECT v FROM options WHERE k='installed_addons'")->fetchColumn();
+            $installed = json_decode((string)$installed_raw, true) ?: [];
+            foreach ($installed as $id => $addon) {
+                if (isset($addon['inject']) && in_array('admin_js', (array)$addon['inject'])) {
+                    $main_file = $addon['main_file'] ?: $id . '.js';
+                    echo '<script type="module" src="/data/addons/' . htmlspecialchars($id) . '/' . htmlspecialchars($main_file) . '?v=' . time() . '"></script>' . "\n";
+                }
+            }
+        }
+    echo '<script type="module" src="/assets/js/index.js?v=<?= time() ?>"></script>
 </body>
 </html>';
     exit;

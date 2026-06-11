@@ -151,6 +151,7 @@ export class EscmsGlobalSettings {
             { id: 'typography', labelKey: 'settings.tab_typography' },
             { id: 'network', labelKey: 'settings.p2p_title' },
             { id: 'backup', labelKey: 'settings.tab_backup' },
+            { id: 'addons', labelKey: 'settings.tab_addons' },
             { id: 'ai', labelKey: 'ai.panel_title' }
         ];
 
@@ -204,6 +205,7 @@ export class EscmsGlobalSettings {
             typography: this.createTypographyTab(),
             network: this.createNetworkTab(),
             backup: this.createBackupTab(),
+            addons: this.createAddonsTab(),
             ai: this.createAITab()
         };
 
@@ -637,6 +639,147 @@ export class EscmsGlobalSettings {
 
         card.appendChild(toggleRow);
         tab.appendChild(card);
+        
+        return tab;
+    }
+
+    createAddonsTab() {
+        const tab = this.createTabContent('settings.tab_addons');
+        
+        const desc = document.createElement('div');
+        desc.setAttribute('data-i18n', 'settings.addons_desc');
+        desc.style.fontSize = '0.85rem';
+        desc.style.color = 'rgba(245, 245, 245, 0.7)';
+        desc.style.marginBottom = '2rem';
+        desc.style.lineHeight = '1.5';
+        tab.appendChild(desc);
+        
+        const grid = document.createElement('div');
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+        grid.style.gap = '1.5rem';
+        tab.appendChild(grid);
+
+        const loadAddons = async () => {
+            grid.innerHTML = '<div style="color: rgba(245,245,245,0.4); grid-column: 1/-1;">Loading addons...</div>';
+            try {
+                const res = await fetch('/api/settings?route=api/addons&action=list');
+                const data = await res.json();
+                if (data.status === 'success' && data.data) {
+                    grid.innerHTML = '';
+                    if (data.data.length === 0) {
+                        grid.innerHTML = '<div style="color: rgba(245,245,245,0.4); grid-column: 1/-1;">No addons found.</div>';
+                        return;
+                    }
+                    data.data.forEach(addon => {
+                        const card = document.createElement('div');
+                        card.style.background = 'rgba(255, 255, 255, 0.02)';
+                        card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+                        card.style.borderRadius = '8px';
+                        card.style.padding = '1rem';
+                        card.style.display = 'flex';
+                        card.style.flexDirection = 'column';
+                        card.style.gap = '0.75rem';
+                        
+                        const header = document.createElement('div');
+                        header.style.display = 'flex';
+                        header.style.justifyContent = 'space-between';
+                        header.style.alignItems = 'center';
+                        
+                        const title = document.createElement('h4');
+                        title.textContent = addon.name;
+                        title.style.margin = '0';
+                        title.style.fontSize = '1rem';
+                        title.style.color = 'var(--text-solid)';
+                        
+                        const badge = document.createElement('span');
+                        badge.style.fontSize = '0.7rem';
+                        badge.style.padding = '2px 6px';
+                        badge.style.borderRadius = '12px';
+                        badge.style.background = addon.installed ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.05)';
+                        badge.style.color = addon.installed ? '#22c55e' : 'rgba(255,255,255,0.6)';
+                        badge.textContent = addon.installed ? 'v' + addon.installed_version : 'v' + addon.version;
+                        
+                        header.appendChild(title);
+                        header.appendChild(badge);
+                        card.appendChild(header);
+                        
+                        const description = document.createElement('div');
+                        description.textContent = addon.description;
+                        description.style.fontSize = '0.8rem';
+                        description.style.color = 'var(--text-muted)';
+                        description.style.lineHeight = '1.4';
+                        description.style.flexGrow = '1';
+                        card.appendChild(description);
+                        
+                        const actions = document.createElement('div');
+                        actions.style.display = 'flex';
+                        actions.style.gap = '0.5rem';
+                        actions.style.marginTop = '0.5rem';
+                        
+                        const createBtn = (icon, titleKey, color, bg, onClick) => {
+                            const btn = document.createElement('button');
+                            btn.innerHTML = icon;
+                            btn.title = this.i18n ? (this.i18n.dictionary[titleKey] || titleKey) : titleKey;
+                            btn.style.width = '32px';
+                            btn.style.height = '32px';
+                            btn.style.display = 'flex';
+                            btn.style.alignItems = 'center';
+                            btn.style.justifyContent = 'center';
+                            btn.style.borderRadius = '6px';
+                            btn.style.border = 'none';
+                            btn.style.background = bg;
+                            btn.style.color = color;
+                            btn.style.cursor = 'pointer';
+                            btn.style.transition = 'all 0.2s';
+                            btn.onmouseenter = () => btn.style.transform = 'scale(1.05)';
+                            btn.onmouseleave = () => btn.style.transform = 'scale(1)';
+                            const svg = btn.querySelector('svg');
+                            if (svg) { svg.style.width = '18px'; svg.style.height = '18px'; }
+                            btn.onclick = onClick;
+                            return btn;
+                        };
+                        
+                        if (!addon.installed) {
+                            actions.appendChild(createBtn(icons.download || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>', 'settings.addons_btn_install', '#fff', 'var(--accent-solid)', async () => {
+                                await fetch('/api/settings?route=api/addons&action=install', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({id: addon.id})
+                                });
+                                loadAddons();
+                            }));
+                        } else {
+                            if (addon.has_update) {
+                                actions.appendChild(createBtn(icons.refresh || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>', 'settings.addons_btn_update', '#fff', 'var(--accent-solid)', async () => {
+                                    await fetch('/api/settings?route=api/addons&action=install', {
+                                        method: 'POST',
+                                        headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify({id: addon.id})
+                                    });
+                                    loadAddons();
+                                }));
+                            }
+                            actions.appendChild(createBtn(icons.trash || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>', 'settings.addons_btn_delete', '#ef4444', 'rgba(239, 68, 68, 0.1)', async () => {
+                                if(confirm('Are you sure?')) {
+                                    await fetch('/api/settings?route=api/addons&action=uninstall', {
+                                        method: 'POST',
+                                        headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify({id: addon.id})
+                                    });
+                                    loadAddons();
+                                }
+                            }));
+                        }
+                        
+                        card.appendChild(actions);
+                        grid.appendChild(card);
+                    });
+                }
+            } catch(e) { console.error('Addons list failed', e); }
+        };
+        
+        loadAddons();
         
         return tab;
     }

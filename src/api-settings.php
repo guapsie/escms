@@ -233,6 +233,152 @@ switch ($route) {
             }
             break;
 
+    case 'api/addons':
+            if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            $action = $_GET['action'] ?? '';
+            
+            if ($action === 'list') {
+                $last_check = $pdo->query("SELECT v FROM options WHERE k='addons_last_checked'")->fetchColumn();
+                $catalog_data = $pdo->query("SELECT v FROM options WHERE k='addons_catalog'")->fetchColumn();
+                $force = isset($_GET['force']) && $_GET['force'] == '1';
+                
+                if ($force || !$last_check || (time() - (int)$last_check) > 86400) {
+                    $ch = curl_init("https://raw.githubusercontent.com/guapsie/escms/main/catalog/catalog.json");
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                    $response = curl_exec($ch);
+                    curl_close($ch);
+                    
+                    if ($response) {
+                        $catalog_data = $response;
+                        $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+                        $stmt->execute(['addons_last_checked', (string)time()]);
+                        $stmt->execute(['addons_catalog', $catalog_data]);
+                    }
+                }
+                
+                $catalog = json_decode((string)$catalog_data, true) ?: ['addons' => []];
+                $installed_raw = $pdo->query("SELECT v FROM options WHERE k='installed_addons'")->fetchColumn();
+                $installed = json_decode((string)$installed_raw, true) ?: [];
+                
+                $list = [];
+                if (isset($catalog['addons']) && is_array($catalog['addons'])) {
+                    foreach ($catalog['addons'] as $addon) {
+                        $id = $addon['id'];
+                        if (isset($installed[$id])) {
+                            $addon['installed'] = true;
+                            $addon['installed_version'] = $installed[$id]['version'] ?? '0.0.0';
+                            $addon['has_update'] = version_compare($addon['version'], $addon['installed_version'], '>');
+                        } else {
+                            $addon['installed'] = false;
+                            $addon['has_update'] = false;
+                        }
+                        $list[] = $addon;
+                    }
+                }
+                $send_json(['status' => 'success', 'data' => $list]);
+            }
+            
+            if ($action === 'install') {
+                if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+                $id = $input['id'] ?? '';
+                if (!$id) $send_json(['error' => 'Missing ID'], 400);
+                
+                $catalog_data = $pdo->query("SELECT v FROM options WHERE k='addons_catalog'")->fetchColumn();
+                $catalog = json_decode((string)$catalog_data, true) ?: ['addons' => []];
+                $addon = null;
+                if (isset($catalog['addons'])) {
+                    foreach ($catalog['addons'] as $a) {
+                        if ($a['id'] === $id) { $addon = $a; break; }
+                    }
+                }
+                if (!$addon) $send_json(['error' => 'Addon not found in catalog'], 404);
+                
+                $url = $addon['download_url'] ?? '';
+                if (!$url) $send_json(['error' => 'No download URL'], 400);
+                
+                $addons_dir = __DIR__ . '/../data/addons';
+                if (!is_dir($addons_dir)) mkdir($addons_dir, 0755, true);
+                
+                $target_dir = $addons_dir . '/' . $id;
+                if (!is_dir($target_dir)) mkdir($target_dir, 0755, true);
+                
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_USERAGENT, 'ESCMS-AddonManager');
+                $content = curl_exec($ch);
+                $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                
+                if ($code !== 200 || !$content) {
+                    $send_json(['error' => 'Failed to download addon'], 500);
+                }
+                
+                $main_file = '';
+                if (str_ends_with(strtolower($url), '.zip')) {
+                    if (!class_exists('ZipArchive')) $send_json(['error' => 'ZipArchive missing'], 500);
+                    $tmp = sys_get_temp_dir() . '/addon_' . uniqid() . '.zip';
+                    file_put_contents($tmp, $content);
+                    $zip = new ZipArchive();
+                    if ($zip->open($tmp) === true) {
+                        $zip->extractTo($target_dir);
+                        $zip->close();
+                        @unlink($tmp);
+                    } else {
+                        @unlink($tmp);
+                        $send_json(['error' => 'Failed to extract zip'], 500);
+                    }
+                } else {
+                    $filename = basename(parse_url($url, PHP_URL_PATH));
+                    file_put_contents($target_dir . '/' . $filename, $content);
+                    $main_file = $filename;
+                }
+                
+                $installed_raw = $pdo->query("SELECT v FROM options WHERE k='installed_addons'")->fetchColumn();
+                $installed = json_decode((string)$installed_raw, true) ?: [];
+                $installed[$id] = [
+                    'version' => $addon['version'],
+                    'inject' => $addon['inject'] ?? [],
+                    'main_file' => $main_file
+                ];
+                
+                $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+                $stmt->execute(['installed_addons', json_encode($installed)]);
+                
+                $send_json(['status' => 'success']);
+            }
+            
+            if ($action === 'uninstall') {
+                if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
+                $id = $input['id'] ?? '';
+                if (!$id) $send_json(['error' => 'Missing ID'], 400);
+                
+                $installed_raw = $pdo->query("SELECT v FROM options WHERE k='installed_addons'")->fetchColumn();
+                $installed = json_decode((string)$installed_raw, true) ?: [];
+                
+                if (isset($installed[$id])) {
+                    unset($installed[$id]);
+                    $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+                    $stmt->execute(['installed_addons', json_encode($installed)]);
+                }
+                
+                $target_dir = __DIR__ . '/../data/addons/' . $id;
+                if (is_dir($target_dir)) {
+                    $files = new RecursiveIteratorIterator(
+                        new RecursiveDirectoryIterator($target_dir, RecursiveDirectoryIterator::SKIP_DOTS),
+                        RecursiveIteratorIterator::CHILD_FIRST
+                    );
+                    foreach ($files as $fileinfo) {
+                        $todo = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
+                        @$todo($fileinfo->getRealPath());
+                    }
+                    @rmdir($target_dir);
+                }
+                
+                $send_json(['status' => 'success']);
+            }
+            break;
+
     case 'api/ai/settings':
             if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
             if ($method === 'GET') {
