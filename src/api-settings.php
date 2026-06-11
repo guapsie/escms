@@ -14,17 +14,47 @@ switch ($route) {
             if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
             if ($method === 'GET') {
                 $action = $_GET['action'] ?? '';
-                if ($action === 'download_locale') {
+                if ($action === 'check_locale_update') {
                     $lang = $_GET['lang'] ?? '';
                     if (!$lang || !preg_match('/^[a-z]{2}$/', $lang)) $send_json(['error' => 'Invalid lang'], 400);
                     $path = __DIR__ . '/../data/locales/' . $lang . '.json';
-                    if (!file_exists($path)) {
+                    if (!file_exists($path)) $send_json(['has_update' => true]);
+                    
+                    $url = "https://raw.githubusercontent.com/guapsie/escms/main/locales/{$lang}.json";
+                    $ctx = stream_context_create(['http' => ['method' => 'HEAD', 'timeout' => 3]]);
+                    @file_get_contents($url, false, $ctx);
+                    if (!empty($http_response_header)) {
+                        foreach ($http_response_header as $hdr) {
+                            if (preg_match('/^ETag:\s*"([^"]+)"/i', $hdr, $m)) {
+                                $remote_etag = $m[1];
+                                $local_etag_path = $path . '.etag';
+                                $local_etag = file_exists($local_etag_path) ? file_get_contents($local_etag_path) : '';
+                                $send_json(['has_update' => $remote_etag !== $local_etag, 'etag' => $remote_etag]);
+                            }
+                        }
+                    }
+                    $send_json(['has_update' => false]);
+                }
+
+                if ($action === 'download_locale') {
+                    $lang = $_GET['lang'] ?? '';
+                    $force = isset($_GET['force']) && $_GET['force'] == '1';
+                    if (!$lang || !preg_match('/^[a-z]{2}$/', $lang)) $send_json(['error' => 'Invalid lang'], 400);
+                    $path = __DIR__ . '/../data/locales/' . $lang . '.json';
+                    if (!file_exists($path) || $force) {
                         $url = "https://raw.githubusercontent.com/guapsie/escms/main/locales/{$lang}.json";
                         $ctx = stream_context_create(['http' => ['timeout' => 3]]);
                         $content = @file_get_contents($url, false, $ctx);
                         if ($content) {
                             if (!is_dir(dirname($path))) mkdir(dirname($path), 0755, true);
                             file_put_contents($path, $content);
+                            if (!empty($http_response_header)) {
+                                foreach ($http_response_header as $hdr) {
+                                    if (preg_match('/^ETag:\s*"([^"]+)"/i', $hdr, $m)) {
+                                        file_put_contents($path . '.etag', $m[1]);
+                                    }
+                                }
+                            }
                             $send_json(['status' => 'success', 'data' => json_decode($content, true)]);
                         } else {
                             $send_json(['error' => 'Not found on github'], 404);

@@ -81,3 +81,8 @@ window.addEventListener('escms:addon:uninstall', (e) => {
         document.querySelectorAll(`link[href*="/data/addons/color-palette"]`).forEach(el => el.remove());
     }
 });
+
+// Announce that the addon has finished loading and is ready to attach
+setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('escms:addons:refresh'));
+}, 50);

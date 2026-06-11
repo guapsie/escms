@@ -199,13 +199,14 @@ export class I18nEngine {
         this.dictionary = { ...enFallback };
     }
 
-    async loadLanguage(lang) {
+    async loadLanguage(lang, force = false) {
         if (lang === 'en') {
             this.dictionary = { ...enFallback };
             return;
         }
         try {
-            const res = await fetch(`/api/settings?action=download_locale&lang=${lang}`);
+            const url = `/api/settings?action=download_locale&lang=${lang}` + (force ? '&force=1' : '');
+            const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
                 if (data.status === 'success' && data.data) {

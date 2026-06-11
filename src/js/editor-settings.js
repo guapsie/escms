@@ -438,6 +438,53 @@ export class EscmsGlobalSettings {
                 });
             }
         });
+        
+        const refreshLangBtn = document.createElement('button');
+        refreshLangBtn.innerHTML = icons.refresh || '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>';
+        refreshLangBtn.style.cssText = 'background: transparent; border: none; color: #888; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: color 0.2s;';
+        refreshLangBtn.onmouseenter = () => refreshLangBtn.style.color = 'var(--text-solid)';
+        refreshLangBtn.onmouseleave = () => refreshLangBtn.style.color = '#888';
+        refreshLangBtn.title = 'Check for updates / Force redownload';
+        refreshLangBtn.onclick = async () => {
+            const svg = refreshLangBtn.querySelector('svg');
+            if (svg) svg.style.animation = 'spin 1s linear infinite';
+            if (window.escmsEditor && window.escmsEditor.i18n) {
+                await window.escmsEditor.i18n.loadLanguage(this.config.editor_language, true);
+                window.escmsEditor.i18n.translateDOM();
+                const currentTab = Object.keys(this.tabContents).find(k => this.tabContents[k].style.display === 'block');
+                if (this.overlay && this.overlay.parentNode) this.overlay.parentNode.removeChild(this.overlay);
+                this.renderOverlay();
+                document.body.appendChild(this.overlay);
+                this.overlay.style.display = 'block';
+                if (currentTab) this.switchTab(currentTab);
+            }
+        };
+
+        if (this.config.editor_language !== 'en') {
+            fetch('/api/settings?action=check_locale_update&lang=' + this.config.editor_language)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.has_update) {
+                        refreshLangBtn.style.color = '#3b82f6'; // Blue to grab attention
+                        refreshLangBtn.title = 'Update available! Click to update.';
+                        refreshLangBtn.innerHTML = '<span style="font-size: 0.75rem; font-weight: bold; margin-right: 4px;">UPDATE</span>' + refreshLangBtn.innerHTML;
+                    }
+                }).catch(() => {});
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
+        wrapper.style.alignItems = 'center';
+        wrapper.style.gap = '8px';
+        const selectEl = langSelect.element.childNodes[1];
+        // Ensure the select still takes up the necessary space
+        selectEl.style.flex = '1';
+        wrapper.style.flex = '0 0 auto';
+        wrapper.style.width = '60%'; // Typical width for the right-side control in these rows
+        wrapper.appendChild(selectEl);
+        wrapper.appendChild(refreshLangBtn);
+        langSelect.element.appendChild(wrapper);
+
         tab.appendChild(langSelect.element);
 
         return tab;
