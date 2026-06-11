@@ -15,7 +15,8 @@
         "padding",
         "opacity",
         "animation",
-        "ariaLabel"
+        "ariaLabel",
+        "layoutModel"
     ],
     "textKey": "leftpanel.default_paragraph",
     "category": "text",

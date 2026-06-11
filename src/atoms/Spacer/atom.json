@@ -6,7 +6,8 @@
     "allowedControls": [
         "spacerHeight",
         "animation",
-        "ariaLabel"
+        "ariaLabel",
+        "layoutModel"
     ],
     "styles": {
         "width": "100%",

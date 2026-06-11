@@ -308,6 +308,50 @@ if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '
             clip-path: inset(0);
         }
 
+        /* Layout Engine */
+        [data-escms-layout="flexbox"] {
+            display: flex !important;
+            flex-direction: var(--l-dir-d, row);
+            flex-wrap: var(--l-wrap-d, nowrap);
+            justify-content: var(--l-jc-d, flex-start);
+            align-items: var(--l-ai-d, stretch);
+            gap: var(--l-gap-d, 0px);
+        }
+        [data-escms-layout="grid"] {
+            display: grid !important;
+            grid-template-columns: var(--l-cols-d, 1fr);
+            grid-template-rows: var(--l-rows-d, auto);
+            gap: var(--l-gap-d, 0px);
+        }
+        @media (max-width: 768px) {
+            [data-escms-layout="flexbox"] {
+                flex-direction: var(--l-dir-t, var(--l-dir-d, row));
+                flex-wrap: var(--l-wrap-t, var(--l-wrap-d, nowrap));
+                justify-content: var(--l-jc-t, var(--l-jc-d, flex-start));
+                align-items: var(--l-ai-t, var(--l-ai-d, stretch));
+                gap: var(--l-gap-t, var(--l-gap-d, 0px));
+            }
+            [data-escms-layout="grid"] {
+                grid-template-columns: var(--l-cols-t, var(--l-cols-d, 1fr));
+                grid-template-rows: var(--l-rows-t, var(--l-rows-d, auto));
+                gap: var(--l-gap-t, var(--l-gap-d, 0px));
+            }
+        }
+        @media (max-width: 390px) {
+            [data-escms-layout="flexbox"] {
+                flex-direction: var(--l-dir-p, var(--l-dir-t, var(--l-dir-d, row)));
+                flex-wrap: var(--l-wrap-p, var(--l-wrap-t, var(--l-wrap-d, nowrap)));
+                justify-content: var(--l-jc-p, var(--l-jc-t, var(--l-jc-d, flex-start)));
+                align-items: var(--l-ai-p, var(--l-ai-t, var(--l-ai-d, stretch)));
+                gap: var(--l-gap-p, var(--l-gap-t, var(--l-gap-d, 0px)));
+            }
+            [data-escms-layout="grid"] {
+                grid-template-columns: var(--l-cols-p, var(--l-cols-t, var(--l-cols-d, 1fr)));
+                grid-template-rows: var(--l-rows-p, var(--l-rows-t, var(--l-rows-d, auto)));
+                gap: var(--l-gap-p, var(--l-gap-t, var(--l-gap-d, 0px)));
+            }
+        }
+
         /* Entrance Animations */
         .escms-anim-ready[data-escms-anim] {
             opacity: 0;

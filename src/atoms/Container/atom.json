@@ -12,7 +12,8 @@
         "border",
         "opacity",
         "animation",
-        "ariaLabel"
+        "ariaLabel",
+        "layoutModel"
     ],
     "styles": {
         "maxWidth": "var(--max-width)",

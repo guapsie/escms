@@ -10,7 +10,8 @@
         "border",
         "opacity",
         "animation",
-        "ariaLabel"
+        "ariaLabel",
+        "layoutModel"
     ],
     "attributes": {
         "src": "https://player.vimeo.com/video/76979871",

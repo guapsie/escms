@@ -9,6 +9,7 @@ import './editor-control-upload.js';
 import './editor-control-effects.js';
 import './editor-settings.js';
 import './editor-inspector.js';
+import './editor-control-layout.js';
 import './editor-canvas.js';
 import './editor-seoview.js';
 import './editor-htmlview.js';

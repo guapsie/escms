@@ -10,7 +10,8 @@
         "border",
         "opacity",
         "animation",
-        "ariaLabel"
+        "ariaLabel",
+        "layoutModel"
     ],
     "attributes": {
         "controls": "true",

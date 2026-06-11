@@ -11,7 +11,8 @@
         "border",
         "opacity",
         "animation",
-        "ariaLabel"
+        "ariaLabel",
+        "layoutModel"
     ],
     "category": "layout",
     "version": "1.0.0",

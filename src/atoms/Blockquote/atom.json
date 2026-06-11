@@ -18,7 +18,8 @@
         "border",
         "opacity",
         "animation",
-        "ariaLabel"
+        "ariaLabel",
+        "layoutModel"
     ],
     "textKey": "leftpanel.default_cite",
     "category": "text",

@@ -2,7 +2,8 @@ import { EscmsBorderControl } from './editor-control-border.js';
 import { EscmsEffectsControl } from './editor-control-effects.js';
 import { EscmsGradientControl } from './editor-control-gradient.js';
 import { EscmsUploadControl, EscmsBgImageControl } from './editor-control-upload.js';
-import { EscmsSelect, EscmsSlider, EscmsColorPicker, EscmsSpacing, EscmsButtonGroup, EscmsCollectionControl, EscmsToggle } from './editor-controls.js';
+import { EscmsToggle, EscmsSelect, EscmsSlider, EscmsColorPicker, EscmsSpacing, EscmsButtonGroup, EscmsCollectionControl } from './editor-controls.js';
+import { EscmsLayoutControl } from './editor-control-layout.js';
 import { icons } from './editor-icons.js';
 
 export class EscmsInspector {
@@ -61,6 +62,12 @@ export class EscmsInspector {
             } else {
                 this.sectionsContainer.style.display = 'none';
                 this.emptyState.style.display = 'flex';
+            }
+        });
+
+        window.addEventListener('escms-view-change', () => {
+            if (this.selectedNode) {
+                this.syncDOMToUI();
             }
         });
 
@@ -433,6 +440,22 @@ export class EscmsInspector {
         // --- LAYOUT ---
         const layoutSection = this.createSection('inspector.layout');
 
+        this.controls.layoutModel = new EscmsLayoutControl(this.i18n, 
+            (prop, val) => {
+                if (!this.selectedNode || this.isSyncing) return;
+                if (val === '') this.selectedNode.style.removeProperty(prop);
+                else this.selectedNode.style.setProperty(prop, val);
+                window.dispatchEvent(new Event('escms-dom-mutated'));
+            },
+            (prop, val) => {
+                if (!this.selectedNode || this.isSyncing) return;
+                if (val === '') this.selectedNode.style.removeProperty(prop);
+                else this.selectedNode.style.setProperty(prop, val);
+                window.dispatchEvent(new Event('escms-dom-mutated'));
+            }
+        );
+        layoutSection.appendChild(this.controls.layoutModel.element);
+
         this.controls.sticky = new EscmsToggle('inspector.sticky', false, (val) => {
             if (!this.selectedNode || this.isSyncing) return;
             if (val) {
@@ -776,9 +799,9 @@ export class EscmsInspector {
             'img': ['src', 'alt', 'margin', 'padding', 'border', 'opacity', 'effects'],
             'a': ['href', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'letterSpacing', 'textAlign', 'textStyle', 'margin', 'padding', 'border', 'opacity'],
             'iframe': ['src', 'margin', 'padding', 'border', 'opacity'],
-            'column': ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation'],
-            'escms-component': ['sticky', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation'],
-            'default': ['sticky', 'tagSwap', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'letterSpacing', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation']
+            'column': ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation', 'layoutModel'],
+            'escms-component': ['sticky', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation', 'layoutModel'],
+            'default': ['sticky', 'tagSwap', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'letterSpacing', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation', 'layoutModel']
         };
 
         let isAtom = false;
@@ -1055,6 +1078,9 @@ export class EscmsInspector {
         if (allowedControls.includes('animation')) {
             let anim = this.selectedNode.getAttribute('data-escms-anim') || '';
             this.controls.animation.setValue(anim, false);
+        }
+        if (allowedControls.includes('layoutModel')) {
+            this.controls.layoutModel.setValue(this.selectedNode);
         }
 
         this.isSyncing = false;
