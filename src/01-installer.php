@@ -58,6 +58,8 @@ if ($needs_install) {
                 is_hidden_menu INTEGER DEFAULT 0,
                 is_custom_link INTEGER DEFAULT 0,
                 custom_link_url TEXT DEFAULT '',
+                page_css TEXT DEFAULT '',
+                page_js TEXT DEFAULT '',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
