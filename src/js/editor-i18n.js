@@ -170,7 +170,8 @@ const enFallback = Object.freeze({
     "add_link": "Add Link",
     "copy_styles": "Copy Styles",
     "paste_styles": "Paste Styles",
-    "add_post": "Add Post"
+    "add_post": "Add Post",
+    "inspector.open_media_manager": "Open Media Manager"
 });
 export class I18nEngine {
     constructor() {

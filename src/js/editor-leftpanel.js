@@ -3,6 +3,7 @@ import { EscmsPageManager } from './editor-pagemanager.js';
 import { EscmsParser } from './editor-parser.js';
 import { el } from './escms-dom.js';
 import { icons } from './editor-icons.js';
+import { EscmsMediaLibrary } from './editor-medialibrary.js';
 
 export class EscmsLeftPanel {
     constructor(i18n) {
@@ -760,7 +761,23 @@ export class EscmsLeftPanel {
             } else {
                 target.appendChild(el);
             }
-            setTimeout(() => el.click(), 10);
+            setTimeout(() => {
+                el.click();
+                if (el.tagName.toLowerCase() === 'img') {
+                    if (!window.escmsMediaLibrary) {
+                        window.escmsMediaLibrary = new EscmsMediaLibrary(this.i18n);
+                    }
+                    window.escmsMediaLibrary.open({ windowed: true }).then(url => {
+                        if (url) {
+                            el.setAttribute('src', url);
+                            window.dispatchEvent(new Event('escms-dom-mutated'));
+                            if (window.escmsEditor && window.escmsEditor.inspector) {
+                                window.escmsEditor.inspector.syncDOMToUI();
+                            }
+                        }
+                    });
+                }
+            }, 10);
             if (window.escmsEditor && window.escmsEditor.autosave) {
                 window.escmsEditor.autosave.saveToServer();
             }

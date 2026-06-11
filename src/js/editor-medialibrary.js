@@ -31,6 +31,7 @@ export class EscmsMediaLibrary {
     async open(options = {}) {
         if (this.modal) return;
         this.isMultiSelect = options.multi || false;
+        this.isWindowed = options.windowed || false;
         this.selectedItems.clear();
         return new Promise((resolve) => {
             this.resolvePromise = resolve;
@@ -59,27 +60,43 @@ export class EscmsMediaLibrary {
     buildUI() {
         this.modal = document.createElement('div');
         this.modal.className = 'escms-media-library escms-anim-fade';
-        this.modal.style.position = 'fixed';
-        this.modal.style.inset = '50px 0 0 0';
         this.modal.style.backgroundColor = 'rgba(10, 10, 10, 0.85)';
         this.modal.style.backdropFilter = 'blur(16px)';
         this.modal.style.webkitBackdropFilter = 'blur(16px)';
         this.modal.style.zIndex = '99999';
         this.modal.style.display = 'flex';
         this.modal.style.flexDirection = 'column';
-        this.modal.style.padding = '2rem';
         this.modal.style.boxSizing = 'border-box';
+        
+        if (this.isWindowed) {
+            this.modal.style.position = 'fixed';
+            this.modal.style.top = '100px';
+            this.modal.style.right = '320px';
+            this.modal.style.width = '380px';
+            this.modal.style.height = '500px';
+            this.modal.style.borderRadius = '12px';
+            this.modal.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+            this.modal.style.boxShadow = '0 10px 40px rgba(0,0,0,0.5)';
+            this.modal.style.padding = '1.5rem';
+        } else {
+            this.modal.style.position = 'fixed';
+            this.modal.style.inset = '50px 0 0 0';
+            this.modal.style.padding = '2rem';
+        }
         
         const header = document.createElement('div');
         header.style.display = 'flex';
         header.style.justifyContent = 'space-between';
         header.style.alignItems = 'center';
-        header.style.marginBottom = '2rem';
+        header.style.marginBottom = this.isWindowed ? '1rem' : '2rem';
+        header.style.flexWrap = 'wrap';
+        header.style.gap = '10px';
         
         const leftControls = document.createElement('div');
         leftControls.style.display = 'flex';
         leftControls.style.alignItems = 'center';
-        leftControls.style.width = '250px';
+        leftControls.style.width = this.isWindowed ? 'auto' : '250px';
+        leftControls.style.flex = this.isWindowed ? '1' : 'none';
         
         const title = document.createElement('h2');
         title.innerHTML = '<span style="color:var(--text-solid, #fff); opacity:1;">ES</span><span style="color:var(--text-solid, #fff); opacity:0.5;">Media Manager</span>';
@@ -208,17 +225,17 @@ export class EscmsMediaLibrary {
         this.searchInput.style.background = 'transparent';
         this.searchInput.style.color = '#fff';
         this.searchInput.style.outline = 'none';
-        this.searchInput.style.width = '140px';
+        this.searchInput.style.width = this.isWindowed ? '90px' : '140px';
         this.searchInput.style.height = '32px';
         this.searchInput.style.fontSize = '0.85rem';
         this.searchInput.style.transition = 'width 0.2s, background 0.2s';
         this.searchInput.addEventListener('focus', () => {
             this.searchInput.style.background = 'rgba(255,255,255,0.05)';
-            this.searchInput.style.width = '180px';
+            this.searchInput.style.width = this.isWindowed ? '130px' : '180px';
         });
         this.searchInput.addEventListener('blur', () => {
             this.searchInput.style.background = 'transparent';
-            this.searchInput.style.width = '140px';
+            this.searchInput.style.width = this.isWindowed ? '90px' : '140px';
         });
         this.searchInput.addEventListener('input', (e) => this.filterMedia(e.target.value));
 
@@ -232,7 +249,7 @@ export class EscmsMediaLibrary {
         rightControls.style.display = 'flex';
         rightControls.style.gap = '1rem';
         rightControls.style.alignItems = 'center';
-        rightControls.style.width = '250px';
+        rightControls.style.width = this.isWindowed ? 'auto' : '250px';
         rightControls.style.justifyContent = 'flex-end';
 
         const closeBtn = document.createElement('button');
@@ -275,8 +292,9 @@ export class EscmsMediaLibrary {
 
         this.grid = document.createElement('div');
         this.grid.style.display = 'grid';
-        this.grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(180px, 1fr))';
+        this.grid.style.gridTemplateColumns = this.isWindowed ? 'repeat(auto-fill, minmax(100px, 1fr))' : 'repeat(auto-fill, minmax(180px, 1fr))';
         this.grid.style.gap = '1rem';
+        this.grid.style.alignContent = 'start';
         this.grid.style.overflowY = 'auto';
         this.grid.style.flex = '1';
         this.grid.style.paddingRight = '1rem';
@@ -346,7 +364,9 @@ export class EscmsMediaLibrary {
             const wrapper = document.createElement('div');
             wrapper.className = 'media-item';
             wrapper.style.position = 'relative';
-            wrapper.style.aspectRatio = '1';
+            wrapper.style.paddingBottom = '100%';
+            wrapper.style.height = '0';
+            wrapper.style.width = '100%';
             wrapper.style.backgroundColor = 'rgba(255,255,255,0.05)';
             wrapper.style.borderRadius = '8px';
             wrapper.style.overflow = 'hidden';
@@ -378,6 +398,9 @@ export class EscmsMediaLibrary {
             img.src = '/data/media/thumbs/' + item.name;
             img.onerror = () => { img.src = item.url; };
             img.loading = 'lazy';
+            img.style.position = 'absolute';
+            img.style.top = '0';
+            img.style.left = '0';
             img.style.width = '100%';
             img.style.height = '100%';
             img.style.objectFit = 'cover';

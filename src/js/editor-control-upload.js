@@ -72,20 +72,20 @@ export class EscmsUploadControl {
         });
 
         this.uploadBtn = document.createElement('button');
-        this.uploadBtn.innerHTML = '<svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="128" y1="216" x2="128" y2="40"></line><polyline points="56 112 128 40 200 112"></polyline></svg>';
-        this.uploadBtn.title = 'Upload File';
+        this.uploadBtn.setAttribute('data-i18n', 'inspector.open_media_manager');
+        this.uploadBtn.textContent = this.i18n ? (this.i18n.dictionary['inspector.open_media_manager'] || 'Open Media Manager') : 'Open Media Manager';
         this.uploadBtn.style.background = 'var(--accent-solid)';
         this.uploadBtn.style.border = 'none';
         this.uploadBtn.style.color = 'var(--text-solid)';
-        this.uploadBtn.style.padding = '0';
-        this.uploadBtn.style.width = '32px';
-        this.uploadBtn.style.height = '32px';
+        this.uploadBtn.style.padding = '0.5rem';
+        this.uploadBtn.style.width = '100%';
         this.uploadBtn.style.borderRadius = '4px';
         this.uploadBtn.style.cursor = 'pointer';
         this.uploadBtn.style.display = 'flex';
         this.uploadBtn.style.alignItems = 'center';
         this.uploadBtn.style.justifyContent = 'center';
-        this.uploadBtn.style.flexShrink = '0';
+        this.uploadBtn.style.fontSize = '0.75rem';
+        this.uploadBtn.style.fontWeight = '500';
 
         this.fileInput = document.createElement('input');
         this.fileInput.type = 'file';
@@ -101,22 +101,23 @@ export class EscmsUploadControl {
             }
         });
 
-        row.appendChild(this.input);
         row.appendChild(this.uploadBtn);
         row.appendChild(this.fileInput);
 
         // Size Toggle Row
         this.sizeToggleRow = document.createElement('div');
         this.sizeToggleRow.style.display = 'none';
-        this.sizeToggleRow.style.gap = '0.25rem';
-        this.sizeToggleRow.style.marginTop = '0.5rem';
+        this.sizeToggleRow.style.justifyContent = 'space-between';
+        this.sizeToggleRow.style.marginTop = '1rem';
         this.sizeToggleRow.style.alignItems = 'center';
 
-        const sizeLabel = document.createElement('span');
-        sizeLabel.textContent = 'Size:';
-        sizeLabel.style.fontSize = '0.7rem';
-        sizeLabel.style.color = 'rgba(255,255,255,0.5)';
-        sizeLabel.style.marginRight = '0.25rem';
+        const sizeLabel = document.createElement('div');
+        sizeLabel.className = 'escms-ui-label';
+        sizeLabel.textContent = 'Size';
+
+        const btnsWrap = document.createElement('div');
+        btnsWrap.style.display = 'flex';
+        btnsWrap.style.gap = '4px';
 
         const styleSizeBtn = (btn) => {
             btn.style.padding = '2px 8px';
@@ -150,12 +151,16 @@ export class EscmsUploadControl {
             }
         });
 
-        this.sizeToggleRow.appendChild(sizeLabel);
-        this.sizeToggleRow.appendChild(this.thumbBtn);
-        this.sizeToggleRow.appendChild(this.fullBtn);
+        btnsWrap.appendChild(this.thumbBtn);
+        btnsWrap.appendChild(this.fullBtn);
 
-        this.element.appendChild(labelRow);
-        this.element.appendChild(this.preview);
+        this.sizeToggleRow.appendChild(sizeLabel);
+        this.sizeToggleRow.appendChild(btnsWrap);
+
+        if (this.labelKey !== 'inspector.src_url') {
+            this.element.appendChild(labelRow);
+            this.element.appendChild(this.preview);
+        }
         this.element.appendChild(row);
         this.element.appendChild(this.sizeToggleRow);
         
@@ -169,8 +174,7 @@ export class EscmsUploadControl {
             
             // Show size toggle if it's a media image
             const isMedia = this.value.includes('/data/media/');
-            const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(this.value);
-            if (isMedia && isImage) {
+            if (isMedia) {
                 this.sizeToggleRow.style.display = 'flex';
                 if (this.value.includes('/thumbs/')) {
                     this.thumbBtn.style.background = 'var(--accent-solid)';
@@ -202,8 +206,8 @@ export class EscmsUploadControl {
         this.value = val;
         if (this.input) {
             this.input.value = val;
-            this.updatePreview();
         }
+        this.updatePreview();
         if (triggerChange && this.onChange) {
             this.onChange(val);
         }
