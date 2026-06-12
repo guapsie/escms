@@ -792,37 +792,27 @@ window.addEventListener('escms:settings:ready', (e) => {
                 if (data.status === 'success') {
                     const content = document.getElementById('ai-settings-content');
                     content.innerHTML = `
-                        <div id="ai-provider-container"></div>
+                        <div id="ai-provider-container" style="margin-bottom: 1.5rem;"></div>
                         
-                        <div id="ai-endpoint-container" class="escms-control-row" style="display:none;">
+                        <div id="ai-endpoint-container" class="escms-control-row" style="display:none; margin-bottom: 1.5rem;">
                             <div class="escms-ui-label">Custom Endpoint URL</div>
                             <input type="text" id="ai-endpoint" value="${data.endpoint || ''}" placeholder="https://api.example.com/v1" class="escms-settings-input">
                         </div>
 
-                        <div class="escms-control-row">
+                        <div class="escms-control-row" style="margin-bottom: 1.5rem;">
                             <div class="escms-ui-label">API Key</div>
                             <input type="password" id="ai-key" placeholder="${data.has_key ? '(Key is configured. Enter new to change)' : 'Paste your API Key here'}" class="escms-settings-input">
                         </div>
 
-                        <div id="ai-model-container"></div>
-                        
-                        <div class="escms-control-row" style="margin-bottom: 1.5rem;">
-                            <div></div>
-                            <div style="text-align: right;">
-                                <button id="btn-fetch-models" style="padding: 8px 16px; background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s;">Fetch Models</button>
-                            </div>
-                        </div>
+                        <div id="ai-model-container" style="margin-bottom: 1.5rem;"></div>
 
-                        <div class="escms-control-row" style="align-items: flex-start;">
-                            <div class="escms-ui-label" style="padding-top: 10px;">Custom Instructions</div>
-                            <textarea id="ai-instructions" rows="4" placeholder="e.g. Always respond in Spanish, use Tailwind classes sparingly, etc." class="escms-settings-input" style="resize:vertical;">${data.instructions || ''}</textarea>
+                        <div style="margin-bottom: 1.5rem;">
+                            <div class="escms-ui-label" style="margin-bottom: 0.5rem;">Custom Instructions (Optional)</div>
+                            <textarea id="ai-instructions" rows="4" placeholder="e.g. Always respond in Spanish, use Tailwind classes sparingly, etc." class="escms-settings-input" style="resize:vertical; width: 100%; box-sizing: border-box;">${data.instructions || ''}</textarea>
                         </div>
                         
-                        <div class="escms-control-row" style="margin-top: 2rem;">
-                            <div></div>
-                            <div style="text-align: right;">
-                                <button id="btn-save-ai" style="padding: 12px 24px; background: var(--accent-solid); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Save AI Settings</button>
-                            </div>
+                        <div style="text-align: right; margin-top: 2rem;">
+                            <button id="btn-save-ai" style="padding: 12px 24px; background: var(--accent-solid); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Save AI Settings</button>
                         </div>
                     `;
 
@@ -862,6 +852,22 @@ window.addEventListener('escms:settings:ready', (e) => {
                     let modelSelect = new EscmsSelect('Model', modelOptions, currentModel, (val) => { currentModel = val; });
                     modelSelect.element.children[0].textContent = 'Model';
                     modelSelect.element.style.marginBottom = '0';
+                    
+                    const modelRightSide = modelSelect.element.children[1];
+                    const modelWrapper = document.createElement('div');
+                    modelWrapper.style.display = 'flex';
+                    modelWrapper.style.gap = '10px';
+                    modelWrapper.style.alignItems = 'center';
+                    
+                    modelRightSide.parentNode.insertBefore(modelWrapper, modelRightSide);
+                    modelWrapper.appendChild(modelRightSide);
+                    
+                    const fetchBtn = document.createElement('button');
+                    fetchBtn.id = 'btn-fetch-models';
+                    fetchBtn.textContent = 'Fetch Models';
+                    fetchBtn.style = 'padding: 10px 16px; background: var(--accent-solid); color: #fff; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap;';
+                    modelWrapper.appendChild(fetchBtn);
+                    
                     document.getElementById('ai-model-container').appendChild(modelSelect.element);
 
 
