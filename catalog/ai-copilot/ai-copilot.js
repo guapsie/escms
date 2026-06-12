@@ -538,7 +538,7 @@ export class EscmsCopilot {
 
     getAtomDefinition(type) {
         if (!window.escmsEditor || !window.escmsEditor.leftpanel) return null;
-        const cats = window.escmsEditor.leftpanel.atomCategories;
+        const cats = window.escmsAtomCategories || [];
         for (let cat of cats) {
             for (let atom of cat.atoms) {
                 if (atom.name === type || atom.name.toLowerCase() === type.toLowerCase()) {
