@@ -11,33 +11,8 @@ export class EscmsGradientControl {
 
     render() {
         const container = document.createElement('div');
-        container.style.marginBottom = '1rem';
-        container.style.padding = '0.75rem';
-        container.style.background = 'rgba(255, 255, 255, 0.02)';
-        container.style.border = '1px solid rgba(255, 255, 255, 0.05)';
-        container.style.borderRadius = '6px';
 
-        const header = document.createElement('div');
-        header.style.display = 'flex';
-        header.style.justifyContent = 'space-between';
-        header.style.alignItems = 'center';
-        header.style.marginBottom = '0.75rem';
-
-        const label = document.createElement('div');
-        if (this.labelKey) label.setAttribute('data-i18n', this.labelKey);
-        label.style.fontSize = '11px';
-        label.style.fontWeight = '600';
-        label.style.color = 'rgba(245, 245, 245, 0.6)';
-        label.style.letterSpacing = '0.5px';
-        label.style.textTransform = 'uppercase';
-
-        header.appendChild(label);
-        container.appendChild(header);
-
-        this.bodyWrapper = document.createElement('div');
-        this.bodyWrapper.style.marginTop = '0.5rem';
-
-        this.typeSelect = new EscmsSelect('inspector.gradient_type', [
+        this.typeSelect = new EscmsSelect(this.labelKey, [
             { label: 'None', value: 'none' },
             { label: 'Linear', value: 'linear' },
             { label: 'Radial', value: 'radial' },
@@ -47,7 +22,7 @@ export class EscmsGradientControl {
             this.positionSelect.element.style.display = (val === 'radial' || val === 'mesh') ? 'grid' : 'none';
             this.stopSlider.element.style.display = (val === 'radial' || val === 'mesh') ? 'grid' : 'none';
             this.blurSlider.element.style.display = (val === 'mesh') ? 'grid' : 'none';
-            this.colorsRow.style.display = (val !== 'none') ? 'flex' : 'none';
+            this.colorsRow.style.display = (val !== 'none') ? 'block' : 'none';
             this.animateToggle.element.style.display = (val !== 'none') ? 'flex' : 'none';
             this.triggerChange();
         });
@@ -82,11 +57,7 @@ export class EscmsGradientControl {
         });
 
         this.colorsRow = document.createElement('div');
-        this.colorsRow.style.display = this.values.type !== 'none' ? 'flex' : 'none';
-        this.colorsRow.style.flexDirection = 'column';
-        this.colorsRow.style.gap = '0.5rem';
-        this.colorsRow.style.marginTop = '0.75rem';
-        this.colorsRow.style.marginBottom = '0.75rem';
+        this.colorsRow.style.display = this.values.type !== 'none' ? 'block' : 'none';
         
         this.color1Picker = new EscmsColorPicker('inspector.color_1', this.values.c1, this.values.a1, (val) => {
             this.values.c1 = val.hex; this.values.a1 = val.alpha; this.values.rgba1 = val.rgba; this.triggerChange();
@@ -106,14 +77,12 @@ export class EscmsGradientControl {
         
         this.animateToggle.element.style.display = this.values.type !== 'none' ? 'flex' : 'none';
 
-        this.bodyWrapper.appendChild(this.typeSelect.element);
-        this.bodyWrapper.appendChild(this.positionSelect.element);
-        this.bodyWrapper.appendChild(this.stopSlider.element);
-        this.bodyWrapper.appendChild(this.blurSlider.element);
-        this.bodyWrapper.appendChild(this.colorsRow);
-        this.bodyWrapper.appendChild(this.animateToggle.element);
-
-        container.appendChild(this.bodyWrapper);
+        container.appendChild(this.typeSelect.element);
+        container.appendChild(this.positionSelect.element);
+        container.appendChild(this.stopSlider.element);
+        container.appendChild(this.blurSlider.element);
+        container.appendChild(this.colorsRow);
+        container.appendChild(this.animateToggle.element);
 
         return container;
     }
@@ -205,7 +174,7 @@ export class EscmsGradientControl {
             this.positionSelect.element.style.display = (newValues.type === 'radial' || newValues.type === 'mesh') ? 'grid' : 'none';
             this.stopSlider.element.style.display = (newValues.type === 'radial' || newValues.type === 'mesh') ? 'grid' : 'none';
             this.blurSlider.element.style.display = (newValues.type === 'mesh') ? 'grid' : 'none';
-            this.colorsRow.style.display = (newValues.type !== 'none') ? 'flex' : 'none';
+            this.colorsRow.style.display = (newValues.type !== 'none') ? 'block' : 'none';
             this.animateToggle.element.style.display = (newValues.type !== 'none') ? 'flex' : 'none';
             changed = true;
         }
