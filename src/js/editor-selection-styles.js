@@ -1,5 +1,6 @@
 export const ESCMS_SELECTION_STYLES = `
-    * { outline: none !important; }
+    * { outline: none !important; box-sizing: border-box; }
+    ::before, ::after { box-sizing: border-box; }
     :where(#document-root) {
         color: var(--color-text, #0a0a0a);
         background-color: var(--color-background, #ffffff);

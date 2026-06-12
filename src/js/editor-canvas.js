@@ -73,14 +73,24 @@ export class EscmsCanvas {
 
 
 
-        const ro = new ResizeObserver(() => {
+        const ro = new ResizeObserver((entries) => {
+            let viewportResized = false;
+            for (let entry of entries) {
+                if (entry.target === this.viewport) viewportResized = true;
+            }
+            if (viewportResized && this.activeView === 'desktop') {
+                if (this.host.style.width !== `${this.viewport.clientWidth}px`) {
+                    this.host.style.width = `${this.viewport.clientWidth}px`;
+                }
+            }
             if (this.currentZoom > 0) this.updateScaler();
         });
         ro.observe(this.host);
+        ro.observe(this.viewport);
         
         window.addEventListener('resize', () => {
             if (this.activeView === 'desktop') {
-                this.host.style.width = `${this.area.clientWidth}px`;
+                this.host.style.width = `${this.viewport.clientWidth}px`;
             }
             this.updateScaler();
         });
@@ -259,7 +269,7 @@ export class EscmsCanvas {
         let targetZoom = 1;
         
         if (viewId === 'desktop') {
-            this.host.style.width = `${this.area.clientWidth}px`;
+            this.host.style.width = `${this.viewport.clientWidth}px`;
         } else {
             this.host.style.width = width;
             
@@ -317,7 +327,7 @@ export class EscmsCanvas {
         
         let baseWidth;
         if (this.activeView === 'desktop') {
-            baseWidth = this.area.clientWidth;
+            baseWidth = this.viewport.clientWidth;
         } else {
             baseWidth = parseInt(this.host.style.width) || 768;
         }
