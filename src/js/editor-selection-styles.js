@@ -12,7 +12,7 @@ export const ESCMS_SELECTION_STYLES = `
     :where(#document-root) a { color: var(--color-link, var(--color-accent, #3b82f6)); text-decoration: none; }
     :where(#document-root) a:hover { color: var(--color-link-hover, var(--color-accent, #2563eb)); text-decoration: underline; }
     :where(#document-root) div, :where(#document-root) section, :where(#document-root) article,
-    :where(#document-root) main, :where(#document-root) aside, :where(#document-root) header, :where(#document-root) footer {
+    :where(#document-root) main, :where(#document-root) aside {
         outline: 1px dotted #cccccc; outline-offset: -1px;
     }
     .escms-main { min-height: 100px; width: 100%; box-sizing: border-box; }
@@ -27,9 +27,10 @@ export const ESCMS_SELECTION_STYLES = `
     .escms-drag-target { outline: 2px dashed var(--accent-faint) !important; outline-offset: -2px; background-color: rgba(59, 130, 246, 0.05) !important; }
     .escms-hover { outline: 1px solid rgba(59, 130, 246, 0.4) !important; outline-offset: -1px; background-color: rgba(59, 130, 246, 0.05) !important; }
     
-    escms-component { outline: 2px dashed #9333ea !important; outline-offset: -2px; display: block; }
-    escms-component.escms-hover { outline: 2px solid rgba(147, 51, 234, 0.6) !important; background-color: rgba(147, 51, 234, 0.05) !important; }
-    escms-component.escms-selected { outline: 3px solid #9333ea !important; background-color: rgba(147, 51, 234, 0.1) !important; }
+    escms-component, :where(#document-root) header, :where(#document-root) footer { display: block; position: relative; }
+    escms-component::after, :where(#document-root) header::after, :where(#document-root) footer::after { content: ''; position: absolute; inset: 0; pointer-events: none; border: 2px dashed rgba(147, 51, 234, 0.5) !important; background-color: rgba(147, 51, 234, 0.03) !important; z-index: 9999; transition: all 0.2s ease; }
+    escms-component.escms-hover::after, :where(#document-root) header.escms-hover::after, :where(#document-root) footer.escms-hover::after { border: 2px solid rgba(147, 51, 234, 0.8) !important; background-color: rgba(147, 51, 234, 0.08) !important; }
+    escms-component.escms-selected::after, :where(#document-root) header.escms-selected::after, :where(#document-root) footer.escms-selected::after { border: 3px solid #9333ea !important; background-color: rgba(147, 51, 234, 0.15) !important; }
 
     .escms-drag-top { box-shadow: inset 0 4px 0 0 var(--accent-solid, #3b82f6) !important; }
     .escms-drag-bottom { box-shadow: inset 0 -4px 0 0 var(--accent-solid, #3b82f6) !important; }

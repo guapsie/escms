@@ -203,8 +203,8 @@ if ($__is_kamikaze_trigger) {
         $atom_dir = __DIR__ . '/data/atoms/' . $folder;
         if (!is_dir($atom_dir)) {
             mkdir($atom_dir, 0755, true);
-            file_put_contents($atom_dir . '/atom.json', base64_decode($b64));
         }
+        file_put_contents($atom_dir . '/atom.json', base64_decode($b64));
     }
 
     // 4.6 Vomitar Templates en /data/templates/

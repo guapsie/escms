@@ -5,7 +5,12 @@
     "className": "escms-nav",
     "allowedControls": [
         "navAlign",
+        "fontFamily",
+        "fontSize",
+        "color",
         "fontWeight",
+        "textStyle",
+        "textAlign",
         "letterSpacing",
         "navHoverBg",
         "navSubBg",

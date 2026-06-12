@@ -110,6 +110,63 @@ export class EscmsAutosave {
         try {
             const dataCache = this.getCleanData();
             
+            // Auto-save inline modified components
+            if (!this.componentId && window.escmsComponents) {
+                const componentsInDom = this.documentRoot.querySelectorAll('escms-component');
+                const componentSavePromises = [];
+                for (const compNode of componentsInDom) {
+                    const ref = compNode.getAttribute('ref');
+                    if (!ref || !window.escmsComponents[ref]) continue;
+
+                    const currentChildren = [];
+                    const cloneComp = compNode.cloneNode(true);
+                    cloneComp.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+                    cloneComp.querySelectorAll('.escms-selected').forEach(el => el.classList.remove('escms-selected'));
+                    cloneComp.querySelectorAll('[class=""]').forEach(el => el.removeAttribute('class'));
+
+                    cloneComp.childNodes.forEach(child => {
+                        const cJson = EscmsParser.domToJson(child);
+                        if (cJson) currentChildren.push(cJson);
+                    });
+
+                    const currentCompJson = {
+                        tag: 'div',
+                        classes: ['escms-component'],
+                        children: currentChildren
+                    };
+
+                    const currentJsonStr = JSON.stringify(currentCompJson);
+                    const savedJsonStr = window.escmsComponents[ref].editor_data;
+
+                    if (currentJsonStr !== savedJsonStr) {
+                        const payload = {
+                            id: window.escmsComponents[ref].id,
+                            name: window.escmsComponents[ref].name,
+                            ref_id: ref,
+                            editor_data: currentJsonStr,
+                            public_html: `<div class="escms-component">${cloneComp.innerHTML}</div>`
+                        };
+
+                        componentSavePromises.push(
+                            fetch('/api/components/save', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload),
+                                keepalive: useKeepAlive
+                            }).then(res => res.json()).then(data => {
+                                if (data.status === 'success') {
+                                    window.escmsComponents[ref].editor_data = currentJsonStr;
+                                    window.escmsComponents[ref].public_html = payload.public_html;
+                                }
+                            }).catch(err => console.error('[ESCMS] Error autosaving component inline', err))
+                        );
+                    }
+                }
+                if (componentSavePromises.length > 0) {
+                    await Promise.all(componentSavePromises);
+                }
+            }
+
             // Si estamos guardando un componente en lugar de una página
             if (this.componentId) {
                 const payload = {
