@@ -1,5 +1,5 @@
-import { el } from './escms-dom.js';
-import { icons } from './editor-icons.js';
+import { el } from '/assets/js/escms-dom.js';
+import { icons } from '/assets/js/editor-icons.js';
 
 export class EscmsCopilot {
     constructor(i18n) {
