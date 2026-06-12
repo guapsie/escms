@@ -16,7 +16,7 @@
             "version": "1.0.0",
             "description": "Your intelligent CMS assistant. Chat and generate canvas elements right from the editor.",
             "author": "Guapsie",
-            "inject": ["admin_js"],
+            "inject": ["admin_js", "admin_css"],
             "download_url": "https://raw.githubusercontent.com/guapsie/escms/main/catalog/ai-copilot/ai-copilot.zip"
         }
     ]
