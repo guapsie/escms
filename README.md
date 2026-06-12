@@ -4,7 +4,7 @@
 
 ESCMS was born from a real frustration: the modern web is bloated. We are tired of systems that need 20 plugins, massive databases, or science fiction workflows where you have to compile HTML (like Astro) just to load a simple page. ESCMS is an ultra-lightweight content management system and visual builder designed exclusively for performance purists.
 
-<img width="2232" height="1224" alt="escms" src="https://github.com/user-attachments/assets/e17605a2-c01f-4412-b0af-486f1dde8873" />
+<img width="1920" height="1116" alt="escms" src="https://github.com/user-attachments/assets/ea5defa5-1050-4b75-a9b5-7cc9dc94beac" />
 
 ## 🔥 Philosophy
 
