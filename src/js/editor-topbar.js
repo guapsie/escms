@@ -128,14 +128,20 @@ export class EscmsTopBar {
 
         btnToggle.addEventListener('click', () => {
             if (!window.escmsEditor || !window.escmsEditor.currentPageObj) return;
-            this.isPublished = !this.isPublished;
-            const newStatus = this.isPublished ? 'published' : 'draft';
-            window.escmsEditor.currentPageObj.status = newStatus;
             
+            // Forzar la lectura del estado real antes de hacer el toggle
+            const currentStatus = window.escmsEditor.currentPageObj.status || 'draft';
+            const isCurrentlyPublished = (currentStatus === 'published');
+            
+            const newStatus = isCurrentlyPublished ? 'draft' : 'published';
+            
+            window.escmsEditor.currentPageObj.status = newStatus;
             this.setStatus(newStatus);
             
             if (window.escmsEditor.autosave) {
-                window.escmsEditor.autosave.saveToServer();
+                // Forzar el guardado y obligar a la sincronización con el servidor
+                window.escmsEditor.autosave.needsSync = true;
+                window.escmsEditor.autosave.saveToServer(false, true);
             }
         });
 

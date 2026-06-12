@@ -227,20 +227,35 @@ if (!empty($options['site_favicon'])) {
 }
 
 // Inyectar ESCMS Network Feed si está activo
-if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '1' && !empty($options['network_feed_html'])) {
-    $feed = $options['network_feed_html'];
+if (!empty($options['escms_p2p_enabled']) && $options['escms_p2p_enabled'] === '1') {
     
-    // Attempt to inject Above Footer
-    if (($p = strripos($content, '<footer')) !== false) {
-        $content = substr_replace($content, $feed, $p, 0);
-    } 
-    // Fallback if no footer element exists: inject before the last closing div of the main container
-    elseif (($p = strripos($content, '</div>')) !== false) {
-        $content = substr_replace($content, $feed, $p, 0);
-    } 
-    // Absolute fallback: append to the end
-    else {
-        $content .= $feed;
+    $last_refresh = (int)($options['network_feed_last_refresh'] ?? 0);
+    // Refresh if older than 12 hours (43200 seconds)
+    if (time() - $last_refresh > 43200) {
+        // Ejecutar trigger en background para no bloquear la carga de la página
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://" . ($_SERVER['HTTP_HOST'] ?? '') . "/api/pages/trigger_p2p_refresh");
+        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        @curl_exec($ch);
+        curl_close($ch);
+    }
+
+    if (!empty($options['network_feed_html'])) {
+        $feed = $options['network_feed_html'];
+        
+        // Attempt to inject Above Footer
+        if (($p = strripos($content, '<footer')) !== false) {
+            $content = substr_replace($content, $feed, $p, 0);
+        } 
+        // Fallback if no footer element exists: inject before the last closing div of the main container
+        elseif (($p = strripos($content, '</div>')) !== false) {
+            $content = substr_replace($content, $feed, $p, 0);
+        } 
+        // Absolute fallback: append to the end
+        else {
+            $content .= $feed;
+        }
     }
 }
 

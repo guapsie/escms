@@ -9,7 +9,58 @@ $send_json = function(array $data, int $status = 200): void {
 };
 $input = json_decode(file_get_contents('php://input'), true) ?: [];
 
+$update_p2p_feed = function($pdo) {
+    $domain = $_SERVER['HTTP_HOST'] ?? 'unknown';
+    $supabase_url = 'https://qrfqksqbioiqynjfarxj.supabase.co';
+    $supabase_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZnFrc3FiaW9pcXluamZhcnhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNDU3MzYsImV4cCI6MjA5NjgyMTczNn0.t453BCFnWVJUvzoGe_V87nqnHFz3p--UfKVYVc5mBJ4';
+    
+    $ctx = stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'header' => "apikey: $supabase_key\r\nAuthorization: Bearer $supabase_key\r\n",
+            'timeout' => 3
+        ]
+    ]);
+    $feed_json = @file_get_contents("$supabase_url/rest/v1/network_posts?domain=neq." . urlencode($domain) . "&order=created_at.desc&limit=10", false, $ctx);
+    if ($feed_json) {
+        $feed_data = json_decode($feed_json, true);
+        if (is_array($feed_data) && !empty($feed_data)) {
+            $html = '<div class="escms-network-wrapper" style="padding: 40px 20px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05); margin-top: 40px;">';
+            $html .= '<div style="max-width: var(--max-width, 1200px); margin: 0 auto;">';
+            $html .= '<h3 style="margin-top:0; margin-bottom: 20px; font-size: 1.2rem; color: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 8px;">';
+            $html .= '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent, #3b82f6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M8.7 10.7l6.6 -3.4"/><path d="M8.7 13.3l6.6 3.4"/></svg>';
+            $html .= 'From the ESCMS Network</h3>';
+            $html .= '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">';
+            foreach ($feed_data as $post) {
+                $html .= '<a href="' . htmlspecialchars($post['url']) . '" target="_blank" style="display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'; this.style.transform=\'translateY(-2px)\';" onmouseout="this.style.background=\'rgba(255,255,255,0.02)\'; this.style.transform=\'none\';">';
+                if (!empty($post['thumbnail'])) {
+                    $html .= '<div style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; background-image: url(\'' . htmlspecialchars($post['thumbnail']) . '\'); background-size: cover; background-position: center;"></div>';
+                } else {
+                    $html .= '<div style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></div>';
+                }
+                $html .= '<div style="flex-grow: 1; min-width: 0;">';
+                $html .= '<h4 style="margin: 0 0 6px 0; font-size: 0.95rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;">' . htmlspecialchars($post['title']) . '</h4>';
+                $parsedUrl = parse_url($post['url'], PHP_URL_HOST);
+                $html .= '<div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">' . htmlspecialchars($parsedUrl ? $parsedUrl : '') . '</div>';
+                $html .= '</div></a>';
+            }
+            $html .= '</div></div></div>';
+            
+            $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('network_feed_html', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+            $stmt->execute([$html]);
+            $stmt2 = $pdo->prepare("INSERT INTO options (k, v) VALUES ('network_feed_last_refresh', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
+            $stmt2->execute([time()]);
+        }
+    }
+};
+
 switch ($route) {
+    case 'api/pages/trigger_p2p_refresh':
+        // This can be triggered without auth by curl in 08-front.php
+        $update_p2p_feed($pdo);
+        $send_json(['status' => 'success']);
+        break;
+
     case 'api/pages/save':
             if ($method !== 'POST') $send_json(['error' => 'Method not allowed'], 405);
             if (!EscmsAuth::isLoggedIn()) {
@@ -119,7 +170,7 @@ switch ($route) {
                 if ($status === 'published') {
                     $network_status = $pdo->query("SELECT v FROM options WHERE k='escms_p2p_enabled'")->fetchColumn();
                     if ($network_status === '1') {
-                        $stmt = $pdo->prepare("SELECT title, slug FROM pages WHERE id = ?");
+                        $stmt = $pdo->prepare("SELECT title, seo_title, slug FROM pages WHERE id = ?");
                         $stmt->execute([$id]);
                         $page_data = $stmt->fetch(PDO::FETCH_ASSOC);
                         
@@ -133,49 +184,34 @@ switch ($route) {
 
                         $ping_payload = json_encode([
                             'domain' => $_SERVER['HTTP_HOST'] ?? 'unknown',
-                            'title' => $page_data['title'],
+                            'title' => !empty($page_data['seo_title']) ? $page_data['seo_title'] : $page_data['title'],
                             'url' => 'https://' . ($_SERVER['HTTP_HOST'] ?? '') . '/' . $page_data['slug'],
                             'thumbnail' => $thumbnail
                         ]);
 
+                        $supabase_url = 'https://qrfqksqbioiqynjfarxj.supabase.co';
+                        $supabase_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZnFrc3FiaW9pcXluamZhcnhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNDU3MzYsImV4cCI6MjA5NjgyMTczNn0.t453BCFnWVJUvzoGe_V87nqnHFz3p--UfKVYVc5mBJ4';
                         $ctx = stream_context_create([
                             'http' => [
                                 'method' => 'POST',
-                                'header' => "Content-Type: application/json\r\n",
+                                'header' => "apikey: $supabase_key\r\nAuthorization: Bearer $supabase_key\r\nContent-Type: application/json\r\nPrefer: resolution=merge-duplicates\r\n",
                                 'content' => $ping_payload,
                                 'timeout' => 2
                             ]
                         ]);
-                        @file_get_contents('https://escms.dev/api/network.php?action=publish', false, $ctx);
+                        $res = @file_get_contents("$supabase_url/rest/v1/network_posts?on_conflict=url", false, $ctx);
                         
-                        $feed_json = @file_get_contents('https://escms.dev/api/network.php?action=get_feed&domain=' . urlencode($_SERVER['HTTP_HOST'] ?? ''), false, stream_context_create(['http' => ['timeout' => 3]]));
-                        if ($feed_json) {
-                            $feed_data = json_decode($feed_json, true);
-                            if (isset($feed_data['status']) && $feed_data['status'] === 'success' && !empty($feed_data['posts'])) {
-                                $html = '<div class="escms-network-wrapper" style="padding: 40px 20px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05); margin-top: 40px;">';
-                                $html .= '<div style="max-width: var(--max-width, 1200px); margin: 0 auto;">';
-                                $html .= '<h3 style="margin-top:0; margin-bottom: 20px; font-size: 1.2rem; color: rgba(255,255,255,0.8); display: flex; align-items: center; gap: 8px;">';
-                                $html .= '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent, #3b82f6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M15 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M8.7 10.7l6.6 -3.4"/><path d="M8.7 13.3l6.6 3.4"/></svg>';
-                                $html .= 'From the ESCMS Network</h3>';
-                                $html .= '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">';
-                                foreach ($feed_data['posts'] as $post) {
-                                    $html .= '<a href="' . htmlspecialchars($post['url']) . '" target="_blank" style="display: flex; align-items: center; gap: 15px; text-decoration: none; color: inherit; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'; this.style.transform=\'translateY(-2px)\';" onmouseout="this.style.background=\'rgba(255,255,255,0.02)\'; this.style.transform=\'none\';">';
-                                    if (!empty($post['thumbnail'])) {
-                                        $html .= '<div style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; background-image: url(\'' . htmlspecialchars($post['thumbnail']) . '\'); background-size: cover; background-position: center;"></div>';
-                                    } else {
-                                        $html .= '<div style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 6px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></div>';
-                                    }
-                                    $html .= '<div style="flex-grow: 1; min-width: 0;">';
-                                    $html .= '<h4 style="margin: 0 0 6px 0; font-size: 0.95rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;">' . htmlspecialchars($post['title']) . '</h4>';
-                                    $html .= '<div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">' . htmlspecialchars(parse_url($post['url'], PHP_URL_HOST)) . '</div>';
-                                    $html .= '</div></a>';
-                                }
-                                $html .= '</div></div></div>';
-                                
-                                $stmt = $pdo->prepare("INSERT INTO options (k, v) VALUES ('network_feed_html', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v");
-                                $stmt->execute([$html]);
-                            }
-                        }
+                        // DEBUG LOG
+                        $error = error_get_last();
+                        $log_content = "Date: " . date('Y-m-d H:i:s') . "\n";
+                        $log_content .= "Payload: $ping_payload\n";
+                        $log_content .= "Response: " . var_export($res, true) . "\n";
+                        if ($error) $log_content .= "Error: " . var_export($error, true) . "\n";
+                        if (isset($http_response_header)) $log_content .= "Headers: " . var_export($http_response_header, true) . "\n";
+                        $log_content .= "------------------------\n";
+                        file_put_contents(__DIR__ . '/../data/supabase_debug.txt', $log_content, FILE_APPEND);
+                        
+                        $update_p2p_feed($pdo);
                     }
                 }
 
@@ -188,6 +224,18 @@ switch ($route) {
         case 'api/pages/list':
             if ($method !== 'GET') $send_json(['error' => 'Method not allowed'], 405);
             if (!EscmsAuth::isLoggedIn()) $send_json(['status' => 'error', 'msg' => 'Unauthorized'], 401);
+            
+            // P2P Lazy Refresh
+            try {
+                $network_status = $pdo->query("SELECT v FROM options WHERE k='escms_p2p_enabled'")->fetchColumn();
+                if ($network_status === '1') {
+                    $last_refresh = (int)$pdo->query("SELECT v FROM options WHERE k='network_feed_last_refresh'")->fetchColumn();
+                    if (time() - $last_refresh > 43200) { // 12 hours
+                        $update_p2p_feed($pdo);
+                    }
+                }
+            } catch (Throwable $e) {}
+
             try {
                 $pages = $pdo->query("SELECT id, title, slug, views, status, updated_at, parent_id, menu_order, is_hidden_menu, is_custom_link, custom_link_url FROM pages ORDER BY menu_order ASC, updated_at DESC")->fetchAll(PDO::FETCH_ASSOC);
                 
