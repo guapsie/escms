@@ -95,7 +95,7 @@ switch ($route) {
                     $send_json(['error' => 'Failed to create zip'], 500);
                 }
 
-                $options = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE 'ai_%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
+                $options = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE '%apikey%' AND k NOT LIKE '%secret%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
                 $send_json(['status' => 'success', 'data' => $options]);
             } elseif ($method === 'POST') {
                 $action = $_GET['action'] ?? '';
@@ -223,7 +223,7 @@ switch ($route) {
 
                 $key = $input['key'] ?? null;
                 $value = $input['value'] ?? null;
-                if (!$key || str_starts_with($key, 'ai_')) $send_json(['status' => 'error', 'msg' => 'Invalid key'], 400);
+                if (!$key || str_contains(strtolower($key), 'apikey')) $send_json(['status' => 'error', 'msg' => 'Invalid key'], 400);
                 
                 if (is_bool($value)) {
                     $value = $value ? '1' : '0';
@@ -233,7 +233,7 @@ switch ($route) {
                 $stmt->execute([$key, (string)$value]);
 
                 // Regenerate vars.css
-                $allOptions = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE 'ai_%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
+                $allOptions = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE '%apikey%' AND k NOT LIKE '%secret%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
                 $custom_css_vars = ":root {\n";
                 $css_keys = [
                     '--max-width', 

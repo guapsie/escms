@@ -203,7 +203,7 @@ if (file_exists($user_css_path)) {
 }
 
 // Cargar opciones globales
-$options = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE 'ai_%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
+$options = $pdo->query("SELECT k, v FROM options WHERE k NOT LIKE '%apikey%' AND k NOT LIKE '%secret%'")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
 
 // Cargar fuentes de Google desde opciones
 $google_fonts_html = "";

@@ -272,7 +272,7 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
         <span style="padding: 0 1rem; line-height: 50px; font-weight: 600; letter-spacing: 1px;">ESCMS</span>
     </div>
     <div id="escms-main">
-        <div id="escms-left-panel"><div style="padding: 1rem; opacity: 0.5; font-size: 0.85rem;">Layers / Copilot</div></div>
+        <div id="escms-left-panel"><div style="padding: 1rem; opacity: 0.5; font-size: 0.85rem;">Loading...</div></div>
         <div id="escms-canvas-wrapper"><div id="escms-canvas-host"></div></div>
         <div id="escms-inspector"><div style="padding: 1rem; opacity: 0.5; font-size: 0.85rem;">Inspector</div></div>
     </div>
