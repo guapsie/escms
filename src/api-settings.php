@@ -273,7 +273,7 @@ switch ($route) {
                 $force = isset($_GET['force']) && $_GET['force'] == '1';
                 
                 if ($force || !$last_check || (time() - (int)$last_check) > 86400) {
-                    $local_catalog = __DIR__ . '/../../catalog/catalog.json';
+                    $local_catalog = __DIR__ . '/../catalog/catalog.json';
                     if (file_exists($local_catalog)) {
                         $response = file_get_contents($local_catalog);
                     } else {
@@ -346,7 +346,7 @@ switch ($route) {
                 curl_close($ch);
                 
                 if (str_starts_with($url, 'https://raw.githubusercontent.com/guapsie/escms/main/catalog/')) {
-                    $local_file = __DIR__ . '/../../' . str_replace('https://raw.githubusercontent.com/guapsie/escms/main/', '', $url);
+                    $local_file = __DIR__ . '/../' . str_replace('https://raw.githubusercontent.com/guapsie/escms/main/', '', $url);
                     if (file_exists($local_file)) {
                         $content = file_get_contents($local_file);
                         $code = 200;
