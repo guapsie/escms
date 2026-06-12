@@ -470,10 +470,10 @@ export const escmsToast = function(msg, type = 'info') {
         }
     } catch (e) {}
 
-    requestAnimationFrame(() => {
+    setTimeout(() => {
         toast.style.transform = 'translateY(0)';
         toast.style.opacity = '1';
-    });
+    }, 10);
 
     if (type === 'error') {
         toast.animate([

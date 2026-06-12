@@ -35,6 +35,20 @@ if (str_starts_with($route, 'api/')) {
         if (file_exists(__DIR__ . '/core/api-media.php')) require_once __DIR__ . '/core/api-media.php';
     } elseif ($route === 'api/challenge' || $route === 'api/register' || $route === 'api/login-challenge' || $route === 'api/login-verify') {
         if (file_exists(__DIR__ . '/core/api-auth.php')) require_once __DIR__ . '/core/api-auth.php';
+    } elseif (str_starts_with($route, 'api/addons/')) {
+        $parts = explode('/', $route);
+        if (count($parts) >= 3) {
+            $addon_id = preg_replace('/[^a-zA-Z0-9_-]/', '', $parts[2]);
+            $addon_file = __DIR__ . '/data/addons/' . $addon_id . '/' . $addon_id . '.php';
+            if (file_exists($addon_file)) {
+                require_once $addon_file;
+            } else {
+                header('Content-Type: application/json');
+                http_response_code(404);
+                echo json_encode(['error' => 'Addon PHP not found']);
+                exit;
+            }
+        }
     } else {
         if (file_exists(__DIR__ . '/core/api-settings.php')) require_once __DIR__ . '/core/api-settings.php';
     }

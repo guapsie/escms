@@ -31,7 +31,7 @@ export class EscmsCopilot {
 
     async checkSettings() {
         try {
-            const res = await fetch('/api/ai/settings');
+            const res = await fetch('/api/addons/ai-copilot/settings');
             const data = await res.json();
             if (data.status === 'success') {
                 this.hasKey = data.has_key;
@@ -266,7 +266,7 @@ export class EscmsCopilot {
         const fullPrompt = `${text}\n\n[CONTEXTO DOM ACTUAL]\n${context}`;
 
         try {
-            const res = await fetch('/api/ai/generate', {
+            const res = await fetch('/api/addons/ai-copilot/generate', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({prompt: fullPrompt})
@@ -771,3 +771,178 @@ export class EscmsCopilot {
         return errors.join('<br>');
     }
 }
+
+document.addEventListener('escms:leftpanel:ready', (e) => {
+    const leftpanel = e.detail.leftpanel;
+    const aiInstance = new EscmsCopilot(window.escmsEditor ? window.escmsEditor.i18n : null);
+    leftpanel.addTab('ai', {
+        icon: icons.ai || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+        title: 'Copilot',
+        order: 40,
+        onRender: (container) => {
+            aiInstance.init(container);
+        }
+    });
+});
+
+document.addEventListener('escms:settings:ready', (e) => {
+    const settings = e.detail.settings;
+    settings.addTab('ai', {
+        icon: icons.ai || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+        title: 'AI Copilot',
+        order: 50,
+        onRender: (tabContainer) => {
+            tabContainer.innerHTML = '<h3>AI Copilot Settings</h3><div id="ai-settings-content">Loading...</div>';
+            
+            fetch('/api/addons/ai-copilot/settings').then(r => r.json()).then(data => {
+                if (data.status === 'success') {
+                    const content = document.getElementById('ai-settings-content');
+                    content.innerHTML = `
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display:block;margin-bottom:0.5rem;font-size:0.85rem;color:rgba(255,255,255,0.7);">Provider</label>
+                            <select id="ai-provider" style="width:100%;padding:0.5rem;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:4px;">
+                                <option value="gemini" ${data.provider === 'gemini' ? 'selected' : ''}>Google Gemini (Recommended)</option>
+                                <option value="claude" ${data.provider === 'claude' ? 'selected' : ''}>Anthropic Claude</option>
+                                <option value="groq" ${data.provider === 'groq' ? 'selected' : ''}>Groq (Fast)</option>
+                                <option value="deepseek" ${data.provider === 'deepseek' ? 'selected' : ''}>DeepSeek</option>
+                                <option value="mistral" ${data.provider === 'mistral' ? 'selected' : ''}>Mistral AI</option>
+                                <option value="custom" ${data.provider === 'custom' ? 'selected' : ''}>Custom OpenAI-compatible</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem;" id="ai-endpoint-container">
+                            <label style="display:block;margin-bottom:0.5rem;font-size:0.85rem;color:rgba(255,255,255,0.7);">Custom Endpoint URL</label>
+                            <input type="text" id="ai-endpoint" value="${data.endpoint || ''}" placeholder="https://api.example.com/v1" style="width:100%;padding:0.5rem;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:4px;box-sizing:border-box;">
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display:block;margin-bottom:0.5rem;font-size:0.85rem;color:rgba(255,255,255,0.7);">API Key</label>
+                            <input type="password" id="ai-key" placeholder="${data.has_key ? '(Key is configured. Enter new to change)' : 'Paste your API Key here'}" style="width:100%;padding:0.5rem;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:4px;box-sizing:border-box;">
+                        </div>
+
+                        <div style="margin-bottom: 1rem; display:flex; gap: 8px;">
+                            <div style="flex:1;">
+                                <label style="display:block;margin-bottom:0.5rem;font-size:0.85rem;color:rgba(255,255,255,0.7);">Model</label>
+                                <select id="ai-model" style="width:100%;padding:0.5rem;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:4px;">
+                                    <option value="${data.model}">${data.model || 'Default'}</option>
+                                </select>
+                            </div>
+                            <div style="display:flex; align-items:flex-end;">
+                                <button id="btn-fetch-models" style="padding:0.5rem 1rem;background:var(--accent-solid);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">Fetch Models</button>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display:block;margin-bottom:0.5rem;font-size:0.85rem;color:rgba(255,255,255,0.7);">Custom Instructions (Optional)</label>
+                            <textarea id="ai-instructions" rows="4" placeholder="e.g. Always respond in Spanish, use Tailwind classes sparingly, etc." style="width:100%;padding:0.5rem;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:4px;box-sizing:border-box;font-family:inherit;resize:vertical;">${data.instructions || ''}</textarea>
+                        </div>
+                        
+                        <div style="text-align: right; margin-top: 1.5rem;">
+                            <button id="btn-save-ai" style="padding:0.5rem 1.5rem;background:var(--accent-solid);color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:500;">Save AI Settings</button>
+                        </div>
+                    `;
+
+                    const providerSel = document.getElementById('ai-provider');
+                    const endpointCont = document.getElementById('ai-endpoint-container');
+                    
+                    const toggleEndpoint = () => {
+                        endpointCont.style.display = providerSel.value === 'custom' ? 'block' : 'none';
+                    };
+                    providerSel.addEventListener('change', toggleEndpoint);
+                    toggleEndpoint();
+
+                    document.getElementById('btn-fetch-models').addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        const key = document.getElementById('ai-key').value;
+                        const provider = providerSel.value;
+                        const endpoint = document.getElementById('ai-endpoint').value;
+                        
+                        const btn = e.target;
+                        btn.textContent = 'Fetching...';
+                        
+                        try {
+                            const mr = await fetch('/api/addons/ai-copilot/models', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ provider, key, endpoint })
+                            });
+                            const md = await mr.json();
+                            if (md.status === 'success') {
+                                const mSel = document.getElementById('ai-model');
+                                mSel.innerHTML = '';
+                                md.models.forEach(m => {
+                                    const opt = document.createElement('option');
+                                    opt.value = m.value;
+                                    opt.textContent = m.label;
+                                    if (m.value === data.model) opt.selected = true;
+                                    mSel.appendChild(opt);
+                                });
+                            } else {
+                                alert('Error fetching models: ' + (md.msg || 'Unknown error'));
+                            }
+                        } catch (err) {
+                            alert('Network error');
+                        } finally {
+                            btn.textContent = 'Fetch Models';
+                        }
+                    });
+
+                    document.getElementById('btn-save-ai').addEventListener('click', async () => {
+                        const payload = {
+                            provider: document.getElementById('ai-provider').value,
+                            model: document.getElementById('ai-model').value,
+                            endpoint: document.getElementById('ai-endpoint').value,
+                            key: document.getElementById('ai-key').value,
+                            instructions: document.getElementById('ai-instructions').value
+                        };
+                        
+                        const btn = document.getElementById('btn-save-ai');
+                        btn.textContent = 'Saving...';
+                        
+                        try {
+                            const sr = await fetch('/api/addons/ai-copilot/settings', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify(payload)
+                            });
+                            const sd = await sr.json();
+                            if (sd.status === 'success') {
+                                btn.textContent = 'Saved!';
+                                setTimeout(() => btn.textContent = 'Save AI Settings', 2000);
+                            } else {
+                                alert('Error saving: ' + sd.msg);
+                                btn.textContent = 'Save AI Settings';
+                            }
+                        } catch (err) {
+                            alert('Network error');
+                            btn.textContent = 'Save AI Settings';
+                        }
+                    });
+                } else {
+                    tabContainer.innerHTML = '<p style="color:red">Error loading AI settings</p>';
+                }
+            });
+        }
+    });
+});
+
+document.addEventListener('escms:contextmenu:ready', (e) => {
+    const contextMenu = e.detail.contextmenu;
+    contextMenu.addItem({
+        id: 'ai-prompt',
+        icon: icons.ai || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+        label: 'Ask AI...',
+        condition: (node) => {
+            const tag = node.tagName.toLowerCase();
+            return tag === 'p' || tag === 'span' || tag.match(/^h[1-6]$/);
+        },
+        action: (node) => {
+            window.escmsEditor.leftpanel.switchTab('ai');
+            const aiInput = document.querySelector('#escms-leftpanel textarea');
+            if (aiInput) {
+                aiInput.value = 'Change the text of the selected element to: ';
+                aiInput.focus();
+            }
+        }
+    });
+});

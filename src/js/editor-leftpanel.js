@@ -1,4 +1,3 @@
-import { EscmsCopilot } from './editor-ai.js';
 import { EscmsPageManager } from './editor-pagemanager.js';
 import { EscmsParser } from './editor-parser.js';
 import { el } from './escms-dom.js';
@@ -16,9 +15,28 @@ export class EscmsLeftPanel {
         this.elementsSubView = 'atoms';
         this.atomCategories = [];
         this.pageManager = new EscmsPageManager(this.i18n);
-        if (typeof EscmsCopilot !== 'undefined') {
-            this.copilot = new EscmsCopilot(this.i18n);
+        
+        this.tabs = [
+            { id: 'elements', icon: icons.atom, title: 'Elements', render: () => this.renderElementsTab() },
+            { id: 'layers', icon: icons.stack, title: 'Layers', render: () => this.renderLayers() },
+            { id: 'pages', icon: icons.file, title: 'Pages', render: () => this.pageManager.init(this.contentArea) }
+        ];
+
+    }
+
+    addTab(id, iconSvg, titleLabel, renderCallback) {
+        if (!this.tabs.find(t => t.id === id)) {
+            this.tabs.push({ id, icon: iconSvg, title: titleLabel, render: renderCallback });
+            this.render();
         }
+    }
+
+    removeTab(id) {
+        this.tabs = this.tabs.filter(t => t.id !== id);
+        if (this.activeTab === id) {
+            this.activeTab = 'elements';
+        }
+        this.render();
     }
 
     init(shadowRoot) {
@@ -72,6 +90,15 @@ export class EscmsLeftPanel {
 
         this.render();
         this.pageManager.loadPages(true);
+
+        // Broadcast ready event and listen for refresh
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('escms:leftpanel:ready', { detail: { leftPanel: this } }));
+        }, 10);
+        
+        window.addEventListener('escms:addons:refresh', () => {
+            window.dispatchEvent(new CustomEvent('escms:leftpanel:ready', { detail: { leftPanel: this } }));
+        });
     }
 
     render() {
@@ -119,10 +146,9 @@ export class EscmsLeftPanel {
             return tab;
         };
 
-        header.appendChild(createTab('elements', icons.atom, 'Elements'));
-        header.appendChild(createTab('layers', icons.stack, 'Layers'));
-        header.appendChild(createTab('pages', icons.file, 'Pages'));
-        header.appendChild(createTab('ai', icons.ai, 'Copilot AI'));
+        this.tabs.forEach(t => {
+            header.appendChild(createTab(t.id, t.icon, t.title));
+        });
 
         this.contentArea = document.createElement('div');
         this.contentArea.style.flex = '1';
@@ -139,18 +165,11 @@ export class EscmsLeftPanel {
         void this.contentArea.offsetWidth; // Force reflow
         this.contentArea.classList.add('escms-anim-fade');
 
-        if (this.activeTab === 'elements') {
-            this.renderElementsTab();
-        } else if (this.activeTab === 'pages') {
-            this.pageManager.init(this.contentArea);
-        } else if (this.activeTab === 'ai') {
-            if (this.copilot) {
-                this.copilot.init(this.contentArea);
-            } else {
-                this.contentArea.innerHTML = '<div style="padding: 1rem; color: #ef4444; text-align: center; font-size: 0.8rem;">Copilot module not loaded.</div>';
-            }
+        const activeTabObj = this.tabs.find(t => t.id === this.activeTab);
+        if (activeTabObj) {
+            activeTabObj.render();
         } else {
-            this.renderLayers();
+            this.renderElementsTab();
         }
     }
 

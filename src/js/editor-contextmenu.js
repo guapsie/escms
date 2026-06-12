@@ -5,6 +5,17 @@ export class EscmsContextMenu {
         this.i18n = i18n;
         this.menu = null;
         this.targetNode = null;
+        this.customItems = [];
+    }
+
+    addItem(id, labelKey, iconSvg, actionCallback) {
+        if (!this.customItems.find(i => i.id === id)) {
+            this.customItems.push({ id, labelKey, icon: iconSvg, action: actionCallback });
+        }
+    }
+
+    removeItem(id) {
+        this.customItems = this.customItems.filter(i => i.id !== id);
     }
 
     init() {
@@ -43,6 +54,13 @@ export class EscmsContextMenu {
         if (host && host.shadowRoot) {
             host.shadowRoot.addEventListener('click', handleOutsideClick, true);
         }
+
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('escms:contextmenu:ready', { detail: { contextMenu: this } }));
+        }, 10);
+        window.addEventListener('escms:addons:refresh', () => {
+            window.dispatchEvent(new CustomEvent('escms:contextmenu:ready', { detail: { contextMenu: this } }));
+        });
     }
 
     showMenu(x, y) {
@@ -112,33 +130,32 @@ export class EscmsContextMenu {
                         alert("Coming soon: Custom Atom saving will be available in the Market update!");
                     }
                 }
-            },
-            {
-                id: 'ask_ai',
-                label: this.i18n.dictionary['ask_ai'] || 'Ask AI',
-                icon: icons.cpu || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>',
-                action: () => {
-                    if (window.escmsEditor && window.escmsEditor.leftpanel) {
-                        window.escmsEditor.leftpanel.activeTab = 'ai';
-                        window.escmsEditor.leftpanel.render();
-                    }
-                }
-            },
-            {
-                id: 'delete',
-                label: this.i18n.dictionary['delete'] || 'Delete',
-                icon: icons.trash || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>',
-                action: () => {
-                    const parent = this.targetNode.parentNode;
-                    this.targetNode.remove();
-                    if (parent && parent.id !== 'document-root') {
-                        setTimeout(() => parent.click(), 10);
-                    } else {
-                        window.dispatchEvent(new CustomEvent('escms-element-selected', { detail: { node: null } }));
-                    }
-                }
             }
         );
+
+        this.customItems.forEach(cItem => {
+            items.push({
+                id: cItem.id,
+                label: this.i18n.dictionary[cItem.labelKey] || cItem.labelKey,
+                icon: cItem.icon,
+                action: cItem.action
+            });
+        });
+
+        items.push({
+            id: 'delete',
+            label: this.i18n.dictionary['delete'] || 'Delete',
+            icon: icons.trash || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>',
+            action: () => {
+                const parent = this.targetNode.parentNode;
+                this.targetNode.remove();
+                if (parent && parent.id !== 'document-root') {
+                    setTimeout(() => parent.click(), 10);
+                } else {
+                    window.dispatchEvent(new CustomEvent('escms-element-selected', { detail: { node: null } }));
+                }
+            }
+        });
 
         items.forEach(item => {
             const btn = document.createElement('div');

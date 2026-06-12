@@ -247,4 +247,11 @@ export class I18nEngine {
             }
         });
     }
+
+    addTranslations(translationsObject) {
+        if (translationsObject && typeof translationsObject === 'object') {
+            this.dictionary = { ...this.dictionary, ...translationsObject };
+            this.translateDOM(); // Re-translate DOM just in case UI is already rendered
+        }
+    }
 }

@@ -146,7 +146,7 @@ export class EscmsInspector {
             if (prop.startsWith('--')) {
                 this.selectedNode.style.setProperty(prop, value);
             } else {
-                this.selectedNode.style[prop] = value;
+                this.selectedNode.style.setProperty(prop, value);
             }
         }
         window.dispatchEvent(new Event('escms-dom-mutated')); // Trigger autosave
