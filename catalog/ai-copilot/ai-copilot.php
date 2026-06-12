@@ -321,9 +321,4 @@ switch ($action) {
     default:
         $send_json(['error' => 'Endpoint no encontrado'], 404);
 }
-        $send_json(['status' => 'success', 'text' => $text]);
-        break;
 
-    default:
-        $send_json(['error' => 'Endpoint no encontrado'], 404);
-}
