@@ -16,7 +16,6 @@ import './editor-htmlview.js';
 import './editor-cssview.js';
 import './editor-pagemanager.js';
 import './editor-contextmenu.js';
-import './editor-ai.js';
 import './editor-leftpanel.js';
 import './editor-selection-styles.js';
 import './editor-selection-utils.js';
