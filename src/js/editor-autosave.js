@@ -101,8 +101,14 @@ export class EscmsAutosave {
         };
     }
 
-    async saveToServer(useKeepAlive = false) {
-        if (this.isSaving || !this.documentRoot || !this.needsSync) return;
+    async saveToServer(useKeepAlive = false, isManual = false) {
+        if (this.isSaving || !this.documentRoot) return;
+        if (!this.needsSync) {
+            if (isManual && window.escmsToast) {
+                window.escmsToast(this.i18n ? (this.i18n.dictionary['topbar.saved'] || 'Saved') : 'Saved', 'success');
+            }
+            return;
+        }
         
         this.isSaving = true;
         this.updateStatus('topbar.saving');
@@ -192,6 +198,9 @@ export class EscmsAutosave {
                     }
                     this.needsSync = false;
                     this.updateStatus('topbar.saved');
+                    if (isManual && window.escmsToast) {
+                        window.escmsToast(this.i18n ? (this.i18n.dictionary['topbar.saved'] || 'Saved') : 'Saved', 'success');
+                    }
                     setTimeout(() => {
                         const st = (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.status === 'published') ? 'topbar.published' : 'topbar.draft';
                         this.updateStatus(st);
@@ -224,6 +233,9 @@ export class EscmsAutosave {
                     if (!this.pageId && data.id) this.pageId = data.id;
                     this.needsSync = false;
                     this.updateStatus('topbar.saved');
+                    if (isManual && window.escmsToast) {
+                        window.escmsToast(this.i18n ? (this.i18n.dictionary['topbar.saved'] || 'Saved') : 'Saved', 'success');
+                    }
                     setTimeout(() => {
                         const st = (window.escmsEditor && window.escmsEditor.currentPageObj && window.escmsEditor.currentPageObj.status === 'published') ? 'topbar.published' : 'topbar.draft';
                         this.updateStatus(st);

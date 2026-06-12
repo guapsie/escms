@@ -352,7 +352,7 @@ export class EscmsEditor {
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
                 e.preventDefault();
-                if (this.autosave) this.autosave.saveToServer();
+                if (this.autosave) this.autosave.saveToServer(false, true);
             }
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
                 e.preventDefault();
@@ -492,3 +492,4 @@ export const escmsToast = function(msg, type = 'info') {
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 };
+window.escmsToast = escmsToast;
