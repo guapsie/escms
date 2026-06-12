@@ -806,13 +806,16 @@ window.addEventListener('escms:settings:ready', (e) => {
 
                         <div id="ai-model-container" style="margin-bottom: 1.5rem;"></div>
 
-                        <div style="margin-bottom: 1.5rem;">
-                            <div class="escms-ui-label" style="margin-bottom: 0.5rem;">Custom Instructions (Optional)</div>
+                        <div class="escms-control-row" style="margin-bottom: 1.5rem; align-items: flex-start;">
+                            <div class="escms-ui-label" style="padding-top: 10px;">Custom Instructions (Optional)</div>
                             <textarea id="ai-instructions" rows="4" placeholder="e.g. Always respond in Spanish, use Tailwind classes sparingly, etc." class="escms-settings-input" style="resize:vertical; width: 100%; box-sizing: border-box;">${data.instructions || ''}</textarea>
                         </div>
                         
-                        <div style="text-align: right; margin-top: 2rem;">
-                            <button id="btn-save-ai" style="padding: 12px 24px; background: var(--accent-solid); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Save AI Settings</button>
+                        <div class="escms-control-row" style="margin-top: 2rem;">
+                            <div style="text-align: left;">
+                                <button id="btn-save-ai" style="padding: 12px 24px; background: var(--accent-solid); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Save AI Settings</button>
+                            </div>
+                            <div></div>
                         </div>
                     `;
 
@@ -854,10 +857,13 @@ window.addEventListener('escms:settings:ready', (e) => {
                     modelSelect.element.style.marginBottom = '0';
                     
                     const modelRightSide = modelSelect.element.children[1];
+                    modelRightSide.style.flex = '1';
+                    
                     const modelWrapper = document.createElement('div');
                     modelWrapper.style.display = 'flex';
                     modelWrapper.style.gap = '10px';
                     modelWrapper.style.alignItems = 'center';
+                    modelWrapper.style.width = '100%';
                     
                     modelRightSide.parentNode.insertBefore(modelWrapper, modelRightSide);
                     modelWrapper.appendChild(modelRightSide);
