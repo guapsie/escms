@@ -89,9 +89,10 @@ export class EscmsGlobalSettings {
         if (!this.tabs.find(t => t.id === id)) {
             this.tabs.push({ id, labelKey, createContent: () => contentElement });
             if (this.overlay) {
-                // Remove existing
+                const wasVisible = this.overlay.style.display !== 'none';
                 if (this.overlay.parentNode) this.overlay.parentNode.removeChild(this.overlay);
                 this.renderOverlay();
+                if (wasVisible) this.overlay.style.display = 'block';
                 document.body.appendChild(this.overlay);
             }
         }
@@ -101,8 +102,10 @@ export class EscmsGlobalSettings {
         this.tabs = this.tabs.filter(t => t.id !== id);
         if (this.activeTab === id) this.activeTab = 'general';
         if (this.overlay) {
+            const wasVisible = this.overlay.style.display !== 'none';
             if (this.overlay.parentNode) this.overlay.parentNode.removeChild(this.overlay);
             this.renderOverlay();
+            if (wasVisible) this.overlay.style.display = 'block';
             document.body.appendChild(this.overlay);
         }
     }
