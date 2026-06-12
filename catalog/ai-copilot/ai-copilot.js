@@ -792,32 +792,37 @@ window.addEventListener('escms:settings:ready', (e) => {
                 if (data.status === 'success') {
                     const content = document.getElementById('ai-settings-content');
                     content.innerHTML = `
-                        <div id="ai-provider-container" style="margin-bottom: 1rem;"></div>
+                        <div id="ai-provider-container"></div>
                         
-                        <div style="margin-bottom: 1rem;" id="ai-endpoint-container">
-                            <label style="display:block;margin-bottom:0.5rem;font-size:0.85rem;color:rgba(255,255,255,0.7);">Custom Endpoint URL</label>
+                        <div id="ai-endpoint-container" class="escms-control-row" style="display:none;">
+                            <div class="escms-ui-label">Custom Endpoint URL</div>
                             <input type="text" id="ai-endpoint" value="${data.endpoint || ''}" placeholder="https://api.example.com/v1" class="escms-settings-input">
                         </div>
 
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display:block;margin-bottom:0.5rem;font-size:0.85rem;color:rgba(255,255,255,0.7);">API Key</label>
+                        <div class="escms-control-row">
+                            <div class="escms-ui-label">API Key</div>
                             <input type="password" id="ai-key" placeholder="${data.has_key ? '(Key is configured. Enter new to change)' : 'Paste your API Key here'}" class="escms-settings-input">
                         </div>
 
-                        <div style="margin-bottom: 1rem;">
-                            <div id="ai-model-container" style="flex:1;"></div>
-                            <div style="text-align: right; margin-top: 0.5rem;">
-                                <button id="btn-fetch-models" class="escms-btn">Fetch Models</button>
+                        <div id="ai-model-container"></div>
+                        
+                        <div class="escms-control-row" style="margin-bottom: 1.5rem;">
+                            <div></div>
+                            <div style="text-align: right;">
+                                <button id="btn-fetch-models" style="padding: 8px 16px; background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s;">Fetch Models</button>
                             </div>
                         </div>
 
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display:block;margin-bottom:0.5rem;font-size:0.85rem;color:rgba(255,255,255,0.7);">Custom Instructions (Optional)</label>
+                        <div class="escms-control-row" style="align-items: flex-start;">
+                            <div class="escms-ui-label" style="padding-top: 10px;">Custom Instructions</div>
                             <textarea id="ai-instructions" rows="4" placeholder="e.g. Always respond in Spanish, use Tailwind classes sparingly, etc." class="escms-settings-input" style="resize:vertical;">${data.instructions || ''}</textarea>
                         </div>
                         
-                        <div style="text-align: right; margin-top: 1.5rem;">
-                            <button id="btn-save-ai" class="escms-btn" style="background:var(--accent-solid);color:#fff;border:none;">Save AI Settings</button>
+                        <div class="escms-control-row" style="margin-top: 2rem;">
+                            <div></div>
+                            <div style="text-align: right;">
+                                <button id="btn-save-ai" style="padding: 12px 24px; background: var(--accent-solid); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Save AI Settings</button>
+                            </div>
                         </div>
                     `;
 
@@ -834,7 +839,12 @@ window.addEventListener('escms:settings:ready', (e) => {
                     let currentProvider = data.provider || 'gemini';
                     const endpointCont = document.getElementById('ai-endpoint-container');
                     const toggleEndpoint = (val) => {
-                        endpointCont.style.display = val === 'custom' ? 'block' : 'none';
+                        if (val === 'custom') {
+                            endpointCont.style.display = ''; // Restore grid display
+                            endpointCont.classList.add('escms-control-row');
+                        } else {
+                            endpointCont.style.display = 'none';
+                        }
                         currentProvider = val;
                     };
                     
