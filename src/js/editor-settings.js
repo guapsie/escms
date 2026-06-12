@@ -269,7 +269,7 @@ export class EscmsGlobalSettings {
         this.overlay.appendChild(style);
 
         document.body.appendChild(this.overlay);
-        this.switchTab('general');
+        this.switchTab(this.activeTab || 'general');
 
         if (this.i18n) {
             this.i18n.translateDOM(this.overlay);
@@ -833,6 +833,8 @@ export class EscmsGlobalSettings {
                                     script.src = `/data/addons/${addon.id}/${addon.id}.js?v=` + Date.now();
                                     script.onload = () => window.dispatchEvent(new CustomEvent('escms:addons:refresh'));
                                     document.head.appendChild(script);
+                                } else {
+                                    window.dispatchEvent(new CustomEvent('escms:addons:refresh'));
                                 }
                                 if (!document.querySelector(`link[href*="/data/addons/${addon.id}"]`)) {
                                     const link = document.createElement('link');
