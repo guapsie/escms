@@ -110,6 +110,17 @@ export class EscmsCssView {
             this.cssContainer.scrollLeft = this.textarea.scrollLeft;
         });
 
+        this.textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.textarea.selectionStart;
+                const end = this.textarea.selectionEnd;
+                this.textarea.value = this.textarea.value.substring(0, start) + "    " + this.textarea.value.substring(end);
+                this.textarea.selectionStart = this.textarea.selectionEnd = start + 4;
+                this.textarea.dispatchEvent(new Event('input'));
+            }
+        });
+
         this.textarea.addEventListener('input', (e) => {
             let formatted = this.colorizeCss(e.target.value);
             if (e.target.value.endsWith('\n')) {

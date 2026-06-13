@@ -1,6 +1,11 @@
 export const escmsTextBlockTags = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'LABEL', 'BLOCKQUOTE', 'A'];
 
 export const escmsResolveTarget = function (target) {
+    if (window.escmsEditor && window.escmsEditor.autosave && !window.escmsEditor.autosave.componentId) {
+        const closestComponent = target.closest('escms-component');
+        if (closestComponent) return closestComponent;
+    }
+    
     const closestBlock = target.closest(escmsTextBlockTags.join(','));
     if (closestBlock && closestBlock.id !== 'document-root') target = closestBlock;
     return target;
