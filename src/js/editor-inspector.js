@@ -385,9 +385,9 @@ export class EscmsInspector {
         bgSection.appendChild(this.controls.bgColor.element);
 
         this.controls.bgGradient = new EscmsGradientControl('inspector.linear_gradient', this.i18n, undefined, (val) => {
-            if (val.type === 'mesh') {
+            if (val.type === 'mesh' || (val.blur !== undefined && val.blur > 0)) {
                 this.selectedNode.setAttribute('data-escms-mesh', 'true');
-                this.applyStyle('background-image', ''); // Clear inline bg-image!
+                this.applyStyle('background-image', ''); 
                 this.applyStyle('--escms-mesh-bg', val.cssString);
                 
                 if (val.bgSize !== undefined) this.applyStyle('--escms-mesh-size', val.bgSize);
@@ -395,7 +395,6 @@ export class EscmsInspector {
                 if (val.animation !== undefined) this.applyStyle('--escms-mesh-anim', val.animation);
                 if (val.blur !== undefined) this.applyStyle('--escms-mesh-blur', val.blur + 'px');
                 
-                // Clear the normal ones so they don't conflict
                 this.applyStyle('background-size', '');
                 this.applyStyle('background-repeat', '');
                 this.applyStyle('animation', '');
@@ -411,12 +410,6 @@ export class EscmsInspector {
                 if (val.bgSize !== undefined) this.applyStyle('background-size', val.bgSize);
                 if (val.bgRepeat !== undefined) this.applyStyle('background-repeat', val.bgRepeat);
                 if (val.animation !== undefined) this.applyStyle('animation', val.animation);
-                
-                if (!val.animate) {
-                    this.applyStyle('background-size', '');
-                    this.applyStyle('background-repeat', '');
-                    this.applyStyle('animation', '');
-                }
             }
         });
         bgSection.appendChild(this.controls.bgGradient.element);
@@ -746,11 +739,10 @@ export class EscmsInspector {
     }
 
     _parseGradient(cssVal, isMesh = false) {
-        let res = { type: 'none', position: 'center', c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100, stop: 60, blur: 60, animate: false };
+        let res = { type: 'none', posX: 50, posY: 50, angle: 135, c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100, stop: 60, blur: 60, animate: false };
         if (!cssVal || cssVal === 'none' || cssVal === '') return res;
 
-        // Basic parsing just to set the type correctly if it's not empty
-        if (isMesh || cssVal.includes('--escms-mesh-bg')) {
+        if (isMesh || cssVal.includes('--escms-mesh-bg') || cssVal.includes('escms-mesh-drift')) {
             res.type = 'mesh';
             res.animate = cssVal.includes('escms-mesh-drift') || (this.selectedNode && this.selectedNode.style.getPropertyValue('--escms-mesh-anim') !== 'none');
             const blurVal = this.selectedNode ? this.selectedNode.style.getPropertyValue('--escms-mesh-blur') : '';
@@ -758,33 +750,36 @@ export class EscmsInspector {
         } else if (cssVal.includes('radial-gradient')) {
             res.type = 'radial';
             res.animate = this.selectedNode && this.selectedNode.style.animation.includes('escms-bg-pan');
-            let match = cssVal.match(/radial-gradient\(([^,]+),\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^,]*),\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^,]*)(?:,\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^)]*))?\)/);
-            if (match) {
-                res.position = match[1].trim();
-                let c1 = this._rgbaToHexA(match[2]); res.c1 = c1.hex; res.a1 = c1.alpha;
-                let c2 = this._rgbaToHexA(match[4]); res.c2 = c2.hex; res.a2 = c2.alpha;
-                if (match[5]) res.stop = parseInt(match[5]) || 60;
-                if (match[6]) {
-                    let c3 = this._rgbaToHexA(match[6]); res.c3 = c3.hex; res.a3 = c3.alpha;
-                } else {
-                    res.c3 = res.c2; res.a3 = res.a2;
-                }
+            let posMatch = cssVal.match(/radial-gradient\((?:circle )?at\s+(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%,/);
+            if (posMatch) {
+                res.posX = parseFloat(posMatch[1]) || 50;
+                res.posY = parseFloat(posMatch[2]) || 50;
             }
         } else if (cssVal.includes('linear-gradient')) {
             res.type = 'linear';
             res.animate = this.selectedNode && this.selectedNode.style.animation.includes('escms-bg-pan');
-            let match = cssVal.match(/linear-gradient\(([^,]+),\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^,]*),\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^,]*)(?:,\s*(rgba?\([^)]+\)|#[^\s,]+)\s*([^)]*))?\)/);
-            if (match) {
-                res.position = match[1].trim();
-                let c1 = this._rgbaToHexA(match[2]); res.c1 = c1.hex; res.a1 = c1.alpha;
-                let c2 = this._rgbaToHexA(match[4]); res.c2 = c2.hex; res.a2 = c2.alpha;
-                if (match[5]) res.stop = parseInt(match[5]) || 60;
-                if (match[6]) {
-                    let c3 = this._rgbaToHexA(match[6]); res.c3 = c3.hex; res.a3 = c3.alpha;
-                } else {
-                    res.c3 = res.c2; res.a3 = res.a2;
-                }
+            let angleMatch = cssVal.match(/linear-gradient\(\s*(-?\d+)deg,/);
+            if (angleMatch) res.angle = parseInt(angleMatch[1]) || 135;
+        }
+
+        const colorMatches = cssVal.match(/(rgba?\([^)]+\)|#[0-9a-fA-F]{3,8})/g);
+        if (colorMatches && colorMatches.length >= 1) {
+            let c1 = this._rgbaToHexA(colorMatches[0]); res.c1 = c1.hex; res.a1 = c1.alpha; res.rgba1 = colorMatches[0];
+            if (colorMatches.length >= 2) {
+                let c2 = this._rgbaToHexA(colorMatches[1]); res.c2 = c2.hex; res.a2 = c2.alpha; res.rgba2 = colorMatches[1];
+            } else {
+                res.c2 = res.c1; res.a2 = res.a1; res.rgba2 = res.rgba1;
             }
+            if (colorMatches.length >= 3) {
+                let c3 = this._rgbaToHexA(colorMatches[2]); res.c3 = c3.hex; res.a3 = c3.alpha; res.rgba3 = colorMatches[2];
+            } else {
+                res.c3 = res.c2; res.a3 = res.a2; res.rgba3 = res.rgba2;
+            }
+        }
+
+        const stopMatch = cssVal.match(/transparent\s+(\d+)%|\)\s+(\d+)%/);
+        if (stopMatch) {
+            res.stop = parseInt(stopMatch[1] || stopMatch[2]);
         }
 
         return res;

@@ -1,10 +1,10 @@
 import { EscmsToggle, EscmsSelect, EscmsSlider, EscmsColorPicker } from './editor-controls.js';
 
 export class EscmsGradientControl {
-    constructor(labelKey, i18n, initialValues = { type: 'none', position: 'center', animate: false, c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100 }, onChangeCallback) {
+    constructor(labelKey, i18n, initialValues = { type: 'none', posX: 50, posY: 50, angle: 135, animate: false, c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100 }, onChangeCallback) {
         this.labelKey = labelKey;
         this.i18n = i18n;
-        this.values = { type: 'none', position: 'center', animate: false, c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100, ...initialValues };
+        this.values = { type: 'none', posX: 50, posY: 50, angle: 135, animate: false, c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100, ...initialValues };
         this.onChange = onChangeCallback;
         this.element = this.render();
     }
@@ -19,37 +19,45 @@ export class EscmsGradientControl {
             { label: 'Mesh (Aurora)', value: 'mesh' }
         ], this.values.type, (val) => {
             this.values.type = val;
-            this.positionSelect.element.style.display = (val === 'radial' || val === 'mesh') ? 'grid' : 'none';
-            this.stopSlider.element.style.display = (val === 'radial' || val === 'mesh') ? 'grid' : 'none';
-            this.blurSlider.element.style.display = (val === 'mesh') ? 'grid' : 'none';
+            this.posXSlider.element.style.display = (val === 'radial' || val === 'mesh') ? 'grid' : 'none';
+            this.posYSlider.element.style.display = (val === 'radial' || val === 'mesh') ? 'grid' : 'none';
+            this.angleSlider.element.style.display = (val === 'linear') ? 'grid' : 'none';
+            this.stopSlider.element.style.display = (val !== 'none') ? 'grid' : 'none';
+            this.blurSlider.element.style.display = (val !== 'none') ? 'grid' : 'none';
             this.colorsRow.style.display = (val !== 'none') ? 'block' : 'none';
             this.animateToggle.element.style.display = (val !== 'none') ? 'flex' : 'none';
             this.triggerChange();
         });
         
-        this.positionSelect = new EscmsSelect('inspector.position', [
-            { label: 'Center', value: 'center' },
-            { label: 'Top', value: 'top' },
-            { label: 'Bottom', value: 'bottom' },
-            { label: 'Left', value: 'left' },
-            { label: 'Right', value: 'right' }
-        ], this.values.position, (val) => {
-            this.values.position = val;
+        this.posXSlider = new EscmsSlider('inspector.pos_x', -100, 200, 1, this.values.posX !== undefined ? this.values.posX : 50, (val) => {
+            this.values.posX = val;
             this.triggerChange();
-        });
-        this.positionSelect.element.style.display = (this.values.type === 'radial' || this.values.type === 'mesh') ? 'grid' : 'none';
+        }, '%');
+        this.posXSlider.element.style.display = (this.values.type === 'radial' || this.values.type === 'mesh') ? 'grid' : 'none';
+
+        this.posYSlider = new EscmsSlider('inspector.pos_y', -100, 200, 1, this.values.posY !== undefined ? this.values.posY : 50, (val) => {
+            this.values.posY = val;
+            this.triggerChange();
+        }, '%');
+        this.posYSlider.element.style.display = (this.values.type === 'radial' || this.values.type === 'mesh') ? 'grid' : 'none';
+
+        this.angleSlider = new EscmsSlider('inspector.angle', 0, 360, 1, this.values.angle !== undefined ? this.values.angle : 135, (val) => {
+            this.values.angle = val;
+            this.triggerChange();
+        }, 'deg');
+        this.angleSlider.element.style.display = (this.values.type === 'linear') ? 'grid' : 'none';
 
         this.stopSlider = new EscmsSlider('inspector.gradient_stop', 0, 100, 1, this.values.stop !== undefined ? this.values.stop : 60, (val) => {
             this.values.stop = val;
             this.triggerChange();
         }, '%');
-        this.stopSlider.element.style.display = (this.values.type === 'radial' || this.values.type === 'mesh') ? 'grid' : 'none';
+        this.stopSlider.element.style.display = (this.values.type !== 'none') ? 'grid' : 'none';
         
         this.blurSlider = new EscmsSlider('inspector.gradient_blur', 0, 200, 1, this.values.blur !== undefined ? this.values.blur : 60, (val) => {
             this.values.blur = val;
             this.triggerChange();
         }, 'px');
-        this.blurSlider.element.style.display = this.values.type === 'mesh' ? 'grid' : 'none';
+        this.blurSlider.element.style.display = (this.values.type !== 'none') ? 'grid' : 'none';
         
         this.animateToggle = new EscmsToggle('inspector.animate', this.values.animate, (val) => {
             this.values.animate = val;
@@ -78,7 +86,9 @@ export class EscmsGradientControl {
         this.animateToggle.element.style.display = this.values.type !== 'none' ? 'flex' : 'none';
 
         container.appendChild(this.typeSelect.element);
-        container.appendChild(this.positionSelect.element);
+        container.appendChild(this.posXSlider.element);
+        container.appendChild(this.posYSlider.element);
+        container.appendChild(this.angleSlider.element);
         container.appendChild(this.stopSlider.element);
         container.appendChild(this.blurSlider.element);
         container.appendChild(this.colorsRow);
@@ -106,26 +116,19 @@ export class EscmsGradientControl {
             let rgba3 = this.values.rgba3 || this._hexToRgba(this.values.c3, this.values.a3);
             
             let cssStr = '';
-            let bgSize = '';
-            let bgRepeat = '';
+            let bgSize = '100% 100%';
+            let bgRepeat = 'no-repeat';
             let animation = '';
-            const pos = this.values.position || 'center';
+            const posX = this.values.posX !== undefined ? this.values.posX : 50;
+            const posY = this.values.posY !== undefined ? this.values.posY : 50;
             const stop = this.values.stop !== undefined ? this.values.stop : 60;
             const midStop = stop / 2;
 
             if (this.values.type === 'mesh') {
-                let p1, p2, p3;
-                if (pos === 'bottom') {
-                    p1 = '20% 100%'; p2 = '80% 100%'; p3 = '50% 100%';
-                } else if (pos === 'top') {
-                    p1 = '20% 0%'; p2 = '80% 0%'; p3 = '50% 0%';
-                } else if (pos === 'left') {
-                    p1 = '0% 20%'; p2 = '0% 80%'; p3 = '0% 50%';
-                } else if (pos === 'right') {
-                    p1 = '100% 20%'; p2 = '100% 80%'; p3 = '100% 50%';
-                } else {
-                    p1 = '0% 0%'; p2 = '100% 0%'; p3 = '50% 100%';
-                }
+                let p1 = `${posX - 30}% ${posY + 50}%`;
+                let p2 = `${posX + 30}% ${posY + 50}%`;
+                let p3 = `${posX}% ${posY - 50}%`;
+                
                 cssStr = `radial-gradient(at ${p1}, ${rgba1} 0px, transparent ${stop}%), radial-gradient(at ${p2}, ${rgba2} 0px, transparent ${stop}%), radial-gradient(at ${p3}, ${rgba3} 0px, transparent ${stop}%)`;
                 
                 if (this.values.animate) {
@@ -134,13 +137,14 @@ export class EscmsGradientControl {
                     animation = 'escms-mesh-drift 12s ease-in-out infinite alternate';
                 }
             } else if (this.values.type === 'radial') {
-                cssStr = `radial-gradient(circle at ${pos}, ${rgba1} 0%, ${rgba2} ${midStop}%, ${rgba3} ${stop}%)`;
+                cssStr = `radial-gradient(circle at ${posX}% ${posY}%, ${rgba1} 0%, ${rgba2} ${midStop}%, ${rgba3} ${stop}%)`;
                 if (this.values.animate) {
                     bgSize = '400% 400%';
                     animation = 'escms-bg-pan 15s ease infinite';
                 }
             } else {
-                cssStr = `linear-gradient(135deg, ${rgba1} 0%, ${rgba2} ${midStop}%, ${rgba3} ${stop}%)`;
+                const ang = this.values.angle !== undefined ? this.values.angle : 135;
+                cssStr = `linear-gradient(${ang}deg, ${rgba1} 0%, ${rgba2} ${midStop}%, ${rgba3} ${stop}%)`;
                 if (this.values.animate) {
                     bgSize = '400% 400%';
                     animation = 'escms-bg-pan 15s ease infinite';
@@ -150,13 +154,16 @@ export class EscmsGradientControl {
             this.onChange({
                 enabled: true,
                 type: this.values.type,
-                position: this.values.position,
+                posX: this.values.posX,
+                posY: this.values.posY,
+                angle: this.values.angle,
                 stop: this.values.stop,
                 blur: this.values.blur,
                 animate: this.values.animate,
                 c1: this.values.c1, a1: this.values.a1,
                 c2: this.values.c2, a2: this.values.a2,
                 c3: this.values.c3, a3: this.values.a3,
+                rgba1: rgba1, rgba2: rgba2, rgba3: rgba3,
                 cssString: cssStr,
                 bgSize: bgSize,
                 bgRepeat: bgRepeat,
@@ -171,17 +178,31 @@ export class EscmsGradientControl {
         if (newValues.type !== undefined && this.values.type !== newValues.type) {
             this.values.type = newValues.type;
             this.typeSelect.setValue(newValues.type, false);
-            this.positionSelect.element.style.display = (newValues.type === 'radial' || newValues.type === 'mesh') ? 'grid' : 'none';
-            this.stopSlider.element.style.display = (newValues.type === 'radial' || newValues.type === 'mesh') ? 'grid' : 'none';
-            this.blurSlider.element.style.display = (newValues.type === 'mesh') ? 'grid' : 'none';
+            this.posXSlider.element.style.display = (newValues.type === 'radial' || newValues.type === 'mesh') ? 'grid' : 'none';
+            this.posYSlider.element.style.display = (newValues.type === 'radial' || newValues.type === 'mesh') ? 'grid' : 'none';
+            this.angleSlider.element.style.display = (newValues.type === 'linear') ? 'grid' : 'none';
+            this.stopSlider.element.style.display = (newValues.type !== 'none') ? 'grid' : 'none';
+            this.blurSlider.element.style.display = (newValues.type !== 'none') ? 'grid' : 'none';
             this.colorsRow.style.display = (newValues.type !== 'none') ? 'block' : 'none';
             this.animateToggle.element.style.display = (newValues.type !== 'none') ? 'flex' : 'none';
             changed = true;
         }
 
-        if (newValues.position !== undefined && this.values.position !== newValues.position) {
-            this.values.position = newValues.position;
-            this.positionSelect.setValue(newValues.position, false);
+        if (newValues.posX !== undefined && this.values.posX !== newValues.posX) {
+            this.values.posX = newValues.posX;
+            this.posXSlider.setValue(newValues.posX, false);
+            changed = true;
+        }
+
+        if (newValues.posY !== undefined && this.values.posY !== newValues.posY) {
+            this.values.posY = newValues.posY;
+            this.posYSlider.setValue(newValues.posY, false);
+            changed = true;
+        }
+
+        if (newValues.angle !== undefined && this.values.angle !== newValues.angle) {
+            this.values.angle = newValues.angle;
+            this.angleSlider.setValue(newValues.angle, false);
             changed = true;
         }
         
@@ -194,6 +215,7 @@ export class EscmsGradientControl {
         if ((newValues.c1 !== undefined && this.values.c1 !== newValues.c1) || (newValues.a1 !== undefined && this.values.a1 !== newValues.a1)) {
             this.values.c1 = newValues.c1 || this.values.c1;
             this.values.a1 = newValues.a1 !== undefined ? newValues.a1 : this.values.a1;
+            if (newValues.rgba1) this.values.rgba1 = newValues.rgba1;
             this.color1Picker.setValue(this.values.c1, this.values.a1, false);
             changed = true;
         }
@@ -201,6 +223,7 @@ export class EscmsGradientControl {
         if ((newValues.c2 !== undefined && this.values.c2 !== newValues.c2) || (newValues.a2 !== undefined && this.values.a2 !== newValues.a2)) {
             this.values.c2 = newValues.c2 || this.values.c2;
             this.values.a2 = newValues.a2 !== undefined ? newValues.a2 : this.values.a2;
+            if (newValues.rgba2) this.values.rgba2 = newValues.rgba2;
             this.color2Picker.setValue(this.values.c2, this.values.a2, false);
             changed = true;
         }
@@ -208,6 +231,7 @@ export class EscmsGradientControl {
         if ((newValues.c3 !== undefined && this.values.c3 !== newValues.c3) || (newValues.a3 !== undefined && this.values.a3 !== newValues.a3)) {
             this.values.c3 = newValues.c3 || this.values.c3;
             this.values.a3 = newValues.a3 !== undefined ? newValues.a3 : this.values.a3;
+            if (newValues.rgba3) this.values.rgba3 = newValues.rgba3;
             this.color3Picker.setValue(this.values.c3, this.values.a3, false);
             changed = true;
         }
