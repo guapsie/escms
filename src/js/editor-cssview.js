@@ -239,6 +239,11 @@ export class EscmsCssView {
             let scopedCss = cssString.replace(/:root/g, '#document-root');
             scopedCss = scopedCss.replace(/\bbody\s*{/g, '#document-root {');
             
+            // Convert Media Queries to Container Queries to support Canvas resizing
+            // Matches @media screen and (max-width:...) or @media (max-width:...)
+            // Does not support height-based media queries since container-type is inline-size
+            scopedCss = scopedCss.replace(/@media[^{]+?\((min-width|max-width)/gi, '@container viewport ($1');
+            
             styleEl.textContent = scopedCss;
         }
     }

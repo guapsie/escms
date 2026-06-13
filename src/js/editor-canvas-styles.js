@@ -71,6 +71,8 @@ export const ESCMS_CANVAS_STYLES = `
     width: 100%;
     min-height: 100%;
     overflow-x: hidden;
+    container-type: inline-size;
+    container-name: viewport;
 }
 
 /* Fix CSS variables for atoms */

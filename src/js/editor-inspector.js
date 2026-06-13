@@ -136,17 +136,34 @@ export class EscmsInspector {
             }
         }
 
-        if (value === '' || value === 'none') {
-            if (prop.startsWith('--')) {
+        if (prop.startsWith('--')) {
+            // CSS Variables remain inline for Layout and Atom logic (they don't affect specificity)
+            if (value === '' || value === 'none') {
                 this.selectedNode.style.removeProperty(prop);
             } else {
-                this.selectedNode.style.removeProperty(prop);
+                this.selectedNode.style.setProperty(prop, value);
             }
         } else {
-            if (prop.startsWith('--')) {
-                this.selectedNode.style.setProperty(prop, value);
+            // Standard CSS properties use the DPS Engine
+            if (!this.selectedNode.id || this.selectedNode.id === 'document-root') {
+                if (this.selectedNode.id !== 'document-root') {
+                    this.selectedNode.id = 'el-' + Math.random().toString(36).substr(2, 8);
+                } else {
+                    return; // Do not apply inspector styles to document-root directly
+                }
+            }
+            
+            const viewport = window.escmsEditor.canvas.activeView || 'desktop';
+            const rs = window.escmsEditor.responsiveStyles;
+            
+            if (rs) {
+                rs.setStyle(this.selectedNode.id, viewport, prop, value);
+                // Clean legacy inline style to ensure DPS takes precedence without !important on desktop
+                this.selectedNode.style.removeProperty(prop);
             } else {
-                this.selectedNode.style.setProperty(prop, value);
+                // Fallback
+                if (value === '' || value === 'none') this.selectedNode.style.removeProperty(prop);
+                else this.selectedNode.style.setProperty(prop, value);
             }
         }
         window.dispatchEvent(new Event('escms-dom-mutated')); // Trigger autosave

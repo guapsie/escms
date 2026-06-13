@@ -87,6 +87,10 @@ export class EscmsAutosave {
     }
 
     getCleanData() {
+        if (window.escmsEditor && window.escmsEditor.responsiveStyles) {
+            window.escmsEditor.responsiveStyles.cleanOrphanedRules(this.documentRoot);
+        }
+
         const clone = this.documentRoot.cloneNode(true);
         clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
         clone.querySelectorAll('.escms-selected').forEach(el => el.classList.remove('escms-selected'));
@@ -94,6 +98,11 @@ export class EscmsAutosave {
         
         clone.removeAttribute('id');
         clone.removeAttribute('style');
+
+        if (window.escmsEditor && window.escmsEditor.responsiveStyles) {
+            const styleNode = clone.querySelector('#escms-page-styles');
+            if (styleNode) styleNode.textContent = window.escmsEditor.responsiveStyles.exportCssText;
+        }
 
         return {
             json: EscmsParser.domToJson(clone),

@@ -163,11 +163,27 @@ export class EscmsSlider {
             }
         }, this.track);
 
+        this.clearBtn = el('div', {
+            class: 'escms-slider-clear-btn',
+            html: '&times;',
+            style: 'display: none; align-items: center; justify-content: center; width: 16px; height: 16px; font-size: 14px; cursor: pointer; opacity: 0.5; margin-left: 5px; transition: opacity 0.2s;',
+            title: 'Reset to default',
+            onmouseenter: (e) => { e.target.style.opacity = '1'; },
+            onmouseleave: (e) => { e.target.style.opacity = '0.5'; },
+            onclick: (e) => {
+                e.stopPropagation();
+                this.value = null; // null signifies cleared state
+                this.updateUI();
+                if (this.onChange) this.onChange('');
+            }
+        });
+
         this.element = el('div', { class: 'escms-control-row' }, [
             this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div'),
             el('div', { style: 'display: flex; flex-direction: column;' }, [
                 el('div', { class: 'escms-slider-header' }, [
-                    this.valDisplay
+                    this.valDisplay,
+                    this.clearBtn
                 ]),
                 trackContainer
             ])
@@ -206,10 +222,18 @@ export class EscmsSlider {
     }
 
     updateUI() {
-        const pct = ((this.value - this.min) / (this.max - this.min)) * 100;
-        this.fill.style.width = `${pct}%`;
-        this.thumb.style.left = `${pct}%`;
-        this.valDisplay.textContent = `${this.value}${this.unit}`;
+        if (this.value === null) {
+            this.fill.style.width = '0%';
+            this.thumb.style.left = '0%';
+            this.valDisplay.textContent = 'Auto';
+            this.clearBtn.style.display = 'none';
+        } else {
+            const pct = ((this.value - this.min) / (this.max - this.min)) * 100;
+            this.fill.style.width = `${pct}%`;
+            this.thumb.style.left = `${pct}%`;
+            this.valDisplay.textContent = `${this.value}${this.unit}`;
+            this.clearBtn.style.display = 'flex';
+        }
     }
 }
 
@@ -250,16 +274,34 @@ export class EscmsColorPicker {
 
         this.alphaDisplay = el('div', { class: 'escms-color-alpha-display' });
         
+        this.clearBtn = el('div', {
+            class: 'escms-color-clear-btn',
+            html: '&times;',
+            style: 'display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; font-size: 16px; cursor: pointer; opacity: 0.5; margin-left: auto; transition: opacity 0.2s;',
+            title: 'Clear color',
+            onmouseenter: (e) => { e.target.style.opacity = '1'; },
+            onmouseleave: (e) => { e.target.style.opacity = '0.5'; },
+            onclick: (e) => {
+                e.stopPropagation();
+                this.hexInput.value = '';
+                this.hex = '';
+                this.alpha = 100;
+                this.updateUI();
+                if (this.onChange) this.onChange({ hex: '', alpha: 100, rgba: '' });
+            }
+        });
+
         this.button = el('div', { 
             class: 'escms-color-btn',
             onclick: (e) => {
                 e.stopPropagation();
-                if (e.target !== this.nativeInput && e.target !== this.hexInput) this.toggle();
+                if (e.target !== this.nativeInput && e.target !== this.hexInput && e.target !== this.clearBtn) this.toggle();
             }
         }, [
             el('div', { class: 'escms-color-swatch-container' }, [this.swatchColor, this.nativeInput]),
             this.hexInput,
-            el('div', { style: 'display: flex; align-items: center;' }, [
+            this.clearBtn,
+            el('div', { style: 'display: flex; align-items: center; margin-left: 5px;' }, [
                 this.alphaDisplay,
                 el('span', { html: icons.caretDown, style: 'display: flex; opacity: 0.7; pointer-events: none;' })
             ])
@@ -321,17 +363,30 @@ export class EscmsColorPicker {
     }
 
     updateUI() {
-        let alphaHex = Math.round((this.alpha / 100) * 255).toString(16).padStart(2, '0');
-        let displayHex = this.alpha === 100 ? this.hex : this.hex + alphaHex;
-        
-        this.swatchColor.style.background = displayHex;
-        this.hexInput.value = displayHex.toUpperCase();
-        this.alphaDisplay.textContent = `${this.alpha}%`;
-        this.nativeInput.value = this.hex;
+        if (this.hex === '') {
+            this.swatchColor.style.background = 'transparent';
+            this.hexInput.value = '';
+            this.alphaDisplay.textContent = '100%';
+            this.nativeInput.value = '#000000';
+            this.clearBtn.style.display = 'none';
+        } else {
+            let alphaHex = Math.round((this.alpha / 100) * 255).toString(16).padStart(2, '0');
+            let displayHex = this.alpha === 100 ? this.hex : this.hex + alphaHex;
+            
+            this.swatchColor.style.background = displayHex;
+            this.hexInput.value = displayHex.toUpperCase();
+            this.alphaDisplay.textContent = `${this.alpha}%`;
+            this.nativeInput.value = this.hex;
+            this.clearBtn.style.display = 'flex';
+        }
     }
 
     triggerChange() {
         if (this.onChange) {
+            if (this.hex === '') {
+                this.onChange({ hex: '', alpha: 100, rgba: '' });
+                return;
+            }
             let r = parseInt(this.hex.slice(1, 3), 16);
             let g = parseInt(this.hex.slice(3, 5), 16);
             let b = parseInt(this.hex.slice(5, 7), 16);

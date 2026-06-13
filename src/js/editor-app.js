@@ -14,6 +14,7 @@ import { EscmsSelection } from './editor-selection.js';
 import { EscmsSeoView } from './editor-seoview.js';
 import { EscmsGlobalSettings } from './editor-settings.js';
 import { EscmsTopBar } from './editor-topbar.js';
+import { EscmsResponsiveStyles } from './editor-responsive-styles.js';
 import { ESCMS_CANVAS_STYLES } from './editor-canvas-styles.js';
 
 export class EscmsEditor {
@@ -55,6 +56,8 @@ export class EscmsEditor {
         const docRoot = document.createElement('div');
         docRoot.id = 'document-root';
         this.shadow.appendChild(docRoot);
+
+        this.responsiveStyles = new EscmsResponsiveStyles(docRoot);
 
         this.settings = new EscmsGlobalSettings(this.i18n);
         this.settings.init();
@@ -159,6 +162,7 @@ export class EscmsEditor {
                             while(parsedRoot.firstChild) {
                                 docRoot.appendChild(parsedRoot.firstChild);
                             }
+                            if (this.responsiveStyles) this.responsiveStyles.initStyleElement();
                         }
                     } catch (err) {
                         console.error('[ESCMS] Error parsing page data', err);
@@ -279,6 +283,7 @@ export class EscmsEditor {
                             while(parsedRoot.firstChild) {
                                 docRoot.appendChild(parsedRoot.firstChild);
                             }
+                            if (this.responsiveStyles) this.responsiveStyles.initStyleElement();
                         }
                     } catch (err) {
                         console.error('[ESCMS] Error parsing component data', err);
