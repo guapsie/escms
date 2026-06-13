@@ -4,28 +4,37 @@ export function createNetworkTab(settings) {
     const tab = settings.createTabContent('topbar.network_btn');
     tab.classList.add('escms-view-content');
     
-    const card = document.createElement('div');
-    card.className = 'escms-card';
-    card.style.maxWidth = '600px';
+    const desc = document.createElement('p');
+    desc.setAttribute('data-i18n', 'network.modal_desc');
+    desc.style.marginTop = '0';
+    desc.style.marginBottom = '1.5rem';
+    desc.style.color = 'var(--text-muted, rgba(245, 245, 245, 0.6))';
+    desc.style.fontSize = '0.85rem';
+    desc.style.lineHeight = '1.5';
+    tab.appendChild(desc);
 
-    card.innerHTML = `
-        <div class="escms-card-body">
-            <p data-i18n="network.modal_desc" style="margin-top: 0;"></p>
-            <div class="escms-alert escms-alert--warning">
-                <span data-i18n="network.modal_warning"></span>
-            </div>
-        </div>
-    `;
+    const alert = document.createElement('div');
+    alert.className = 'escms-alert escms-alert--warning';
+    alert.innerHTML = '<span data-i18n="network.modal_warning"></span>';
+    tab.appendChild(alert);
 
-    const toggleRow = document.createElement('div');
-    toggleRow.className = 'escms-card-footer';
+    const toggleGroup = document.createElement('div');
+    toggleGroup.className = 'escms-form-group';
+    
     const toggle = new EscmsToggle('network.toggle_label', settings.config.escms_p2p_enabled, (val) => {
         settings.saveConfig('escms_p2p_enabled', val);
     });
-    toggleRow.appendChild(toggle.element);
 
-    card.appendChild(toggleRow);
-    tab.appendChild(card);
+    // Make the toggle label look like other settings labels
+    const label = toggle.element.querySelector('.escms-ui-label');
+    if (label) {
+        label.style.fontSize = '0.9rem';
+        label.style.color = 'var(--text-solid, #f5f5f5)';
+        label.style.fontWeight = '500';
+    }
+
+    toggleGroup.appendChild(toggle.element);
+    tab.appendChild(toggleGroup);
     
     return tab;
 }
