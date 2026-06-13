@@ -180,7 +180,7 @@ export class EscmsMediaLibrary {
 
         this.executeDeleteBtn = document.createElement('button');
         this.executeDeleteBtn.innerHTML = '<span style="font-size:0.75rem; font-weight:bold;">Delete (0)</span>';
-        this.executeDeleteBtn.title = 'Confirm Deletion';
+        this.executeDeleteBtn.title = this.i18n?.t ? this.i18n.t('medialibrary.confirm_deletion') : 'Confirm Deletion';
         this.executeDeleteBtn.style.padding = '0 1rem';
         this.executeDeleteBtn.style.height = '32px';
         this.executeDeleteBtn.style.borderRadius = '16px';
@@ -319,7 +319,7 @@ export class EscmsMediaLibrary {
         this.dropOverlay.style.pointerEvents = 'none';
         
         const dropText = document.createElement('h2');
-        dropText.textContent = 'Drop files to upload';
+        dropText.textContent = this.i18n?.t ? this.i18n.t('medialibrary.drop_files') : 'Drop files to upload';
         dropText.style.color = 'var(--accent-solid)';
         this.dropOverlay.appendChild(dropText);
         
@@ -521,7 +521,8 @@ export class EscmsMediaLibrary {
 
     async deleteSelected() {
         if (this.selectedForDeletion.size === 0) return;
-        if (!confirm(`Are you sure you want to delete ${this.selectedForDeletion.size} items?`)) return;
+        const msg = this.i18n?.t ? this.i18n.t('medialibrary.confirm_delete_msg').replace('{count}', this.selectedForDeletion.size) : `Are you sure you want to delete ${this.selectedForDeletion.size} items?`;
+        if (!confirm(msg)) return;
 
         try {
             const res = await fetch('/api/media/delete', {

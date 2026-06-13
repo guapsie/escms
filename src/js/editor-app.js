@@ -65,7 +65,7 @@ export class EscmsEditor {
         this.inspector = new EscmsInspector(this.i18n);
         this.inspector.init();
 
-        this.seoView = new EscmsSeoView();
+        this.seoView = new EscmsSeoView(this.i18n);
         this.seoView.init(this.canvas.area);
 
         this.htmlView = new EscmsHtmlView();

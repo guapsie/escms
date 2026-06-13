@@ -170,7 +170,40 @@ const enFallback = Object.freeze({
     "copy_styles": "Copy Styles",
     "paste_styles": "Paste Styles",
     "add_post": "Add Post",
-    "inspector.open_media_manager": "Open Media Manager"
+    "inspector.open_media_manager": "Open Media Manager",
+    "controls.reset": "Reset to default",
+    "controls.auto": "Auto",
+    "controls.clear_color": "Clear color",
+    "controls.size": "Size",
+    "controls.thumb": "Thumb",
+    "controls.full": "Full",
+    "controls.no_image": "No Image",
+    "controls.upload_bg": "Upload Background Image",
+    "controls.clear_image": "Clear Image",
+    "controls.cover": "Cover (Fill)",
+    "controls.contain": "Contain (Fit)",
+    "controls.pattern": "Pattern (Repeat)",
+    "leftpanel.tab_elements": "Elements",
+    "leftpanel.tab_layers": "Layers",
+    "leftpanel.tab_pages": "Pages",
+    "leftpanel.empty_atoms": "No atoms downloaded yet.",
+    "leftpanel.empty_components": "No components found.",
+    "leftpanel.edit_component": "Edit Component",
+    "leftpanel.add_to_canvas": "Add to Canvas",
+    "leftpanel.duplicate": "Duplicate",
+    "leftpanel.delete": "Delete",
+    "leftpanel.empty_canvas": "Canvas is empty",
+    "medialibrary.confirm_deletion": "Confirm Deletion",
+    "medialibrary.drop_files": "Drop files to upload",
+    "medialibrary.confirm_delete_msg": "Are you sure you want to delete {count} items?",
+    "medialibrary.uploading": "Uploading",
+    "seo.title": "Page SEO Settings",
+    "seo.slug": "URL Slug",
+    "seo.page_title": "Page Title",
+    "seo.description": "Meta Description",
+    "seo.keywords": "Keywords",
+    "seo.language": "Language Code",
+    "settings.add": "Add"
 });
 export class I18nEngine {
     constructor() {
@@ -231,5 +264,9 @@ export class I18nEngine {
             this.dictionary = { ...this.dictionary, ...translationsObject };
             this.translateDOM(); // Re-translate DOM just in case UI is already rendered
         }
+    }
+
+    t(key) {
+        return this.dictionary[key] || key;
     }
 }

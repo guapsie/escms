@@ -967,7 +967,8 @@ export class EscmsGlobalSettings {
         input.style.flex = '1';
 
         const addBtn = document.createElement('button');
-        addBtn.textContent = 'Add';
+        addBtn.setAttribute('data-i18n', 'settings.add');
+        addBtn.textContent = this.i18n?.t ? this.i18n.t('settings.add') : 'Add';
         addBtn.style.background = 'var(--accent-solid)';
         addBtn.style.color = 'var(--text-solid)';
         addBtn.style.border = 'none';

@@ -17,9 +17,9 @@ export class EscmsLeftPanel {
         this.pageManager = new EscmsPageManager(this.i18n);
         
         this.tabs = [
-            { id: 'elements', icon: icons.atom, title: 'Elements', render: () => this.renderElementsTab() },
-            { id: 'layers', icon: icons.stack, title: 'Layers', render: () => this.renderLayers() },
-            { id: 'pages', icon: icons.file, title: 'Pages', render: () => this.pageManager.init(this.contentArea) }
+            { id: 'elements', icon: icons.atom, title: this.i18n.t('leftpanel.tab_elements'), render: () => this.renderElementsTab() },
+            { id: 'layers', icon: icons.stack, title: this.i18n.t('leftpanel.tab_layers'), render: () => this.renderLayers() },
+            { id: 'pages', icon: icons.file, title: this.i18n.t('leftpanel.tab_pages'), render: () => this.pageManager.init(this.contentArea) }
         ];
 
     }
@@ -237,7 +237,8 @@ export class EscmsLeftPanel {
 
             if (cat.atoms.length === 0) {
                 const empty = document.createElement('div');
-                empty.textContent = 'No atoms downloaded yet.';
+                empty.setAttribute('data-i18n', 'leftpanel.empty_atoms');
+                empty.textContent = this.i18n.t('leftpanel.empty_atoms');
                 empty.style.color = 'rgba(245, 245, 245, 0.3)';
                 empty.style.fontSize = '0.8rem';
                 empty.style.padding = '0 15px 15px 15px';
@@ -297,7 +298,8 @@ export class EscmsLeftPanel {
 
         if (!window.escmsComponents || Object.keys(window.escmsComponents).length === 0) {
             const empty = document.createElement('div');
-            empty.textContent = 'No components found.';
+            empty.setAttribute('data-i18n', 'leftpanel.empty_components');
+            empty.textContent = this.i18n.t('leftpanel.empty_components');
             empty.style.color = 'rgba(245, 245, 245, 0.3)';
             empty.style.fontSize = '0.8rem';
             empty.style.padding = '0 15px 15px 15px';
@@ -381,7 +383,8 @@ export class EscmsLeftPanel {
 
                 const editBtn = document.createElement('button');
                 editBtn.innerHTML = icons.edit || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
-                editBtn.title = 'Edit Component';
+                editBtn.setAttribute('data-i18n-title', 'leftpanel.edit_component');
+                editBtn.title = this.i18n.t('leftpanel.edit_component');
                 editBtn.style.background = 'transparent';
                 editBtn.style.border = 'none';
                 editBtn.style.color = 'rgba(255, 255, 255, 0.4)';
@@ -401,7 +404,8 @@ export class EscmsLeftPanel {
 
                 const addBtn = document.createElement('button');
                 addBtn.innerHTML = icons.plus;
-                addBtn.title = 'Add to Canvas';
+                addBtn.setAttribute('data-i18n-title', 'leftpanel.add_to_canvas');
+                addBtn.title = this.i18n.t('leftpanel.add_to_canvas');
                 addBtn.style.background = 'transparent';
                 addBtn.style.border = 'none';
                 addBtn.style.color = 'rgba(255, 255, 255, 0.4)';
@@ -596,13 +600,13 @@ export class EscmsLeftPanel {
                 return btn;
             };
 
-            actionsDiv.appendChild(createActionBtn(icons.copy, 'Duplicate', () => {
+            actionsDiv.appendChild(createActionBtn(icons.copy, this.i18n.t('leftpanel.duplicate'), () => {
                 const clone = domNode.cloneNode(true);
                 domNode.parentNode.insertBefore(clone, domNode.nextSibling);
                 setTimeout(() => clone.click(), 10);
             }));
 
-            actionsDiv.appendChild(createActionBtn(icons.trash, 'Delete', () => {
+            actionsDiv.appendChild(createActionBtn(icons.trash, this.i18n.t('leftpanel.delete'), () => {
                 const parent = domNode.parentNode;
                 domNode.remove();
                 if (this.selectedNode === domNode && parent) {
@@ -725,7 +729,8 @@ export class EscmsLeftPanel {
 
         if (treeContainer.childNodes.length === 0) {
             const empty = document.createElement('div');
-            empty.textContent = 'Canvas is empty';
+            empty.setAttribute('data-i18n', 'leftpanel.empty_canvas');
+            empty.textContent = this.i18n.t('leftpanel.empty_canvas');
             empty.style.fontSize = '0.8rem';
             empty.style.color = 'rgba(245,245,245,0.4)';
             empty.style.padding = '1rem';

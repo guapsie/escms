@@ -113,7 +113,8 @@ export class EscmsUploadControl {
 
         const sizeLabel = document.createElement('div');
         sizeLabel.className = 'escms-ui-label';
-        sizeLabel.textContent = 'Size';
+        sizeLabel.setAttribute('data-i18n', 'controls.size');
+        sizeLabel.textContent = window.escmsEditor?.i18n?.t('controls.size') || 'Size';
 
         const btnsWrap = document.createElement('div');
         btnsWrap.style.display = 'flex';
@@ -130,11 +131,13 @@ export class EscmsUploadControl {
         };
 
         this.thumbBtn = document.createElement('button');
-        this.thumbBtn.textContent = 'Thumb';
+        this.thumbBtn.setAttribute('data-i18n', 'controls.thumb');
+        this.thumbBtn.textContent = window.escmsEditor?.i18n?.t('controls.thumb') || 'Thumb';
         styleSizeBtn(this.thumbBtn);
 
         this.fullBtn = document.createElement('button');
-        this.fullBtn.textContent = 'Full';
+        this.fullBtn.setAttribute('data-i18n', 'controls.full');
+        this.fullBtn.textContent = window.escmsEditor?.i18n?.t('controls.full') || 'Full';
         styleSizeBtn(this.fullBtn);
 
         this.thumbBtn.addEventListener('click', () => {
@@ -264,11 +267,12 @@ export class EscmsBgImageControl {
         this.preview.style.justifyContent = 'center';
         this.preview.style.fontSize = '0.7rem';
         this.preview.style.color = 'rgba(255,255,255,0.3)';
-        this.preview.textContent = 'No Image';
+        this.preview.textContent = window.escmsEditor?.i18n?.t('controls.no_image') || 'No Image';
 
         this.uploadBtn = document.createElement('button');
         this.uploadBtn.innerHTML = '<svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="128" y1="216" x2="128" y2="40"></line><polyline points="56 112 128 40 200 112"></polyline></svg>';
-        this.uploadBtn.title = 'Upload Background Image';
+        this.uploadBtn.setAttribute('data-i18n-title', 'controls.upload_bg');
+        this.uploadBtn.title = window.escmsEditor?.i18n?.t('controls.upload_bg') || 'Upload Background Image';
         this.uploadBtn.style.background = 'var(--accent-solid)';
         this.uploadBtn.style.border = 'none';
         this.uploadBtn.style.color = 'var(--text-solid)';
@@ -282,7 +286,8 @@ export class EscmsBgImageControl {
 
         this.clearBtn = document.createElement('button');
         this.clearBtn.innerHTML = '<svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="200" y1="56" x2="56" y2="200"></line><line x1="200" y1="200" x2="56" y2="56"></line></svg>';
-        this.clearBtn.title = 'Clear Image';
+        this.clearBtn.setAttribute('data-i18n-title', 'controls.clear_image');
+        this.clearBtn.title = window.escmsEditor?.i18n?.t('controls.clear_image') || 'Clear Image';
         this.clearBtn.style.background = '#333';
         this.clearBtn.style.border = 'none';
         this.clearBtn.style.color = 'var(--text-solid)';
@@ -320,7 +325,8 @@ export class EscmsBgImageControl {
         this.sizeToggleRow.style.alignItems = 'center';
 
         const sizeLabel = document.createElement('span');
-        sizeLabel.textContent = 'Size:';
+        sizeLabel.setAttribute('data-i18n', 'controls.size');
+        sizeLabel.textContent = window.escmsEditor?.i18n?.t('controls.size') || 'Size';
         sizeLabel.style.fontSize = '0.7rem';
         sizeLabel.style.color = 'rgba(255,255,255,0.5)';
         sizeLabel.style.marginRight = '0.25rem';
@@ -336,11 +342,13 @@ export class EscmsBgImageControl {
         };
 
         this.thumbBtn = document.createElement('button');
-        this.thumbBtn.textContent = 'Thumb';
+        this.thumbBtn.setAttribute('data-i18n', 'controls.thumb');
+        this.thumbBtn.textContent = window.escmsEditor?.i18n?.t('controls.thumb') || 'Thumb';
         styleSizeBtn(this.thumbBtn);
 
         this.fullBtn = document.createElement('button');
-        this.fullBtn.textContent = 'Full';
+        this.fullBtn.setAttribute('data-i18n', 'controls.full');
+        this.fullBtn.textContent = window.escmsEditor?.i18n?.t('controls.full') || 'Full';
         styleSizeBtn(this.fullBtn);
 
         this.thumbBtn.addEventListener('click', () => {
@@ -367,9 +375,9 @@ export class EscmsBgImageControl {
 
         // Dropdown Mode
         const modeOptions = [
-            { label: 'Cover (Fill)', value: 'cover' },
-            { label: 'Contain (Fit)', value: 'contain' },
-            { label: 'Pattern (Repeat)', value: 'pattern' }
+            { label: window.escmsEditor?.i18n?.t('controls.cover') || 'Cover (Fill)', value: 'cover' },
+            { label: window.escmsEditor?.i18n?.t('controls.contain') || 'Contain (Fit)', value: 'contain' },
+            { label: window.escmsEditor?.i18n?.t('controls.pattern') || 'Pattern (Repeat)', value: 'pattern' }
         ];
 
         let currentMode = this._getMode();
@@ -470,7 +478,7 @@ export class EscmsBgImageControl {
             }
         } else {
             this.preview.style.backgroundImage = 'none';
-            this.preview.textContent = 'No Image';
+            this.preview.textContent = window.escmsEditor?.i18n?.t('controls.no_image') || 'No Image';
             this.modeSelect.element.style.display = 'none';
             this.sizeToggleRow.style.display = 'none';
         }

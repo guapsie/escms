@@ -1,5 +1,6 @@
 export class EscmsSeoView {
-    constructor() {
+    constructor(i18n) {
+        this.i18n = i18n;
         this.view = null;
         this.inputs = {};
         this.data = {
@@ -30,7 +31,8 @@ export class EscmsSeoView {
         wrapper.style.gap = '1.5rem';
 
         const title = document.createElement('h2');
-        title.textContent = 'Page SEO Settings';
+        title.setAttribute('data-i18n', 'seo.title');
+        title.textContent = this.i18n?.t ? this.i18n.t('seo.title') : 'Page SEO Settings';
         title.style.margin = '0 0 1rem 0';
         title.style.fontSize = '1.25rem';
         title.style.fontWeight = '600';
@@ -44,6 +46,7 @@ export class EscmsSeoView {
             group.style.gap = '0.5rem';
 
             const lbl = document.createElement('label');
+            lbl.setAttribute('data-i18n', `seo.${key}`);
             lbl.textContent = label;
             lbl.style.fontSize = '0.85rem';
             lbl.style.color = 'rgba(245, 245, 245, 0.8)';
@@ -91,11 +94,11 @@ export class EscmsSeoView {
             return group;
         };
 
-        wrapper.appendChild(createInput('slug', 'URL Slug', 'text', 'my-page-url'));
-        wrapper.appendChild(createInput('title', 'Page Title', 'text', 'My Awesome Page'));
-        wrapper.appendChild(createInput('description', 'Meta Description', 'textarea', 'A brief description of this page...'));
-        wrapper.appendChild(createInput('keywords', 'Keywords', 'text', 'keyword1, keyword2, keyword3'));
-        wrapper.appendChild(createInput('language', 'Language Code', 'text', 'en'));
+        wrapper.appendChild(createInput('slug', this.i18n?.t ? this.i18n.t('seo.slug') : 'URL Slug', 'text', 'my-page-url'));
+        wrapper.appendChild(createInput('page_title', this.i18n?.t ? this.i18n.t('seo.page_title') : 'Page Title', 'text', 'My Awesome Page'));
+        wrapper.appendChild(createInput('description', this.i18n?.t ? this.i18n.t('seo.description') : 'Meta Description', 'textarea', 'A brief description of this page...'));
+        wrapper.appendChild(createInput('keywords', this.i18n?.t ? this.i18n.t('seo.keywords') : 'Keywords', 'text', 'keyword1, keyword2, keyword3'));
+        wrapper.appendChild(createInput('language', this.i18n?.t ? this.i18n.t('seo.language') : 'Language Code', 'text', 'en'));
 
         this.view.appendChild(wrapper);
         container.appendChild(this.view);

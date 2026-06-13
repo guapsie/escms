@@ -167,7 +167,8 @@ export class EscmsSlider {
             class: 'escms-slider-clear-btn',
             html: '&times;',
             style: 'display: none; align-items: center; justify-content: center; width: 14px; height: 14px; font-size: 14px; cursor: pointer; opacity: 0.5; transition: opacity 0.2s; background: rgba(255,255,255,0.1); border-radius: 50%; padding-bottom: 1px;',
-            title: 'Reset to default',
+            'data-i18n-title': 'controls.reset',
+            title: window.escmsEditor?.i18n?.t('controls.reset') || 'Reset to default',
             onmouseenter: (e) => { e.target.style.opacity = '1'; },
             onmouseleave: (e) => { e.target.style.opacity = '0.5'; },
             onclick: (e) => {
@@ -230,7 +231,7 @@ export class EscmsSlider {
         if (this.value === null) {
             this.fill.style.width = '0%';
             this.thumb.style.left = '0%';
-            this.valDisplay.textContent = 'Auto';
+            this.valDisplay.textContent = window.escmsEditor?.i18n?.t('controls.auto') || 'Auto';
             this.clearBtn.style.display = 'none';
         } else {
             const pct = ((this.value - this.min) / (this.max - this.min)) * 100;
@@ -283,7 +284,8 @@ export class EscmsColorPicker {
             class: 'escms-color-clear-btn',
             html: '&times;',
             style: 'display: none; align-items: center; justify-content: center; width: 14px; height: 14px; font-size: 14px; cursor: pointer; opacity: 0.5; transition: opacity 0.2s; background: rgba(255,255,255,0.1); border-radius: 50%; padding-bottom: 1px;',
-            title: 'Clear color',
+            'data-i18n-title': 'controls.clear_color',
+            title: window.escmsEditor?.i18n?.t('controls.clear_color') || 'Clear color',
             onmouseenter: (e) => { e.target.style.opacity = '1'; },
             onmouseleave: (e) => { e.target.style.opacity = '0.5'; },
             onclick: (e) => {
