@@ -313,7 +313,7 @@ export class EscmsColorPicker {
             ])
         ]);
 
-        this.alphaSlider = new EscmsSlider(null, 0, 100, 1, this.alpha, (val) => {
+        this.alphaSlider = new EscmsSlider('controls.alpha', 0, 100, 1, this.alpha, (val) => {
             this.alpha = val;
             this.updateUI();
             this.triggerChange();

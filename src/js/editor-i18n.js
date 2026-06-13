@@ -174,6 +174,7 @@ const enFallback = Object.freeze({
     "controls.reset": "Reset to default",
     "controls.auto": "Auto",
     "controls.clear_color": "Clear color",
+    "controls.alpha": "Alpha",
     "controls.size": "Size",
     "controls.thumb": "Thumb",
     "controls.full": "Full",
