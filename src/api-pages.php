@@ -78,7 +78,19 @@ switch ($route) {
                     $tag = $node['tag'] ?? 'div';
                     
                     if ($tag === 'escms-component' && !empty($node['ref'])) {
-                        return '<!-- ESCMS_COMPONENT:' . htmlspecialchars($node['ref']) . ' -->';
+                        $compHtml = '<escms-component ref="' . htmlspecialchars($node['ref']) . '"';
+                        if (!empty($node['id'])) $compHtml .= ' id="' . htmlspecialchars($node['id']) . '"';
+                        if (!empty($node['classes'])) $compHtml .= ' class="' . htmlspecialchars(implode(' ', $node['classes'])) . '"';
+                        if (!empty($node['attributes'])) {
+                            foreach ($node['attributes'] as $attrKey => $attrVal) {
+                                $compHtml .= ' ' . htmlspecialchars($attrKey) . '="' . htmlspecialchars($attrVal) . '"';
+                            }
+                        }
+                        if (!empty($node['styles'])) {
+                            $compHtml .= ' style="' . htmlspecialchars($node['styles']) . '"';
+                        }
+                        $compHtml .= '><!-- ESCMS_COMPONENT:' . htmlspecialchars($node['ref']) . ' --></escms-component>';
+                        return $compHtml;
                     }
 
                     $html = "<$tag";
@@ -110,7 +122,7 @@ switch ($route) {
                 $public_html = $jsonToHtml($nodeTree);
 
                 // --- CSS/JS EXTRACTION ---
-                $page_css = '';
+                $page_css = "escms-component { display: block; }\n";
                 $page_js = '';
 
                 $has_mesh = strpos($public_html, 'data-escms-mesh') !== false;
