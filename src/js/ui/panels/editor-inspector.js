@@ -1,0 +1,809 @@
+import { EscmsBorderControl } from '../controls/editor-control-border.js';
+import { EscmsEffectsControl } from '../controls/editor-control-effects.js';
+import { EscmsGradientControl } from '../controls/editor-control-gradient.js';
+import { EscmsUploadControl, EscmsBgImageControl } from '../controls/editor-control-upload.js';
+import { EscmsToggle, EscmsSelect, EscmsSlider, EscmsColorPicker, EscmsSpacing, EscmsButtonGroup, EscmsCollectionControl } from '../controls/editor-controls.js';
+import { EscmsLayoutControl } from '../controls/editor-control-layout.js';
+import { icons } from '../../core/editor-icons.js';
+
+import { createStructureSection } from './inspector/inspector-structure.js';
+import { createAttributesSection } from './inspector/inspector-attributes.js';
+import { createTypographySection } from './inspector/inspector-typography.js';
+import { createBackgroundSection } from './inspector/inspector-background.js';
+import { createLayoutSection } from './inspector/inspector-layout.js';
+import { createVisibilitySection } from './inspector/inspector-visibility.js';
+import { createEffectsSection } from './inspector/inspector-effects.js';
+import { createNavStylesSection } from './inspector/inspector-navstyles.js';
+
+export class EscmsInspector {
+    constructor(i18nEngine) {
+        this.i18n = i18nEngine;
+        this.selectedNode = null;
+        this.isSyncing = false;
+
+        this.controls = {};
+    }
+
+    init() {
+        this.container = document.getElementById('escms-inspector');
+        if (!this.container) return;
+
+        this.container.innerHTML = '';
+        this.container.style.padding = '1.5rem 1.5rem 5rem 1.5rem';
+        this.container.style.display = 'flex';
+        this.container.style.flexDirection = 'column';
+        this.container.style.gap = '1rem';
+        this.container.style.overflowY = 'auto';
+        this.container.style.height = '100%';
+        this.container.style.boxSizing = 'border-box';
+        this.sectionsContainer = document.createElement('div');
+        this.sectionsContainer.style.display = 'none'; // Hide by default until selection
+        this.container.appendChild(this.sectionsContainer);
+
+        this.emptyState = document.createElement('div');
+        this.emptyState.style.display = 'flex';
+        this.emptyState.style.flexDirection = 'column';
+        this.emptyState.style.alignItems = 'center';
+        this.emptyState.style.justifyContent = 'center';
+        this.emptyState.style.height = '100%';
+        this.emptyState.style.color = 'rgba(245,245,245,0.3)';
+        this.emptyState.style.textAlign = 'center';
+        this.emptyState.style.gap = '1rem';
+        this.emptyState.innerHTML = `
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" />
+                <path d="m12 12 4 10 1.7-4.3L22 16Z" />
+            </svg>
+            <div style="font-size: 0.85rem; font-weight: 500;" data-i18n="inspector.empty_state">${this.i18n ? (this.i18n.dictionary['inspector.empty_state'] || 'Select an element to edit') : 'Select an element to edit'}</div>
+        `;
+        this.container.appendChild(this.emptyState);
+
+        this.renderSections();
+
+        window.addEventListener('escms-element-selected', (e) => {
+            const node = e.detail.node;
+            this.selectedNode = node;
+
+            if (node && node.id !== 'document-root') {
+                this.emptyState.style.display = 'none';
+                this.sectionsContainer.style.display = 'block';
+                this.syncDOMToUI();
+            } else {
+                this.sectionsContainer.style.display = 'none';
+                this.emptyState.style.display = 'flex';
+            }
+        });
+
+        window.addEventListener('escms-view-change', () => {
+            if (this.selectedNode) {
+                this.syncDOMToUI();
+            }
+        });
+
+        window.addEventListener('escms-fonts-updated', () => {
+            if (this.controls && this.controls.fontFamily) {
+                this.controls.fontFamily.updateOptions(this.getInstalledFonts());
+                if (this.selectedNode) {
+                    const comp = window.getComputedStyle(this.selectedNode);
+                    let fFamily = comp.fontFamily;
+                    if (fFamily) {
+                        let firstFont = fFamily.split(',')[0].trim().replace(/['"]/g, '');
+                        let fontOpt = this.controls.fontFamily.options.find(o => o.label === firstFont);
+                        if (fontOpt) this.controls.fontFamily.setValue(fontOpt.value, false);
+                        else this.controls.fontFamily.setValue('', false);
+                    }
+                }
+            }
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .escms-inspector-text-input:focus {
+                border-color: var(--accent-faint) !important;
+                box-shadow: 0 0 10px var(--accent-faint) !important;
+                outline: none !important;
+            }
+        `;
+        this.container.appendChild(style);
+    }
+
+    createSection(titleI18n) {
+        const section = document.createElement('div');
+        section.style.display = 'flex';
+        section.style.flexDirection = 'column';
+        section.style.gap = '0.5rem';
+        section.style.marginBottom = '1rem';
+        section.style.paddingTop = '1rem';
+        section.style.borderTop = '1px solid rgba(255, 255, 255, 0.05)';
+
+        const title = document.createElement('div');
+        title.setAttribute('data-i18n', titleI18n);
+        title.style.fontSize = '0.75rem';
+        title.style.fontWeight = '600';
+        title.style.letterSpacing = '1px';
+        title.style.textTransform = 'uppercase';
+        title.style.color = 'rgba(245, 245, 245, 0.6)';
+        title.style.paddingBottom = '0.25rem';
+
+        section.appendChild(title);
+        return section;
+    }
+
+    applyStyle(prop, value) {
+        if (!this.selectedNode || this.isSyncing) return;
+        
+        if (this.selectedNode.classList.contains('escms-portfolio')) {
+            // Portfolio intercepts background/border/etc to style its children via CSS variables
+            if (['background', 'background-color', 'background-image', 'border', 'border-radius', 'border-width', 'border-color', 'border-style'].includes(prop)) {
+                if (value === '' || value === 'none') {
+                    this.selectedNode.style.removeProperty(`--item-${prop}`);
+                } else {
+                    this.selectedNode.style.setProperty(`--item-${prop}`, value);
+                }
+                window.dispatchEvent(new Event('escms-dom-mutated'));
+                return;
+            }
+        }
+
+        if (prop.startsWith('--')) {
+            // CSS Variables remain inline for Layout and Atom logic (they don't affect specificity)
+            if (value === '' || value === 'none') {
+                this.selectedNode.style.removeProperty(prop);
+            } else {
+                this.selectedNode.style.setProperty(prop, value);
+            }
+        } else {
+            // Standard CSS properties use the DPS Engine
+            if (!this.selectedNode.id || this.selectedNode.id === 'document-root') {
+                if (this.selectedNode.id !== 'document-root') {
+                    this.selectedNode.id = 'el-' + Math.random().toString(36).substr(2, 8);
+                } else {
+                    return; // Do not apply inspector styles to document-root directly
+                }
+            }
+            
+            const viewport = window.escmsEditor.canvas.activeView || 'desktop';
+            const rs = window.escmsEditor.responsiveStyles;
+            
+            if (rs) {
+                rs.setStyle(this.selectedNode.id, viewport, prop, value);
+                // Clean legacy inline style to ensure DPS takes precedence without !important on desktop
+                this.selectedNode.style.removeProperty(prop);
+            } else {
+                // Fallback
+                if (value === '' || value === 'none') this.selectedNode.style.removeProperty(prop);
+                else this.selectedNode.style.setProperty(prop, value);
+            }
+        }
+        window.dispatchEvent(new Event('escms-dom-mutated')); // Trigger autosave
+    }
+
+    applyAttribute(attr, value) {
+        if (!this.selectedNode || this.isSyncing) return;
+        
+        let finalValue = value;
+        let isValidEmbed = true;
+
+        if (attr === 'src' && this.selectedNode.tagName.toLowerCase() === 'iframe') {
+            if (this.selectedNode.classList.contains('escms-youtube')) {
+                let match = finalValue.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+                if (match && match[1]) {
+                    finalValue = `https://www.youtube.com/embed/${match[1]}`;
+                } else if (finalValue !== '') {
+                    isValidEmbed = false; // Wait until they finish typing
+                }
+            } else if (this.selectedNode.classList.contains('escms-vimeo')) {
+                let match = finalValue.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/);
+                if (match && match[1]) {
+                    finalValue = `https://player.vimeo.com/video/${match[1]}`;
+                } else if (finalValue !== '') {
+                    isValidEmbed = false;
+                }
+            }
+        }
+
+        if (!isValidEmbed) {
+            // Do not update the DOM attribute if it's an invalid/incomplete YouTube/Vimeo URL
+            return;
+        }
+
+        if (finalValue === '') {
+            this.selectedNode.removeAttribute(attr);
+        } else {
+            this.selectedNode.setAttribute(attr, finalValue);
+        }
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+    }
+
+    swapTag(newTag) {
+        if (!this.selectedNode || this.isSyncing) return;
+        const oldTag = this.selectedNode.tagName.toLowerCase();
+        if (oldTag === newTag) return;
+
+        const newNode = document.createElement(newTag);
+        Array.from(this.selectedNode.attributes).forEach(attr => newNode.setAttribute(attr.name, attr.value));
+        newNode.innerHTML = this.selectedNode.innerHTML;
+
+        this.selectedNode.replaceWith(newNode);
+        this.selectedNode = newNode;
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+        window.dispatchEvent(new CustomEvent('escms-element-selected', { detail: { node: newNode } }));
+    }
+
+    getInstalledFonts() {
+        let fonts = [{ value: '', label: 'Default' }];
+        const host = document.getElementById('escms-canvas-host');
+        if (host && host.shadowRoot) {
+            const links = host.shadowRoot.querySelectorAll('link[data-type="escms-google-font"]');
+            links.forEach(l => {
+                try {
+                    const url = new URL(l.href);
+                    const families = url.searchParams.getAll('family');
+                    families.forEach(f => {
+                        const name = f.split(':')[0];
+                        fonts.push({ value: `"${name.replace(/\+/g, ' ')}"`, label: name.replace(/\+/g, ' ') });
+                    });
+                } catch (e) { }
+            });
+        }
+        return fonts;
+    }
+
+    updateColumns(val) {
+        if (!this.selectedNode || this.isSyncing) return;
+        this.selectedNode.setAttribute('data-columns', val);
+        this.selectedNode.style.gridTemplateColumns = `repeat(${val}, 1fr)`;
+
+        // Append missing columns
+        while (this.selectedNode.children.length < val) {
+            const col = document.createElement('div');
+            col.className = this.selectedNode.classList.contains('escms-grid') ? 'escms-grid-item' : 'escms-column';
+            this.selectedNode.appendChild(col);
+        }
+
+        // Remove trailing empty columns
+        while (this.selectedNode.children.length > val) {
+            const lastChild = this.selectedNode.lastElementChild;
+            if (lastChild.innerHTML.trim() === '' || lastChild.textContent.trim() === '') {
+                this.selectedNode.removeChild(lastChild);
+            } else {
+                break; // Stop removing if not empty
+            }
+        }
+
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+    }
+
+    updateGridItemWidth(val) {
+        if (!this.selectedNode || this.isSyncing) return;
+        this.selectedNode.setAttribute('data-item-width', val);
+        this.selectedNode.style.gridTemplateColumns = `repeat(auto-fill, minmax(${val}px, 1fr))`;
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+    }
+
+    updateImageCollection(urls) {
+        if (!this.selectedNode || this.isSyncing) return;
+        this.selectedNode.setAttribute('data-collection', JSON.stringify(urls));
+        
+        // Clear current children
+        this.selectedNode.innerHTML = '';
+        
+        // Append new images
+        urls.forEach(url => {
+            const item = document.createElement('div');
+            item.className = 'escms-portfolio-item';
+            
+            // Link item to parent's CSS variables
+            item.style.background = 'var(--item-background, transparent)';
+            item.style.backgroundColor = 'var(--item-background-color, transparent)';
+            item.style.backgroundImage = 'var(--item-background-image, none)';
+            item.style.border = 'var(--item-border, none)';
+            item.style.borderRadius = 'var(--item-border-radius, 0)';
+            item.style.overflow = 'hidden';
+
+            const img = document.createElement('img');
+            img.src = url;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.display = 'block';
+            item.appendChild(img);
+            this.selectedNode.appendChild(item);
+        });
+
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+    }
+
+    renderSections() {
+        this.structureSection = createStructureSection(this);
+        this.sectionsContainer.appendChild(this.structureSection);
+
+        this.attrSection = createAttributesSection(this);
+        this.sectionsContainer.appendChild(this.attrSection);
+
+        this.typoSection = createTypographySection(this);
+        this.sectionsContainer.appendChild(this.typoSection);
+
+        this.bgSection = createBackgroundSection(this);
+        this.sectionsContainer.appendChild(this.bgSection);
+
+        this.layoutSection = createLayoutSection(this);
+        this.sectionsContainer.appendChild(this.layoutSection);
+
+        this.visSection = createVisibilitySection(this);
+        this.sectionsContainer.appendChild(this.visSection);
+
+        this.effectsSection = createEffectsSection(this);
+        this.sectionsContainer.appendChild(this.effectsSection);
+
+        this.navStylesSection = createNavStylesSection(this);
+        this.sectionsContainer.appendChild(this.navStylesSection);
+    }
+
+    createTextInput(i18nKey, onChange) {
+        const container = document.createElement('div');
+        container.className = 'escms-control-row';
+        container.style.display = 'none';
+
+        const label = document.createElement('div');
+        label.setAttribute('data-i18n', i18nKey);
+        label.className = 'escms-ui-label';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.style.width = '100%';
+        input.style.background = 'rgba(255, 255, 255, 0.04)';
+        input.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        input.style.color = 'var(--text-solid)';
+        input.style.padding = '0.35rem 0.5rem';
+        input.style.borderRadius = '4px';
+        input.style.boxSizing = 'border-box';
+        input.style.fontFamily = 'monospace';
+        input.style.fontSize = '11px';
+        input.className = 'escms-inspector-text-input';
+        input.style.transition = 'border-color 0.2s, background 0.2s';
+
+        input.addEventListener('input', (e) => onChange(e.target.value));
+
+        container.appendChild(label);
+        container.appendChild(input);
+
+        return {
+            element: container,
+            input: input,
+            show: () => container.style.display = 'grid',
+            hide: () => container.style.display = 'none',
+            setValue: (val) => input.value = val || ''
+        };
+    }
+
+
+
+    _rgbaToHexA(rgba) {
+        if (!rgba || rgba === 'transparent' || rgba === 'none' || rgba.trim() === '') return { hex: '#000000', alpha: 0 };
+        let parts = rgba.match(/^rgba?\(\s*([0-9.%]+)(?:\s*,?\s*)([0-9.%]+)(?:\s*,?\s*)([0-9.%]+)(?:(?:\s*,?\s*|\s*\/\s*)([0-9.]+))?\s*\)$/i);
+        if (!parts) return { hex: '#000000', alpha: 100 };
+
+        const parseVal = (v) => {
+            if (v.endsWith('%')) {
+                return Math.round((parseFloat(v) / 100) * 255);
+            }
+            return Math.round(parseFloat(v));
+        };
+
+        let r = parseVal(parts[1]).toString(16).padStart(2, '0');
+        let g = parseVal(parts[2]).toString(16).padStart(2, '0');
+        let b = parseVal(parts[3]).toString(16).padStart(2, '0');
+        let a = parts[4] !== undefined ? Math.round(parseFloat(parts[4]) * 100) : 100;
+
+        return { hex: `#${r}${g}${b}`, alpha: a };
+    }
+
+    _parseSpacing(cssVal) {
+        if (!cssVal) return { t: 0, r: 0, b: 0, l: 0 };
+        let parts = cssVal.replace(/px/g, '').split(' ').map(n => parseInt(n) || 0);
+        if (parts.length === 1) return { t: parts[0], r: parts[0], b: parts[0], l: parts[0] };
+        if (parts.length === 2) return { t: parts[0], r: parts[1], b: parts[0], l: parts[1] };
+        if (parts.length === 3) return { t: parts[0], r: parts[1], b: parts[2], l: parts[1] };
+        if (parts.length === 4) return { t: parts[0], r: parts[1], b: parts[2], l: parts[3] };
+        return { t: 0, r: 0, b: 0, l: 0 };
+    }
+
+    _parseBorder(cssVal, radiusVal) {
+        let res = { width: 0, style: 'solid', color: '#000000', alpha: 100 };
+        if (!cssVal || cssVal === 'none' || cssVal === '') return res;
+
+        let widthMatch = cssVal.match(/(\d+)px/);
+        if (widthMatch) res.width = parseInt(widthMatch[1]);
+
+        let styleMatch = cssVal.match(/(solid|dashed|dotted)/);
+        if (styleMatch) res.style = styleMatch[1];
+
+        let colorMatch = cssVal.match(/rgba?\([^)]+\)|#[0-9a-fA-F]+/);
+        if (colorMatch) {
+            if (colorMatch[0].startsWith('#')) {
+                res.color = colorMatch[0].substring(0, 7);
+                res.alpha = colorMatch[0].length === 9 ? Math.round(parseInt(colorMatch[0].substring(7, 9), 16) / 255 * 100) : 100;
+            } else {
+                let rgba = this._rgbaToHexA(colorMatch[0]);
+                res.color = rgba.hex;
+                res.alpha = rgba.alpha;
+            }
+        }
+
+        if (radiusVal) {
+            let radiusMatch = radiusVal.match(/(\d+)px/);
+            if (radiusMatch) res.radius = parseInt(radiusMatch[1]);
+        }
+        return res;
+    }
+
+    _parseGradient(cssVal, isMesh = false) {
+        let res = { type: 'none', posX: 50, posY: 50, angle: 135, c1: '#ec4899', a1: 100, c2: '#8b5cf6', a2: 100, c3: '#3b82f6', a3: 100, stop: 60, blur: 60, animate: false };
+        if (!cssVal || cssVal === 'none' || cssVal === '') return res;
+
+        if (isMesh || cssVal.includes('--escms-mesh-bg') || cssVal.includes('escms-mesh-drift')) {
+            res.type = 'mesh';
+            res.animate = cssVal.includes('escms-mesh-drift') || (this.selectedNode && this.selectedNode.style.getPropertyValue('--escms-mesh-anim') !== 'none');
+            const blurVal = this.selectedNode ? this.selectedNode.style.getPropertyValue('--escms-mesh-blur') : '';
+            if (blurVal) res.blur = parseInt(blurVal) || 60;
+        } else if (cssVal.includes('radial-gradient')) {
+            res.type = 'radial';
+            res.animate = this.selectedNode && this.selectedNode.style.animation.includes('escms-bg-pan');
+            let posMatch = cssVal.match(/radial-gradient\((?:circle )?at\s+(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%,/);
+            if (posMatch) {
+                res.posX = parseFloat(posMatch[1]) || 50;
+                res.posY = parseFloat(posMatch[2]) || 50;
+            }
+        } else if (cssVal.includes('linear-gradient')) {
+            res.type = 'linear';
+            res.animate = this.selectedNode && this.selectedNode.style.animation.includes('escms-bg-pan');
+            let angleMatch = cssVal.match(/linear-gradient\(\s*(-?\d+)deg,/);
+            if (angleMatch) res.angle = parseInt(angleMatch[1]) || 135;
+        }
+
+        const colorMatches = cssVal.match(/(rgba?\([^)]+\)|#[0-9a-fA-F]{3,8})/g);
+        if (colorMatches && colorMatches.length >= 1) {
+            let c1 = this._rgbaToHexA(colorMatches[0]); res.c1 = c1.hex; res.a1 = c1.alpha; res.rgba1 = colorMatches[0];
+            if (colorMatches.length >= 2) {
+                let c2 = this._rgbaToHexA(colorMatches[1]); res.c2 = c2.hex; res.a2 = c2.alpha; res.rgba2 = colorMatches[1];
+            } else {
+                res.c2 = res.c1; res.a2 = res.a1; res.rgba2 = res.rgba1;
+            }
+            if (colorMatches.length >= 3) {
+                let c3 = this._rgbaToHexA(colorMatches[2]); res.c3 = c3.hex; res.a3 = c3.alpha; res.rgba3 = colorMatches[2];
+            } else {
+                res.c3 = res.c2; res.a3 = res.a2; res.rgba3 = res.rgba2;
+            }
+        }
+
+        const stopMatch = cssVal.match(/transparent\s+(\d+)%|\)\s+(\d+)%/);
+        if (stopMatch) {
+            res.stop = parseInt(stopMatch[1] || stopMatch[2]);
+        }
+
+        return res;
+    }
+
+    applyTextStyles(vals) {
+        if (!this.selectedNode || this.isSyncing) return;
+
+        // Font Weight
+        this.selectedNode.style.fontWeight = vals.includes('bold') ? 'bold' : '';
+
+        // Font Style
+        this.selectedNode.style.fontStyle = vals.includes('italic') ? 'italic' : '';
+
+        // Text Decoration
+        let decorations = [];
+        if (vals.includes('underline')) decorations.push('underline');
+        if (vals.includes('strikethrough')) decorations.push('line-through');
+
+        this.selectedNode.style.textDecoration = decorations.length > 0 ? decorations.join(' ') : '';
+
+        window.dispatchEvent(new Event('escms-dom-mutated'));
+    }
+
+    syncDOMToUI() {
+        if (!this.selectedNode) return;
+        this.isSyncing = true;
+
+        const comp = window.getComputedStyle(this.selectedNode);
+        const tag = this.selectedNode.tagName.toLowerCase();
+
+        // 1. Determine allowed controls for this node based on Atom Schema or tag fallback
+        let allowedControls = [];
+        const defaultControls = {
+            'img': ['src', 'alt', 'margin', 'padding', 'border', 'opacity', 'effects'],
+            'a': ['href', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'letterSpacing', 'textAlign', 'textStyle', 'margin', 'padding', 'border', 'opacity'],
+            'iframe': ['src', 'margin', 'padding', 'border', 'opacity'],
+            'column': ['bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation', 'layoutModel'],
+            'escms-component': ['sticky', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation', 'layoutModel'],
+            'default': ['sticky', 'tagSwap', 'fontFamily', 'fontWeight', 'color', 'fontSize', 'letterSpacing', 'textAlign', 'textStyle', 'bgColor', 'bgGradient', 'margin', 'padding', 'border', 'opacity', 'animation', 'layoutModel']
+        };
+
+        let isAtom = false;
+        if (this.selectedNode.classList.contains('escms-column') || this.selectedNode.classList.contains('escms-grid-item')) {
+            allowedControls = defaultControls['column'];
+            isAtom = true;
+        }
+
+        if (!isAtom) {
+            const categories = window.escmsAtomCategories || [];
+            for (let cat of categories) {
+                for (let atom of cat.atoms) {
+                    let match = false;
+                    if (atom.className) {
+                        if (this.selectedNode.classList.contains(atom.className)) {
+                            match = true;
+                        }
+                    } else if (this.selectedNode.tagName.toLowerCase() === atom.tag.toLowerCase()) {
+                        match = true;
+                    }
+                    if (match) {
+                        allowedControls = atom.allowedControls || defaultControls['default'];
+                        isAtom = true;
+                        break;
+                    }
+                }
+                if (isAtom) break;
+            }
+        }
+
+        if (!isAtom) {
+            allowedControls = defaultControls[tag] || defaultControls['default'];
+        }
+
+        // Hide/Show Controls based on allowedControls
+        Object.keys(this.controls).forEach(key => {
+            if (this.controls[key].element) {
+                this.controls[key].element.style.display = allowedControls.includes(key) ? 'grid' : 'none';
+            }
+        });
+        Object.keys(this.attrInputs).forEach(key => {
+            if (this.attrInputs[key].element) {
+                this.attrInputs[key].element.style.display = allowedControls.includes(key) ? 'grid' : 'none';
+            }
+        });
+
+        // Hide Sections if all their controls are hidden
+        [this.structureSection, this.attrSection, this.controls.tagSwap.element.parentElement, this.controls.bgColor.element.parentElement, this.controls.margin.element.parentElement, this.controls.opacity.element.parentElement, this.effectsSection, this.navStylesSection].forEach(section => {
+            if (!section) return;
+            // Typo section is the parent of tagSwap, background is parent of bgColor, layout is parent of margin, visibility is parent of opacity
+            let hasVisibleControls = Array.from(section.children).some(child => {
+                // Ignore the label/header of the section which is a span or div with data-i18n
+                if (child.hasAttribute('data-i18n') && child.tagName === 'DIV' && child.style.fontWeight === '600') return false;
+                return child.style.display !== 'none';
+            });
+            section.style.display = hasVisibleControls ? 'flex' : 'none';
+        });
+
+        // Sync Heading Tag Swap manually since its value depends on the tag
+        if (tag.match(/^h[1-6]$/) && allowedControls.includes('tagSwap')) {
+            this.controls.tagSwap.setValue(tag, false);
+        } else if (this.controls.tagSwap.element) {
+            this.controls.tagSwap.element.style.display = 'none';
+        }
+
+        // Sync Structure manually since its value is custom
+        if (allowedControls.includes('columnsCount') && (this.selectedNode.classList.contains('escms-columns') || this.selectedNode.hasAttribute('data-columns'))) {
+            let cols = parseInt(this.selectedNode.getAttribute('data-columns')) || this.selectedNode.children.length || 2;
+            this.controls.columnsCount.setValue(cols, false);
+        }
+
+        if (allowedControls.includes('gridItemWidth') && this.selectedNode.hasAttribute('data-item-width')) {
+            let width = parseInt(this.selectedNode.getAttribute('data-item-width')) || 250;
+            this.controls.gridItemWidth.setValue(width, false);
+        }
+
+        if (allowedControls.includes('imageCollection')) {
+            let colStr = this.selectedNode.getAttribute('data-collection');
+            let urls = [];
+            try { if (colStr) urls = JSON.parse(colStr); } catch(e) {}
+            this.controls.imageCollection.setValue(urls, false);
+        }
+
+        // Sync Attributes
+        if (allowedControls.includes('src')) {
+            this.attrInputs.src.setValue(this.selectedNode.getAttribute('src'), false);
+            this.attrInputs.src.element.style.display = 'grid';
+        }
+        if (allowedControls.includes('alt')) {
+            this.attrInputs.alt.setValue(this.selectedNode.getAttribute('alt'), false);
+            this.attrInputs.alt.show();
+        }
+        if (allowedControls.includes('href')) {
+            this.attrInputs.href.setValue(this.selectedNode.getAttribute('href'), false);
+            this.attrInputs.href.element.style.display = 'grid';
+        }
+        if (allowedControls.includes('ariaLabel')) {
+            this.attrInputs.ariaLabel.setValue(this.selectedNode.getAttribute('aria-label'), false);
+            this.attrInputs.ariaLabel.element.style.display = 'grid';
+        }
+
+        // Typography
+        if (allowedControls.includes('fontFamily')) {
+            this.controls.fontFamily.updateOptions(this.getInstalledFonts());
+            let fFamily = comp.fontFamily;
+            if (fFamily) {
+                let firstFont = fFamily.split(',')[0].trim().replace(/['"]/g, '');
+                let fontOpt = this.controls.fontFamily.options.find(o => o.label === firstFont);
+                if (fontOpt) this.controls.fontFamily.setValue(fontOpt.value, false);
+                else this.controls.fontFamily.setValue('', false);
+            } else {
+                this.controls.fontFamily.setValue('', false);
+            }
+        }
+
+        if (allowedControls.includes('fontWeight')) {
+            let fWeight = comp.fontWeight;
+            if (fWeight === 'normal') fWeight = '400';
+            if (fWeight === 'bold') fWeight = '700';
+            let weightOpt = this.controls.fontWeight.options.find(o => o.value === fWeight);
+            if (weightOpt) this.controls.fontWeight.setValue(weightOpt.value, false);
+            else this.controls.fontWeight.setValue('', false);
+        }
+
+        if (allowedControls.includes('color')) {
+            let cColor = this._rgbaToHexA(comp.color);
+            this.controls.color.setValue(cColor.hex, cColor.alpha, false);
+        }
+
+        if (allowedControls.includes('fontSize')) {
+            let fSize = parseInt(comp.fontSize) || 16;
+            this.controls.fontSize.setValue(fSize, false);
+        }
+
+        if (allowedControls.includes('letterSpacing')) {
+            let lSpacingStr = comp.letterSpacing;
+            let lSpacing = lSpacingStr === 'normal' ? 0 : parseFloat(lSpacingStr) || 0;
+            this.controls.letterSpacing.setValue(lSpacing, false);
+        }
+
+        if (allowedControls.includes('textAlign')) {
+            let tAlign = comp.textAlign === 'start' ? 'left' : comp.textAlign;
+            this.controls.textAlign.setValue(['left', 'center', 'right', 'justify'].includes(tAlign) ? tAlign : 'left', false);
+        }
+
+        if (allowedControls.includes('textStyle')) {
+            let activeStyles = [];
+            if (comp.fontWeight === 'bold' || parseInt(comp.fontWeight) >= 700) activeStyles.push('bold');
+            if (comp.fontStyle === 'italic') activeStyles.push('italic');
+            if (comp.textDecorationLine.includes('underline')) activeStyles.push('underline');
+            if (comp.textDecorationLine.includes('line-through')) activeStyles.push('strikethrough');
+            this.controls.textStyle.setValue(activeStyles, false);
+        }
+
+        // Background
+        if (allowedControls.includes('bgColor')) {
+            let bColor = comp.backgroundColor;
+            if (this.selectedNode.classList.contains('escms-portfolio')) bColor = this.selectedNode.style.getPropertyValue('--item-background-color') || bColor;
+            let bgColor = this._rgbaToHexA(bColor);
+            this.controls.bgColor.setValue(bgColor.hex, bgColor.alpha, false);
+        }
+
+        if (allowedControls.includes('bgGradient')) {
+            let bGradient = comp.backgroundImage;
+            if (this.selectedNode.classList.contains('escms-portfolio')) bGradient = this.selectedNode.style.getPropertyValue('--item-background-image') || bGradient;
+            
+            let isMesh = this.selectedNode.getAttribute('data-escms-mesh') === 'true';
+            if (isMesh) bGradient = this.selectedNode.style.getPropertyValue('--escms-mesh-bg') || bGradient;
+
+            let gradient = this._parseGradient(bGradient, isMesh);
+            this.controls.bgGradient.setValue(gradient, false);
+        }
+
+        if (allowedControls.includes('bgImage')) {
+            let bImg = comp.backgroundImage;
+            if (this.selectedNode.classList.contains('escms-portfolio')) bImg = this.selectedNode.style.getPropertyValue('--item-background-image') || bImg;
+            let bgImg = bImg !== 'none' && !bImg.includes('gradient') ? bImg : '';
+            this.controls.bgImage.setValue({
+                image: bgImg,
+                size: comp.backgroundSize,
+                repeat: comp.backgroundRepeat,
+                position: comp.backgroundPosition
+            }, false);
+        }
+
+        // Layout
+        if (allowedControls.includes('sticky')) {
+            let isSticky = comp.position === 'sticky';
+            this.controls.sticky.setValue(isSticky, false);
+        }
+
+
+
+        if (allowedControls.includes('navAlign')) {
+            let align = comp.justifyContent;
+            this.controls.navAlign.setValue(['flex-start', 'center', 'flex-end'].includes(align) ? align : 'flex-start', false);
+        }
+
+        if (allowedControls.includes('itemAlign')) {
+            let align = 'left';
+            if (comp.marginRight === 'auto' && comp.marginLeft === 'auto') align = 'center';
+            else if (comp.marginLeft === 'auto' && comp.marginRight === '0px') align = 'right';
+            this.controls.itemAlign.setValue(align, false);
+        }
+
+        if (this.controls.imageAlign) {
+            let showAlign = allowedControls.includes('imageAlign');
+            if (showAlign && this.selectedNode.parentElement) {
+                const parentLayout = this.selectedNode.parentElement.getAttribute('data-escms-layout');
+                if (parentLayout === 'flexbox' || parentLayout === 'grid') {
+                    showAlign = false;
+                }
+            }
+            this.controls.imageAlign.element.style.display = showAlign ? '' : 'none';
+            if (showAlign) {
+                let align = 'left';
+                if (comp.marginRight === 'auto' && comp.marginLeft === 'auto') align = 'center';
+                else if (comp.marginLeft === 'auto' && comp.marginRight === '0px') align = 'right';
+                this.controls.imageAlign.setValue(align, false);
+            }
+        }
+
+        if (allowedControls.includes('contentValign')) {
+            let align = comp.alignItems;
+            this.controls.contentValign.setValue(['flex-start', 'center', 'flex-end'].includes(align) ? align : 'stretch', false);
+        }
+
+        if (allowedControls.includes('navHoverBg')) {
+            let color = this.selectedNode.style.getPropertyValue('--nav-hover-bg') || 'rgba(59, 130, 246, 0.3)';
+            let parsed = this._rgbaToHexA(color);
+            this.controls.navHoverBg.setValue(parsed.hex, parsed.alpha, false);
+        }
+
+        if (allowedControls.includes('navSubBg')) {
+            let color = this.selectedNode.style.getPropertyValue('--nav-sub-bg') || '#0a0a0a';
+            let parsed = this._rgbaToHexA(color);
+            this.controls.navSubBg.setValue(parsed.hex, parsed.alpha, false);
+        }
+
+        if (allowedControls.includes('navSubGlow')) {
+            let color = this.selectedNode.style.getPropertyValue('--nav-sub-glow') || 'transparent';
+            let parsed = this._rgbaToHexA(color);
+            this.controls.navSubGlow.setValue(parsed.hex, parsed.alpha, false);
+        }
+
+        if (allowedControls.includes('navSubBorder')) {
+            let width = parseInt(this.selectedNode.style.getPropertyValue('--nav-sub-border-width')) || 1;
+            let style = this.selectedNode.style.getPropertyValue('--nav-sub-border-style') || 'solid';
+            let colorStr = this.selectedNode.style.getPropertyValue('--nav-sub-border-color') || 'rgba(255, 255, 255, 0.05)';
+            let parsedColor = this._rgbaToHexA(colorStr);
+            let radius = parseInt(this.selectedNode.style.getPropertyValue('--nav-sub-radius')) || 6;
+            this.controls.navSubBorder.setValue({ width, style, color: parsedColor.hex, alpha: parsedColor.alpha, radius, cssString: `${width}px ${style} ${colorStr}` }, false);
+        }
+
+
+
+        if (allowedControls.includes('spacerHeight')) {
+            let sHeight = parseInt(comp.height) || 50;
+            this.controls.spacerHeight.setValue(sHeight, false);
+        }
+
+        if (allowedControls.includes('margin')) this.controls.margin.setValue(this._parseSpacing(comp.margin), false);
+        if (allowedControls.includes('padding')) this.controls.padding.setValue(this._parseSpacing(comp.padding), false);
+        if (allowedControls.includes('border')) {
+            let b = comp.border;
+            let br = comp.borderRadius;
+            if (this.selectedNode.classList.contains('escms-portfolio')) {
+                b = this.selectedNode.style.getPropertyValue('--item-border') || 'none';
+                br = this.selectedNode.style.getPropertyValue('--item-border-radius') || '0px';
+            }
+            this.controls.border.setValue(this._parseBorder(b, br), false);
+        }
+
+        // Visibility
+        if (allowedControls.includes('opacity')) this.controls.opacity.setValue(this.selectedNode.style.opacity !== '' ? Math.round(parseFloat(this.selectedNode.style.opacity) * 100) : 100, false);
+        if (allowedControls.includes('effects')) this.controls.effects.setValue(this.selectedNode.style.filter || 'none', false);
+        if (allowedControls.includes('animation')) {
+            let anim = this.selectedNode.getAttribute('data-escms-anim') || '';
+            this.controls.animation.setValue(anim, false);
+        }
+        if (allowedControls.includes('layoutModel')) {
+            this.controls.layoutModel.setValue(this.selectedNode);
+        }
+
+        this.isSyncing = false;
+    }
+}

@@ -502,6 +502,3 @@ switch ($route) {
         default:
             $send_json(['error' => 'Endpoint no encontrado'], 404);
 }
-        default:
-            $send_json(['error' => 'Endpoint no encontrado'], 404);
-}

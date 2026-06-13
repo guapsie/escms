@@ -288,7 +288,7 @@ if (EscmsAuth::isLoggedIn() && !str_starts_with($route, 'api/')) {
                 }
             }
         }
-    echo '<script type="module" src="/assets/js/index.js?v=<?= time() ?>"></script>
+    echo '<script type="module" src="/assets/js/core/index.js?v=<?= time() ?>"></script>
 </body>
 </html>';
     exit;

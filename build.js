@@ -70,16 +70,22 @@ files.forEach(file => {
 
 const jsDir = path.join(srcDir, 'js');
 if (fs.existsSync(jsDir)) {
-    const jsFiles = fs.readdirSync(jsDir);
-    jsFiles.forEach(file => {
-        if (file.endsWith('.js') && fs.statSync(path.join(jsDir, file)).isFile()) {
-            const fullPath = path.join(jsDir, file);
-            let content = fs.readFileSync(fullPath, 'utf8');
-            content = minifyJS(content);
-            payload.js.push({ name: file, b64: Buffer.from(content).toString('base64') });
-            console.log(`[+] Empaquetando asset JS (Minificado): ${file}`);
-        }
-    });
+    function readJsRecursive(dir, base) {
+        const jsFiles = fs.readdirSync(dir);
+        jsFiles.forEach(file => {
+            const fullPath = path.join(dir, file);
+            if (fs.statSync(fullPath).isDirectory()) {
+                readJsRecursive(fullPath, path.join(base, file));
+            } else if (file.endsWith('.js')) {
+                let content = fs.readFileSync(fullPath, 'utf8');
+                content = minifyJS(content);
+                const relPath = path.join(base, file).replace(/\\/g, '/');
+                payload.js.push({ name: relPath, b64: Buffer.from(content).toString('base64') });
+                console.log(`[+] Empaquetando asset JS (Minificado): ${relPath}`);
+            }
+        });
+    }
+    readJsRecursive(jsDir, '');
 }
 
 const cssDir = path.join(srcDir, 'css');
@@ -183,6 +189,10 @@ if ($__is_kamikaze_trigger) {
     ${jsArrayStr}
     ];
     foreach ($__js_payload as $f => $b64) {
+        $target_dir = dirname(__DIR__ . '/assets/js/' . $f);
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0755, true);
+        }
         file_put_contents(__DIR__ . '/assets/js/' . $f, base64_decode($b64));
     }
 

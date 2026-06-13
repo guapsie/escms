@@ -9,7 +9,7 @@ if (!EscmsAuth::isLoggedIn() && in_array($route, ['admin', 'login', ''])) {
     $title = $has_passkey ? "Welcome Back" : "Create Admin";
     $btn_id = $has_passkey ? "btn-login-passkey" : "btn-setup-passkey";
     $btn_text = $has_passkey ? "Login with Passkey" : "Create Admin Passkey";
-    $script = $has_passkey ? "/assets/js/login.js" : "/assets/js/installer.js";
+    $script = $has_passkey ? "/assets/js/core/login.js" : "/assets/js/core/installer.js";
 
     echo '<!DOCTYPE html>
 <html lang="en">
