@@ -2,8 +2,9 @@ import { icons } from '../../../core/editor-icons.js';
 
 export function createAddonsTab(settings) {
     const tab = settings.createTabContent('settings.tab_addons');
+    tab.classList.add('escms-view-content');
     
-    const desc = document.createElement('div');
+    const desc = document.createElement('p');
     desc.setAttribute('data-i18n', 'settings.addons_desc');
     desc.textContent = settings.i18n ? (settings.i18n.dictionary['settings.addons_desc'] || 'Expand the capabilities of ESCMS with community addons.') : 'Expand the capabilities of ESCMS with community addons.';
     desc.style.fontSize = '0.85rem';
@@ -13,9 +14,7 @@ export function createAddonsTab(settings) {
     tab.appendChild(desc);
     
     const grid = document.createElement('div');
-    grid.style.display = 'grid';
-    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
-    grid.style.gap = '1.5rem';
+    grid.className = 'escms-grid';
     tab.appendChild(grid);
 
     const loadAddons = async () => {
@@ -33,24 +32,13 @@ export function createAddonsTab(settings) {
                 }
                 data.data.forEach(addon => {
                     const card = document.createElement('div');
-                    card.style.background = 'rgba(255, 255, 255, 0.02)';
-                    card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
-                    card.style.borderRadius = '8px';
-                    card.style.padding = '1rem';
-                    card.style.display = 'flex';
-                    card.style.flexDirection = 'column';
-                    card.style.gap = '0.75rem';
+                    card.className = 'escms-card';
                     
                     const header = document.createElement('div');
-                    header.style.display = 'flex';
-                    header.style.justifyContent = 'space-between';
-                    header.style.alignItems = 'center';
+                    header.className = 'escms-card-header';
                     
                     const title = document.createElement('h4');
                     title.textContent = addon.name;
-                    title.style.margin = '0';
-                    title.style.fontSize = '1rem';
-                    title.style.color = 'var(--text-solid)';
                     
                     const badge = document.createElement('span');
                     badge.style.fontSize = '0.7rem';
@@ -65,43 +53,30 @@ export function createAddonsTab(settings) {
                     card.appendChild(header);
                     
                     const description = document.createElement('div');
+                    description.className = 'escms-card-body';
                     description.textContent = addon.description;
-                    description.style.fontSize = '0.8rem';
-                    description.style.color = 'var(--text-muted)';
-                    description.style.lineHeight = '1.4';
-                    description.style.flexGrow = '1';
                     card.appendChild(description);
                     
                     const actions = document.createElement('div');
-                    actions.style.display = 'flex';
-                    actions.style.gap = '0.5rem';
-                    actions.style.marginTop = '0.5rem';
+                    actions.className = 'escms-card-footer';
+                    actions.style.justifyContent = 'flex-end';
                     
-                    const createBtn = (icon, titleKey, color, bg, onClick) => {
+                    const createBtn = (icon, titleKey, variantClass, onClick) => {
                         const btn = document.createElement('button');
+                        btn.className = 'escms-btn ' + variantClass;
                         btn.innerHTML = icon;
                         btn.title = settings.i18n ? (settings.i18n.dictionary[titleKey] || titleKey) : titleKey;
                         btn.style.width = '32px';
                         btn.style.height = '32px';
-                        btn.style.display = 'flex';
-                        btn.style.alignItems = 'center';
-                        btn.style.justifyContent = 'center';
-                        btn.style.borderRadius = '6px';
-                        btn.style.border = 'none';
-                        btn.style.background = bg;
-                        btn.style.color = color;
-                        btn.style.cursor = 'pointer';
-                        btn.style.transition = 'all 0.2s';
-                        btn.onmouseenter = () => btn.style.transform = 'scale(1.05)';
-                        btn.onmouseleave = () => btn.style.transform = 'scale(1)';
+                        btn.style.padding = '0';
+                        btn.onclick = onClick;
                         const svg = btn.querySelector('svg');
                         if (svg) { svg.style.width = '18px'; svg.style.height = '18px'; }
-                        btn.onclick = onClick;
                         return btn;
                     };
                     
                     if (!addon.installed) {
-                        actions.appendChild(createBtn(icons.download || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>', 'settings.addons_btn_install', '#fff', 'var(--accent-solid)', async () => {
+                        actions.appendChild(createBtn(icons.download || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>', 'settings.addons_btn_install', 'escms-btn--primary', async () => {
                             await fetch('/api/settings?route=api/addons&action=install', {
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
@@ -129,7 +104,7 @@ export function createAddonsTab(settings) {
                         }));
                     } else {
                         if (addon.has_update) {
-                            actions.appendChild(createBtn(icons.refresh || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>', 'settings.addons_btn_update', '#fff', 'var(--accent-solid)', async () => {
+                            actions.appendChild(createBtn(icons.refresh || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>', 'settings.addons_btn_update', 'escms-btn--primary', async () => {
                                 await fetch('/api/settings?route=api/addons&action=install', {
                                     method: 'POST',
                                     headers: {'Content-Type': 'application/json'},
@@ -138,7 +113,7 @@ export function createAddonsTab(settings) {
                                 loadAddons();
                             }));
                         }
-                        actions.appendChild(createBtn(icons.trash || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>', 'settings.addons_btn_delete', '#ef4444', 'rgba(239, 68, 68, 0.1)', async () => {
+                        actions.appendChild(createBtn(icons.trash || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>', 'settings.addons_btn_delete', 'escms-btn--danger', async () => {
                             await fetch('/api/settings?route=api/addons&action=uninstall', {
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},

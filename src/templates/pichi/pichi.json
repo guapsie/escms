@@ -66,7 +66,15 @@
           "pichi-footer"
         ],
         "children": [
-          "Powered by ESCMS - The Zero-Bloat CMS"
+          {
+            "tag": "div",
+            "classes": [
+              "pichi-footer-container"
+            ],
+            "children": [
+              "Powered by ESCMS - The Zero-Bloat CMS"
+            ]
+          }
         ]
       }
     ]

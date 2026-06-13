@@ -1,12 +1,10 @@
 export function createBackupTab(settings) {
     const tab = settings.createTabContent('settings.tab_backup');
+    tab.classList.add('escms-view-content');
     
     const desc = document.createElement('div');
+    desc.className = 'escms-alert escms-alert--info';
     desc.setAttribute('data-i18n', 'settings.backup_desc');
-    desc.style.fontSize = '0.85rem';
-    desc.style.color = 'rgba(245, 245, 245, 0.7)';
-    desc.style.marginBottom = '2rem';
-    desc.style.lineHeight = '1.5';
     tab.appendChild(desc);
 
     const actionsContainer = document.createElement('div');
@@ -19,16 +17,9 @@ export function createBackupTab(settings) {
         if (data.status === 'success' && data.has_zip) {
             // Export Button
             const exportBtn = document.createElement('button');
-            exportBtn.className = 'escms-btn';
+            exportBtn.className = 'escms-btn escms-btn--primary';
             exportBtn.setAttribute('data-i18n', 'settings.btn_export');
             exportBtn.textContent = settings.i18n ? (settings.i18n.dictionary['settings.btn_export'] || 'Export Site') : 'Export Site';
-            exportBtn.style.padding = '12px 24px';
-            exportBtn.style.background = 'var(--accent-solid)';
-            exportBtn.style.color = '#fff';
-            exportBtn.style.border = 'none';
-            exportBtn.style.borderRadius = '6px';
-            exportBtn.style.fontWeight = '600';
-            exportBtn.style.cursor = 'pointer';
             exportBtn.style.width = '200px';
             exportBtn.onclick = () => {
                 window.location.href = '/api/settings?action=export';
@@ -42,16 +33,9 @@ export function createBackupTab(settings) {
             importWrapper.style.width = '200px';
             
             const importBtn = document.createElement('button');
-            importBtn.className = 'escms-btn';
+            importBtn.className = 'escms-btn escms-btn--secondary';
             importBtn.setAttribute('data-i18n', 'settings.btn_import');
             importBtn.textContent = settings.i18n ? (settings.i18n.dictionary['settings.btn_import'] || 'Import Site') : 'Import Site';
-            importBtn.style.padding = '12px 24px';
-            importBtn.style.background = 'transparent';
-            importBtn.style.color = 'var(--text-solid)';
-            importBtn.style.border = '1px solid rgba(255,255,255,0.2)';
-            importBtn.style.borderRadius = '6px';
-            importBtn.style.fontWeight = '600';
-            importBtn.style.cursor = 'pointer';
             importBtn.style.width = '100%';
             
             const fileInput = document.createElement('input');
@@ -110,13 +94,9 @@ export function createBackupTab(settings) {
             actionsContainer.appendChild(importWrapper);
         } else {
             const warn = document.createElement('div');
+            warn.className = 'escms-alert escms-alert--warning';
             warn.setAttribute('data-i18n', 'settings.zip_missing');
             warn.textContent = settings.i18n ? (settings.i18n.dictionary['settings.zip_missing'] || 'Zip missing') : 'Zip missing';
-            warn.style.color = '#ef4444';
-            warn.style.background = 'rgba(239, 68, 68, 0.1)';
-            warn.style.borderLeft = '3px solid #ef4444';
-            warn.style.padding = '1rem';
-            warn.style.borderRadius = '0 4px 4px 0';
             actionsContainer.appendChild(warn);
         }
     }).catch(err => {

@@ -190,6 +190,7 @@ export class EscmsGlobalSettings {
 
         this.sidebar = document.createElement('div');
         this.sidebar.style.width = '250px';
+        this.sidebar.style.flexShrink = '0';
         this.sidebar.style.borderRight = '1px solid rgba(255, 255, 255, 0.05)';
         this.sidebar.style.paddingRight = '20px';
         this.sidebar.style.display = 'flex';
@@ -256,15 +257,6 @@ export class EscmsGlobalSettings {
 
         const style = document.createElement('style');
         style.textContent = `
-            .escms-settings-group { margin-bottom: 1.5rem; }
-            .escms-settings-label { display: block; font-size: 0.85rem; color: rgba(245, 245, 245, 0.8); margin-bottom: 0.5rem; }
-            .escms-settings-input, .escms-settings-textarea {
-                width: 100%; max-width: 450px; background: #f5f5f5; color: #0a0a0a; border: none;
-                border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.9rem; font-family: inherit;
-                box-sizing: border-box; outline: none; transition: box-shadow 0.2s ease;
-            }
-            .escms-settings-input:focus, .escms-settings-textarea:focus { box-shadow: 0 0 0 3px var(--accent-solid); }
-            .escms-settings-textarea { max-width: 600px; min-height: 120px; resize: vertical; }
             .escms-settings-color-row { display: flex; gap: 1rem; align-items: center; }
             .escms-settings-color-input {
                 -webkit-appearance: none; -moz-appearance: none; appearance: none;
@@ -312,20 +304,22 @@ export class EscmsGlobalSettings {
 
     createInputGroup(labelKey, inputType = 'text', onChange = null) {
         const group = document.createElement('div');
-        group.className = 'escms-settings-group';
+        group.className = 'escms-form-group';
 
         const label = document.createElement('label');
-        label.className = 'escms-settings-label';
         label.setAttribute('data-i18n', labelKey);
+        label.textContent = this.i18n ? (this.i18n.dictionary[labelKey] || labelKey) : labelKey;
 
         let input;
         if (inputType === 'textarea') {
             input = document.createElement('textarea');
-            input.className = 'escms-settings-textarea';
+            input.className = 'escms-input';
+            input.style.minHeight = '120px';
+            input.style.resize = 'vertical';
         } else {
             input = document.createElement('input');
             input.type = inputType;
-            input.className = 'escms-settings-input';
+            input.className = 'escms-input';
         }
 
         if (onChange) {

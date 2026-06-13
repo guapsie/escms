@@ -3,10 +3,11 @@ import { icons } from '../../../core/editor-icons.js';
 
 export function createGeneralTab(settings) {
     const tab = settings.createTabContent('settings.tab_ide');
+    tab.classList.add('escms-view-content');
     
     const createToggleSetting = (titleKey, descKey, settingKey, value, onChange) => {
         const group = document.createElement('div');
-        group.style.marginBottom = '2rem';
+        group.className = 'escms-form-group';
         
         const headerRow = document.createElement('div');
         headerRow.style.display = 'flex';
@@ -14,11 +15,9 @@ export function createGeneralTab(settings) {
         headerRow.style.alignItems = 'center';
         headerRow.style.marginBottom = '0.5rem';
 
-        const title = document.createElement('div');
+        const title = document.createElement('label');
         title.setAttribute('data-i18n', titleKey);
-        title.style.fontSize = '0.9rem';
-        title.style.fontWeight = '500';
-        title.style.color = 'var(--text-solid)';
+        title.textContent = settings.i18n ? (settings.i18n.dictionary[titleKey] || titleKey) : titleKey;
 
         const toggle = new EscmsToggle(null, value, onChange);
 
@@ -27,10 +26,9 @@ export function createGeneralTab(settings) {
         group.appendChild(headerRow);
 
         if (descKey) {
-            const desc = document.createElement('div');
+            const desc = document.createElement('p');
             desc.setAttribute('data-i18n', descKey);
-            desc.style.fontSize = '0.75rem';
-            desc.style.color = 'rgba(245,245,245,0.5)';
+            desc.textContent = settings.i18n ? (settings.i18n.dictionary[descKey] || descKey) : descKey;
             group.appendChild(desc);
         }
 
@@ -64,8 +62,20 @@ export function createGeneralTab(settings) {
         (val) => { settings.saveConfig('auto_save_server', val); }
     ));
 
+    const group = document.createElement('div');
+    group.className = 'escms-form-group';
+    
+    const headerRow = document.createElement('div');
+    headerRow.style.display = 'flex';
+    headerRow.style.justifyContent = 'space-between';
+    headerRow.style.alignItems = 'center';
+
+    const title = document.createElement('label');
+    title.setAttribute('data-i18n', 'settings.language_title');
+    title.textContent = settings.i18n ? (settings.i18n.dictionary['settings.language_title'] || 'Editor Language') : 'Editor Language';
+
     // Language
-    const langSelect = new EscmsSelect('settings.language_title', [
+    const langSelect = new EscmsSelect(null, [
         { value: 'es', label: 'Español' },
         { value: 'en', label: 'English' }
     ], settings.config.editor_language, (val) => {
@@ -73,7 +83,6 @@ export function createGeneralTab(settings) {
         if (window.escmsEditor && window.escmsEditor.i18n) {
             window.escmsEditor.i18n.loadLanguage(val).then(() => {
                 window.escmsEditor.i18n.translateDOM();
-                // Re-render settings to show new language
                 const currentTab = Object.keys(settings.tabContents).find(k => settings.tabContents[k].style.display === 'block');
                 if (settings.overlay && settings.overlay.parentNode) {
                     settings.overlay.parentNode.removeChild(settings.overlay);
@@ -119,19 +128,24 @@ export function createGeneralTab(settings) {
             }).catch(() => {});
     }
 
-    const wrapper = document.createElement('div');
-    wrapper.style.display = 'flex';
-    wrapper.style.alignItems = 'center';
-    wrapper.style.gap = '8px';
+    const rightSide = document.createElement('div');
+    rightSide.style.display = 'flex';
+    rightSide.style.alignItems = 'center';
+    rightSide.style.gap = '8px';
     const selectEl = langSelect.element.childNodes[1];
-    selectEl.style.flex = '1';
-    wrapper.style.flex = '0 0 auto';
-    wrapper.style.width = '60%';
-    wrapper.appendChild(selectEl);
-    wrapper.appendChild(refreshLangBtn);
-    langSelect.element.appendChild(wrapper);
+    
+    // We don't want the select to span 100% horizontally. 
+    // It should just wrap its content like the color pickers do.
+    selectEl.style.width = '200px'; 
+    
+    rightSide.appendChild(selectEl);
+    rightSide.appendChild(refreshLangBtn);
 
-    tab.appendChild(langSelect.element);
+    headerRow.appendChild(title);
+    headerRow.appendChild(rightSide);
+    group.appendChild(headerRow);
+
+    tab.appendChild(group);
 
     return tab;
 }
