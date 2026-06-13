@@ -1,6 +1,6 @@
-import { el } from '/assets/js/escms-dom.js';
-import { icons } from '/assets/js/editor-icons.js';
-import { EscmsSelect } from '/assets/js/editor-controls.js';
+import { el } from '/assets/js/core/escms-dom.js';
+import { icons } from '/assets/js/core/editor-icons.js';
+import { EscmsSelect } from '/assets/js/ui/controls/editor-controls.js';
 
 export class EscmsCopilot {
     constructor(i18n) {
@@ -784,7 +784,8 @@ window.addEventListener('escms:leftpanel:ready', (e) => {
 window.addEventListener('escms:settings:ready', (e) => {
     const settings = e.detail.settings;
     const tabContainer = document.createElement('div');
-    tabContainer.innerHTML = '<h3>AI Copilot Settings</h3><div id="ai-settings-content">Loading...</div>';
+    tabContainer.classList.add('escms-view-content');
+    tabContainer.innerHTML = '<div id="ai-settings-content" style="display: flex; justify-content: center; align-items: center; height: 100%; color: rgba(245,245,245,0.4);">Loading...</div>';
     
     settings.addTab('ai', 'AI Copilot', tabContainer);
     
@@ -792,30 +793,28 @@ window.addEventListener('escms:settings:ready', (e) => {
                 if (data.status === 'success') {
                     const content = document.getElementById('ai-settings-content');
                     content.innerHTML = `
-                        <div id="ai-provider-container" style="margin-bottom: 1.5rem;"></div>
+                        <div id="ai-provider-container" class="escms-form-group"></div>
                         
-                        <div id="ai-endpoint-container" class="escms-control-row" style="display:none; margin-bottom: 1.5rem;">
-                            <div class="escms-ui-label">Custom Endpoint URL</div>
-                            <input type="text" id="ai-endpoint" value="${data.endpoint || ''}" placeholder="https://api.example.com/v1" class="escms-settings-input">
+                        <div id="ai-endpoint-container" class="escms-form-group" style="display:none;">
+                            <label>Custom Endpoint URL</label>
+                            <input type="text" id="ai-endpoint" value="${data.endpoint || ''}" placeholder="https://api.example.com/v1" class="escms-input">
                         </div>
 
-                        <div class="escms-control-row" style="margin-bottom: 1.5rem;">
-                            <div class="escms-ui-label">API Key</div>
-                            <input type="password" id="ai-key" placeholder="${data.has_key ? '(Key is configured. Enter new to change)' : 'Paste your API Key here'}" class="escms-settings-input">
+                        <div class="escms-form-group">
+                            <label>API Key</label>
+                            <input type="password" id="ai-key" placeholder="${data.has_key ? '(Key is configured. Enter new to change)' : 'Paste your API Key here'}" class="escms-input">
                         </div>
 
-                        <div id="ai-model-container" style="margin-bottom: 1.5rem;"></div>
+                        <div id="ai-model-container" class="escms-form-group"></div>
 
-                        <div class="escms-control-row" style="margin-bottom: 1.5rem; align-items: flex-start;">
-                            <div class="escms-ui-label" style="padding-top: 10px;">Custom Instructions (Optional)</div>
-                            <textarea id="ai-instructions" rows="4" placeholder="e.g. Always respond in Spanish, use Tailwind classes sparingly, etc." class="escms-settings-input" style="resize:vertical; width: 100%; box-sizing: border-box;">${data.instructions || ''}</textarea>
+                        <div class="escms-form-group">
+                            <label>Custom Instructions (Optional)</label>
+                            <p style="margin-bottom: 0.5rem;">e.g. Always respond in Spanish, use Tailwind classes sparingly, etc.</p>
+                            <textarea id="ai-instructions" rows="4" class="escms-input" style="resize:vertical;">${data.instructions || ''}</textarea>
                         </div>
                         
-                        <div class="escms-control-row" style="margin-top: 2rem;">
-                            <div style="text-align: left;">
-                                <button id="btn-save-ai" style="padding: 12px 24px; background: var(--accent-solid); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Save AI Settings</button>
-                            </div>
-                            <div></div>
+                        <div class="escms-form-group">
+                            <button id="btn-save-ai" class="escms-btn escms-btn--primary">Save AI Settings</button>
                         </div>
                     `;
 
@@ -833,18 +832,24 @@ window.addEventListener('escms:settings:ready', (e) => {
                     const endpointCont = document.getElementById('ai-endpoint-container');
                     const toggleEndpoint = (val) => {
                         if (val === 'custom') {
-                            endpointCont.style.display = ''; // Restore grid display
-                            endpointCont.classList.add('escms-control-row');
+                            endpointCont.style.display = 'block';
                         } else {
                             endpointCont.style.display = 'none';
                         }
                         currentProvider = val;
                     };
                     
-                    const providerSelect = new EscmsSelect('Provider', providerOptions, currentProvider, toggleEndpoint);
-                    providerSelect.element.children[0].textContent = 'Provider';
+                    const providerLabel = document.createElement('label');
+                    providerLabel.textContent = 'Provider';
+                    
+                    const providerSelect = new EscmsSelect(null, providerOptions, currentProvider, toggleEndpoint);
                     providerSelect.element.style.marginBottom = '0';
-                    document.getElementById('ai-provider-container').appendChild(providerSelect.element);
+                    providerSelect.element.style.display = 'block'; // Override default grid
+                    
+                    const providerContainer = document.getElementById('ai-provider-container');
+                    providerContainer.appendChild(providerLabel);
+                    providerContainer.appendChild(providerSelect.element.children[1]); // Append just the select box since we use a custom label
+                    
                     toggleEndpoint(currentProvider);
 
                     // Model Dropdown
@@ -852,9 +857,13 @@ window.addEventListener('escms:settings:ready', (e) => {
                     const modelOptions = [
                         { value: currentModel, label: currentModel || 'Default' }
                     ];
-                    let modelSelect = new EscmsSelect('Model', modelOptions, currentModel, (val) => { currentModel = val; });
-                    modelSelect.element.children[0].textContent = 'Model';
+                    
+                    const modelLabel = document.createElement('label');
+                    modelLabel.textContent = 'Model';
+                    
+                    let modelSelect = new EscmsSelect(null, modelOptions, currentModel, (val) => { currentModel = val; });
                     modelSelect.element.style.marginBottom = '0';
+                    modelSelect.element.style.display = 'block';
                     
                     const modelRightSide = modelSelect.element.children[1];
                     modelRightSide.style.flex = '1';
@@ -865,16 +874,18 @@ window.addEventListener('escms:settings:ready', (e) => {
                     modelWrapper.style.alignItems = 'center';
                     modelWrapper.style.width = '100%';
                     
-                    modelRightSide.parentNode.insertBefore(modelWrapper, modelRightSide);
                     modelWrapper.appendChild(modelRightSide);
                     
                     const fetchBtn = document.createElement('button');
                     fetchBtn.id = 'btn-fetch-models';
                     fetchBtn.textContent = 'Fetch Models';
-                    fetchBtn.style = 'padding: 10px 16px; background: var(--accent-solid); color: #fff; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap;';
+                    fetchBtn.className = 'escms-btn escms-btn--secondary';
+                    fetchBtn.style.whiteSpace = 'nowrap';
                     modelWrapper.appendChild(fetchBtn);
                     
-                    document.getElementById('ai-model-container').appendChild(modelSelect.element);
+                    const modelContainer = document.getElementById('ai-model-container');
+                    modelContainer.appendChild(modelLabel);
+                    modelContainer.appendChild(modelWrapper);
 
 
 
