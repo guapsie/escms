@@ -135,22 +135,50 @@ export class EscmsAutosave {
                         if (cJson) currentChildren.push(cJson);
                     });
 
-                    const currentCompJson = {
-                        tag: 'div',
-                        classes: ['escms-component'],
-                        children: currentChildren
-                    };
-
-                    const currentJsonStr = JSON.stringify(currentCompJson);
                     const savedJsonStr = window.escmsComponents[ref].editor_data;
+                    let originalJson = { tag: 'div', classes: ['escms-component'] };
+                    try {
+                        originalJson = JSON.parse(savedJsonStr);
+                    } catch(e) {}
+
+                    originalJson.children = currentChildren;
+                    
+                    if (cloneComp.hasAttribute('style')) {
+                        originalJson.styles = cloneComp.getAttribute('style');
+                    } else {
+                        delete originalJson.styles;
+                    }
+
+                    const allowedAttrs = ['data-escms-anim', 'data-escms-layout', 'data-escms-mesh', 'data-columns', 'data-item-width', 'data-collection'];
+                    originalJson.attributes = originalJson.attributes || {};
+                    for (let attr of allowedAttrs) {
+                        if (cloneComp.hasAttribute(attr)) {
+                            originalJson.attributes[attr] = cloneComp.getAttribute(attr);
+                        } else {
+                            delete originalJson.attributes[attr];
+                        }
+                    }
+
+                    const currentJsonStr = JSON.stringify(originalJson);
 
                     if (currentJsonStr !== savedJsonStr) {
+                        const outTag = originalJson.tag || 'div';
+                        const outClasses = originalJson.classes ? originalJson.classes.join(' ') : '';
+                        const outStyles = originalJson.styles ? ` style="${originalJson.styles}"` : '';
+                        let outAttrs = '';
+                        if (originalJson.attributes) {
+                            for (let k in originalJson.attributes) {
+                                outAttrs += ` ${k}="${originalJson.attributes[k]}"`;
+                            }
+                        }
+                        const publicHtml = `<${outTag}${outClasses ? ` class="${outClasses}"` : ''}${outStyles}${outAttrs}>${cloneComp.innerHTML}</${outTag}>`;
+
                         const payload = {
                             id: window.escmsComponents[ref].id,
                             name: window.escmsComponents[ref].name,
                             ref_id: ref,
                             editor_data: currentJsonStr,
-                            public_html: `<div class="escms-component">${cloneComp.innerHTML}</div>`
+                            public_html: publicHtml
                         };
 
                         componentSavePromises.push(
