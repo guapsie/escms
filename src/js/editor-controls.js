@@ -166,7 +166,7 @@ export class EscmsSlider {
         this.clearBtn = el('div', {
             class: 'escms-slider-clear-btn',
             html: '&times;',
-            style: 'display: none; align-items: center; justify-content: center; width: 16px; height: 16px; font-size: 14px; cursor: pointer; opacity: 0.5; margin-left: 5px; transition: opacity 0.2s;',
+            style: 'display: none; align-items: center; justify-content: center; width: 14px; height: 14px; font-size: 14px; cursor: pointer; opacity: 0.5; transition: opacity 0.2s; background: rgba(255,255,255,0.1); border-radius: 50%; padding-bottom: 1px;',
             title: 'Reset to default',
             onmouseenter: (e) => { e.target.style.opacity = '1'; },
             onmouseleave: (e) => { e.target.style.opacity = '0.5'; },
@@ -178,12 +178,17 @@ export class EscmsSlider {
             }
         });
 
+        const labelEl = this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div');
+        const labelContainer = el('div', { style: 'display: flex; align-items: center; justify-content: space-between; width: 100%; padding-right: 8px; box-sizing: border-box;' }, [
+            labelEl,
+            this.clearBtn
+        ]);
+
         this.element = el('div', { class: 'escms-control-row' }, [
-            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div'),
+            labelContainer,
             el('div', { style: 'display: flex; flex-direction: column;' }, [
                 el('div', { class: 'escms-slider-header' }, [
-                    this.valDisplay,
-                    this.clearBtn
+                    this.valDisplay
                 ]),
                 trackContainer
             ])
@@ -277,7 +282,7 @@ export class EscmsColorPicker {
         this.clearBtn = el('div', {
             class: 'escms-color-clear-btn',
             html: '&times;',
-            style: 'display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; font-size: 16px; cursor: pointer; opacity: 0.5; margin-left: auto; transition: opacity 0.2s;',
+            style: 'display: none; align-items: center; justify-content: center; width: 14px; height: 14px; font-size: 14px; cursor: pointer; opacity: 0.5; transition: opacity 0.2s; background: rgba(255,255,255,0.1); border-radius: 50%; padding-bottom: 1px;',
             title: 'Clear color',
             onmouseenter: (e) => { e.target.style.opacity = '1'; },
             onmouseleave: (e) => { e.target.style.opacity = '0.5'; },
@@ -295,12 +300,11 @@ export class EscmsColorPicker {
             class: 'escms-color-btn',
             onclick: (e) => {
                 e.stopPropagation();
-                if (e.target !== this.nativeInput && e.target !== this.hexInput && e.target !== this.clearBtn) this.toggle();
+                if (e.target !== this.nativeInput && e.target !== this.hexInput) this.toggle();
             }
         }, [
             el('div', { class: 'escms-color-swatch-container' }, [this.swatchColor, this.nativeInput]),
             this.hexInput,
-            this.clearBtn,
             el('div', { style: 'display: flex; align-items: center; margin-left: 5px;' }, [
                 this.alphaDisplay,
                 el('span', { html: icons.caretDown, style: 'display: flex; opacity: 0.7; pointer-events: none;' })
@@ -318,8 +322,14 @@ export class EscmsColorPicker {
             onclick: (e) => e.stopPropagation()
         }, this.alphaSlider.element);
 
+        const labelEl = this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div');
+        const labelContainer = el('div', { style: 'display: flex; align-items: center; justify-content: space-between; width: 100%; padding-right: 8px; box-sizing: border-box;' }, [
+            labelEl,
+            this.clearBtn
+        ]);
+
         this.element = el('div', { class: 'escms-control-row', style: 'position: relative;' }, [
-            this.labelKey ? el('div', { 'data-i18n': this.labelKey, class: 'escms-ui-label' }) : el('div'),
+            labelContainer,
             this.button,
             this.dropdown
         ]);
